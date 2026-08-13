@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Login - C2 Dashboard</title>
+  
+  <!-- Vue 3 -->
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --color-primary: #0066cc;
+      --color-danger: #cc3333;
+      --color-success: #33cc66;
+      --color-warning: #ffaa00;
+      --color-dark: #1a1a1a;
+      --color-light: #f5f5f5;
+      --color-border: #e0e0e0;
+      --color-muted: #666666;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #app {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .login-container {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      width: 100%;
+      max-width: 420px;
+      padding: 40px;
+      animation: slideUp 0.3s ease-out;
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .login-header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    .login-logo {
+      font-size: 40px;
+      margin-bottom: 15px;
+    }
+
+    .login-title {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--color-dark);
+      margin-bottom: 8px;
+    }
+
+    .login-subtitle {
+      font-size: 14px;
+      color: var(--color-muted);
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--color-dark);
+      margin-bottom: 8px;
+    }
+
+    .form-input {
+      width: 100%;
+      padding: 12px 14px;
+      font-size: 14px;
+      border: 2px solid var(--color-border);
+      border-radius: 8px;
+      transition: border-color 0.3s, box-shadow 0.3s;
+      font-family: inherit;
+    }
+
+    .form-input:focus {
+      outline: none;
+      border-color: var(--color-primary);
+      box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1);
+    }
+
+    .form-input.error {
+      border-color: var(--color-danger);
+    }
+
+    .form-input.error:focus {
+      box-shadow: 0 0 0 3px rgba(204, 51, 51, 0.1);
+    }
+
+    .error-message {
+      font-size: 13px;
+      color: var(--color-danger);
+      margin-top: 6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .error-icon {
+      font-size: 16px;
+    }
+
+    .form-actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 30px;
+    }
+
+    .btn {
+      flex: 1;
+      padding: 12px 20px;
+      font-size: 14px;
+      font-weight: 600;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .btn-primary {
+      background: var(--color-primary);
+      color: white;
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      background: #0052a3;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 102, 204, 0.3);
+    }
+
+    .btn-primary:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+    }
+
+    .btn-secondary {
+      background: var(--color-light);
+      color: var(--color-dark);
+      border: 2px solid var(--color-border);
+    }
+
+    .btn-secondary:hover:not(:disabled) {
+      background: #f0f0f0;
+      border-color: var(--color-muted);
+    }
+
+    .remember-me {
+      display: flex;
+      align-items: center;
+      font-size: 13px;
+      color: var(--color-muted);
+      margin-top: 12px;
+    }
+
+    .checkbox {
+      width: 18px;
+      height: 18px;
+      margin-right: 8px;
+      cursor: pointer;
+      accent-color: var(--color-primary);
+    }
+
+    .success-message {
+      font-size: 13px;
+      color: var(--color-success);
+      margin-top: 6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .success-icon {
+      font-size: 16px;
+    }
+
+    .loading-spinner {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      border-top-color: white;
+      animation: spin 0.8s linear infinite;
+      margin-right: 8px;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .info-box {
+      background: #f0f4ff;
+      border-left: 4px solid var(--color-primary);
+      padding: 12px 14px;
+      border-radius: 6px;
+      font-size: 13px;
+      color: #0052a3;
+      margin-bottom: 20px;
+      line-height: 1.5;
+    }
+
+    .info-icon {
+      font-size: 16px;
+      margin-right: 6px;
+    }
+
+    .links {
+      text-align: center;
+      margin-top: 20px;
+      font-size: 13px;
+    }
+
+    .links a {
+      color: var(--color-primary);
+      text-decoration: none;
+      font-weight: 600;
+      transition: color 0.3s;
+    }
+
+    .links a:hover {
+      color: #0052a3;
+      text-decoration: underline;
+    }
+
+    .back-button {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--color-muted);
+      text-decoration: none;
+      font-size: 13px;
+      margin-bottom: 20px;
+      transition: color 0.3s;
+    }
+
+    .back-button:hover {
+      color: var(--color-dark);
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <div class="login-container">
+      <a href="index.html" class="back-button">← Retour au dashboard</a>
+      
+      <div class="login-header">
+        <div class="login-logo">🔐</div>
+        <h1 class="login-title">Admin Login</h1>
+        <p class="login-subtitle">Connectez-vous pour accéder aux fonctionnalités d'administration</p>
+      </div>
+
+      <div class="info-box">
+        <span class="info-icon">ℹ️</span>
+        <strong>Identifiants par défaut:</strong><br>
+        Username: <code>admin</code><br>
+        Password: <code>change_me</code>
+      </div>
+
+      <form @submit.prevent="handleLogin">
+        <div class="form-group">
+          <label for="username" class="form-label">Nom d'utilisateur</label>
+          <input
+            type="text"
+            id="username"
+            v-model="form.username"
+            class="form-input"
+            :class="{ error: errors.username }"
+            placeholder="Entrez votre nom d'utilisateur"
+            autocomplete="username"
+            required
+            :disabled="isLoading"
+          >
+          <div v-if="errors.username" class="error-message">
+            <span class="error-icon">⚠️</span>
+            {{ errors.username }}
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="password" class="form-label">Mot de passe</label>
+          <input
+            type="password"
+            id="password"
+            v-model="form.password"
+            class="form-input"
+            :class="{ error: errors.password }"
+            placeholder="Entrez votre mot de passe"
+            autocomplete="current-password"
+            required
+            :disabled="isLoading"
+          >
+          <div v-if="errors.password" class="error-message">
+            <span class="error-icon">⚠️</span>
+            {{ errors.password }}
+          </div>
+        </div>
+
+        <div class="remember-me">
+          <input
+            type="checkbox"
+            id="rememberMe"
+            v-model="form.rememberMe"
+            class="checkbox"
+            :disabled="isLoading"
+          >
+          <label for="rememberMe" style="cursor: pointer;">Se souvenir de moi</label>
+        </div>
+
+        <div v-if="errors.general" class="error-message" style="margin-top: 15px;">
+          <span class="error-icon">✕</span>
+          {{ errors.general }}
+        </div>
+
+        <div v-if="successMessage" class="success-message" style="margin-top: 15px;">
+          <span class="success-icon">✓</span>
+          {{ successMessage }}
+        </div>
+
+        <div class="form-actions">
+          <button
+            type="submit"
+            class="btn btn-primary"
+            :disabled="isLoading"
+          >
+            <span v-if="isLoading">
+              <span class="loading-spinner"></span>Connexion en cours...
+            </span>
+            <span v-else>Se connecter</span>
+          </button>
+          <button
+            type="reset"
+            class="btn btn-secondary"
+            @click="clearForm"
+            :disabled="isLoading"
+          >
+            Réinitialiser
+          </button>
+        </div>
+      </form>
+
+      <div class="links">
+        <p style="margin-bottom: 12px;">
+          Accès refusé? <a href="javascript:void(0)" @click="contactAdmin">Contacter l'administrateur</a>
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script src="js/admin-login.js"></script>
+</body>
+</html>

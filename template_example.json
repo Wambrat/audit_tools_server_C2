@@ -1,0 +1,12 @@
+{
+  "name": "Audit système standard",
+  "description": "Contrôle rapide de sécurité du poste et du réseau",
+  "commands": [
+    "Get-Process",
+    "Get-Service",
+    "Get-LocalUser",
+    "Get-IPConfig",
+    "Get-EventLog"
+  ],
+  "created_by": "admin"
+}

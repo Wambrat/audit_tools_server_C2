@@ -1,0 +1,1614 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard - C2</title>
+  
+  <!-- Vue 3 -->
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  
+  <!-- Authentication Guard -->
+  <script src="js/auth-guard.js"></script>
+  
+  <!-- Styles -->
+  <link rel="stylesheet" href="css/style.css">
+  
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --color-primary: #0066cc;
+      --color-danger: #cc3333;
+      --color-success: #33cc66;
+      --color-warning: #ffaa00;
+      --color-dark: #1a1a1a;
+      --color-light: #f5f5f5;
+      --color-border: #e0e0e0;
+      --color-muted: #666666;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: var(--color-light);
+      color: var(--color-dark);
+    }
+
+    .admin-container {
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      width: 280px;
+      background: var(--color-dark);
+      color: white;
+      padding: 20px;
+      position: fixed;
+      height: 100vh;
+      overflow-y: auto;
+      box-shadow: 2px 0 8px rgba(0, 0, 0, 0.15);
+    }
+
+    .sidebar-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 30px;
+      font-size: 18px;
+      font-weight: 700;
+      padding-bottom: 20px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .sidebar-logo {
+      font-size: 28px;
+    }
+
+    .sidebar-nav {
+      list-style: none;
+    }
+
+    .sidebar-nav li {
+      margin-bottom: 12px;
+    }
+
+    .sidebar-nav a {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 14px;
+      color: rgba(255, 255, 255, 0.8);
+      text-decoration: none;
+      border-radius: 6px;
+      transition: all 0.3s;
+      cursor: pointer;
+    }
+
+    .sidebar-nav a:hover {
+      background: rgba(255, 255, 255, 0.1);
+      color: white;
+    }
+
+    .sidebar-nav a.active {
+      background: var(--color-primary);
+      color: white;
+    }
+
+    .sidebar-footer {
+      position: absolute;
+      bottom: 20px;
+      left: 20px;
+      right: 20px;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      padding-top: 20px;
+    }
+
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .user-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: var(--color-primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 16px;
+    }
+
+    .user-details {
+      flex: 1;
+    }
+
+    .user-name {
+      font-size: 13px;
+      font-weight: 600;
+      display: block;
+    }
+
+    .user-role {
+      font-size: 11px;
+      color: rgba(255, 255, 255, 0.6);
+      display: block;
+    }
+
+    /* Main Content */
+    .main-content {
+      margin-left: 280px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .header {
+      background: white;
+      padding: 20px 30px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .page-title {
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--color-dark);
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .btn-secondary {
+      padding: 10px 16px;
+      background: var(--color-light);
+      color: var(--color-dark);
+      border: 1px solid var(--color-border);
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+      transition: all 0.3s;
+    }
+
+    .btn-secondary:hover {
+      background: #f0f0f0;
+    }
+
+    .btn-danger {
+      padding: 10px 16px;
+      background: var(--color-danger);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+      transition: all 0.3s;
+    }
+
+    .btn-danger:hover {
+      background: #b32a2a;
+    }
+
+    .content {
+      flex: 1;
+      padding: 30px;
+      overflow-y: auto;
+    }
+
+    .content > div {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .command-manager {
+      position: relative;
+    }
+
+    .command-toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin: 0 0 16px;
+      flex-wrap: wrap;
+    }
+
+    .command-toolbar-title {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .command-toolbar-title h2 {
+      margin: 0;
+      font-size: 28px;
+      line-height: 1.2;
+    }
+
+    .command-toolbar-subtitle {
+      font-size: 13px;
+      color: var(--color-muted);
+    }
+
+    .command-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .command-table-shell {
+      background: rgba(255, 255, 255, 0.9);
+      border: 1px solid var(--color-border);
+      border-radius: 16px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
+      overflow: hidden;
+    }
+
+    .command-table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 760px;
+    }
+
+    .command-table th,
+    .command-table td {
+      padding: 16px 14px;
+      border-bottom: 1px solid var(--color-border);
+      text-align: left;
+      vertical-align: top;
+    }
+
+    .command-table thead th {
+      background: #f8faff;
+      color: #2b3f5d;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .command-table tbody tr {
+      transition: background 0.2s ease;
+    }
+
+    .command-table tbody tr:hover {
+      background: #f9fbff;
+    }
+
+    .command-table .cell-name {
+      font-weight: 700;
+      color: var(--color-dark);
+    }
+
+    .command-cell-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .fab {
+      position: fixed;
+      right: 28px;
+      bottom: 28px;
+      width: 62px;
+      height: 62px;
+      border: none;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--color-primary), #1d7ae0);
+      color: white;
+      font-size: 32px;
+      line-height: 1;
+      box-shadow: 0 18px 40px rgba(0, 102, 204, 0.35);
+      cursor: pointer;
+      z-index: 1200;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .fab:hover {
+      transform: translateY(-2px) scale(1.02);
+      box-shadow: 0 22px 48px rgba(0, 102, 204, 0.42);
+    }
+
+    .drawer-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(14, 25, 40, 0.42);
+      z-index: 1100;
+      backdrop-filter: blur(2px);
+    }
+
+    .command-drawer {
+      position: fixed;
+      top: 0;
+      right: 0;
+      width: min(460px, 92vw);
+      height: 100vh;
+      background: white;
+      border-left: 1px solid var(--color-border);
+      box-shadow: -18px 0 30px rgba(14, 25, 40, 0.18);
+      z-index: 1201;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .command-drawer-header {
+      padding: 22px 22px 14px;
+      border-bottom: 1px solid var(--color-border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      background: linear-gradient(180deg, #f8faff, #ffffff);
+    }
+
+    .command-drawer-header h3 {
+      margin: 0;
+      font-size: 20px;
+    }
+
+    .command-drawer-body {
+      padding: 22px;
+      overflow-y: auto;
+      flex: 1;
+    }
+
+    .drawer-field {
+      display: grid;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .drawer-field label {
+      font-weight: 700;
+      color: #30415d;
+      font-size: 13px;
+    }
+
+    .drawer-field input,
+    .drawer-field textarea {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1px solid var(--color-border);
+      border-radius: 10px;
+      font-size: 14px;
+      background: white;
+    }
+
+    .drawer-field textarea {
+      resize: vertical;
+      min-height: 160px;
+      font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+    }
+
+    .drawer-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+
+    .drawer-upload-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+
+    /* Dashboard Cards */
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+
+    .card {
+      background: white;
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      transition: all 0.3s;
+    }
+
+    .card:hover {
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+      transform: translateY(-2px);
+    }
+
+    .card-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--color-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 12px;
+    }
+
+    .card-value {
+      font-size: 32px;
+      font-weight: 700;
+      color: var(--color-primary);
+      margin-bottom: 8px;
+    }
+
+    .card-subtitle {
+      font-size: 13px;
+      color: var(--color-muted);
+    }
+
+    .card-status {
+      display: inline-block;
+      padding: 4px 8px;
+      font-size: 11px;
+      font-weight: 600;
+      border-radius: 4px;
+      background: rgba(51, 204, 102, 0.1);
+      color: var(--color-success);
+    }
+
+    .results-kpis {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(180px, 1fr));
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .results-stat-card {
+      background: linear-gradient(135deg, #ffffff 0%, #f8fbff 100%);
+      border: 1px solid #e3ecff;
+      border-radius: 16px;
+      padding: 18px 20px;
+      box-shadow: 0 8px 24px rgba(18, 44, 86, 0.05);
+    }
+
+    .results-stat-card .label {
+      color: #607797;
+      font-size: 12px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+
+    .results-stat-card .value {
+      font-size: 30px;
+      font-weight: 800;
+      color: #163f6a;
+      line-height: 1.1;
+    }
+
+    .results-stat-card .trend {
+      margin-top: 8px;
+      font-size: 12px;
+      color: #607797;
+      font-weight: 600;
+    }
+
+    .results-controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 18px;
+      flex-wrap: wrap;
+    }
+
+    .results-filter-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .results-filter {
+      min-width: 220px;
+      padding: 12px 14px;
+      border-radius: 12px;
+      border: 1px solid #dfeaff;
+      background: #fff;
+      color: #203b5f;
+      font-size: 14px;
+      box-shadow: inset 0 1px 2px rgba(0,0,0,0.02);
+    }
+
+    .results-layout {
+      width: 100%;
+      display: block;
+    }
+
+    .results-panel {
+      width: 100%;
+      background: #fff;
+      border: 1px solid #e6edf8;
+      border-radius: 18px;
+      box-shadow: 0 12px 28px rgba(13, 39, 72, 0.05);
+      overflow: hidden;
+    }
+
+    .results-table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+    }
+
+    .results-table th,
+    .results-table td {
+      padding: 14px 16px;
+      border-bottom: 1px solid #edf2fa;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    .results-table thead th {
+      background: #f7faff;
+      color: #536b8b;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .results-table tbody tr {
+      cursor: pointer;
+      transition: background 0.15s ease;
+    }
+
+    .results-table tbody tr:hover {
+      background: #f9fbff;
+    }
+
+    .results-table tbody tr.active-row {
+      background: linear-gradient(90deg, rgba(0, 102, 204, 0.08), rgba(0, 102, 204, 0.02));
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .status-pill.success {
+      background: rgba(34, 197, 94, 0.12);
+      color: #1f8f4d;
+    }
+
+    .status-pill.failed {
+      background: rgba(239, 68, 68, 0.12);
+      color: #d63d3d;
+    }
+
+    .result-detail-panel {
+      background: linear-gradient(180deg, #ffffff 0%, #f9fbff 100%);
+      border: 1px solid #e6edf8;
+      border-radius: 18px;
+      box-shadow: 0 12px 28px rgba(13, 39, 72, 0.05);
+      padding: 20px;
+      min-height: 280px;
+    }
+
+    .detail-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .detail-header h3 {
+      margin: 0;
+      font-size: 18px;
+      color: #173f69;
+    }
+
+    .detail-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(120px, 1fr));
+      gap: 12px 16px;
+      margin-bottom: 16px;
+    }
+
+    .detail-field {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      padding: 10px 12px;
+      background: #f7faff;
+      border-radius: 10px;
+      border: 1px solid #edf2fa;
+    }
+
+    .detail-field label {
+      font-size: 11px;
+      color: #607797;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-weight: 700;
+    }
+
+    .detail-field value {
+      font-size: 13px;
+      color: #1d3858;
+      font-weight: 600;
+      word-break: break-word;
+    }
+
+    .detail-output {
+      background: #111827;
+      color: #e5edf9;
+      border-radius: 12px;
+      padding: 16px;
+      font-size: 12px;
+      line-height: 1.6;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+      max-height: 340px;
+      overflow: auto;
+    }
+
+    .results-empty {
+      padding: 32px 18px;
+      text-align: center;
+      color: #6a7c95;
+      font-weight: 600;
+    }
+
+    /* Sections */
+    .section {
+      background: white;
+      border-radius: 8px;
+      padding: 24px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      margin-bottom: 20px;
+    }
+
+    .section-title {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 20px;
+      color: var(--color-dark);
+      border-bottom: 2px solid var(--color-primary);
+      padding-bottom: 12px;
+    }
+
+    .table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .table th {
+      background: var(--color-light);
+      padding: 12px;
+      text-align: left;
+      font-weight: 600;
+      font-size: 13px;
+      color: var(--color-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border-bottom: 2px solid var(--color-border);
+    }
+
+    .table td {
+      padding: 12px;
+      border-bottom: 1px solid var(--color-border);
+      font-size: 14px;
+    }
+
+    .table tr:hover {
+      background: var(--color-light);
+    }
+
+    /* Loading & Messages */
+    .loading {
+      text-align: center;
+      padding: 40px;
+      color: var(--color-muted);
+    }
+
+    .spinner {
+      display: inline-block;
+      width: 32px;
+      height: 32px;
+      border: 3px solid rgba(0, 102, 204, 0.3);
+      border-radius: 50%;
+      border-top-color: var(--color-primary);
+      animation: spin 0.8s linear infinite;
+      margin-bottom: 12px;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .alert {
+      padding: 16px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      font-size: 14px;
+    }
+
+    .alert-info {
+      background: #f0f4ff;
+      border-left: 4px solid var(--color-primary);
+      color: #0052a3;
+    }
+
+    .alert-success {
+      background: #f0f9f1;
+      border-left: 4px solid var(--color-success);
+      color: #229942;
+    }
+
+    .alert-warning {
+      background: #fffbf0;
+      border-left: 4px solid var(--color-warning);
+      color: #b37800;
+    }
+
+    .alert-danger {
+      background: #fff5f5;
+      border-left: 4px solid var(--color-danger);
+      color: #b32a2a;
+    }
+
+    .premium-template-builder {
+      display: grid;
+      grid-template-columns: 1.35fr 0.85fr;
+      gap: 22px;
+      margin-bottom: 30px;
+    }
+
+    .template-panel {
+      background: linear-gradient(180deg, #ffffff 0%, #f7fbff 100%);
+      border: 1px solid #dfeeff;
+      border-radius: 18px;
+      padding: 22px;
+      box-shadow: 0 10px 22px rgba(7, 85, 165, 0.08);
+    }
+
+    .template-panel.right {
+      background: linear-gradient(180deg, #f9fbff 0%, #ffffff 100%);
+    }
+
+    .template-heading {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 18px;
+      gap: 12px;
+    }
+
+    .template-heading h3 {
+      margin: 0;
+      font-size: 19px;
+      color: #123b6a;
+    }
+
+    .template-form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .field-group {
+      margin-bottom: 16px;
+    }
+
+    .field-label {
+      display: block;
+      font-weight: 700;
+      margin-bottom: 8px;
+      color: #173f69;
+      font-size: 13px;
+    }
+
+    .premium-input,
+    .premium-select,
+    .premium-textarea {
+      width: 100%;
+      padding: 12px 10px;
+      border: 1px solid #d9e6f8;
+      border-radius: 10px;
+      background: white;
+      font-size: 14px;
+      color: #173f69;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .premium-input:focus,
+    .premium-select:focus,
+    .premium-textarea:focus {
+      outline: none;
+      border-color: #7cb4ff;
+      box-shadow: 0 0 0 4px rgba(124, 180, 255, 0.15);
+    }
+
+    .premium-textarea {
+      resize: vertical;
+      min-height: 110px;
+    }
+
+    .command-picker {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    .command-pill {
+      padding: 8px 12px;
+      border-radius: 999px;
+      border: 1px solid #d9e6f8;
+      background: #eef6ff;
+      color: #0b4f96;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 700;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .command-pill:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 12px rgba(16, 105, 180, 0.12);
+    }
+
+    .selected-command-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      min-height: 46px;
+      padding: 12px;
+      background: white;
+      border: 1px solid #d9e6f8;
+      border-radius: 10px;
+    }
+
+    .command-chip {
+      background: linear-gradient(135deg, #eaf3ff 0%, #dfeefe 100%);
+      color: #0c4d92;
+      border: 1px solid #cfe0ff;
+      border-radius: 999px;
+      padding: 8px 12px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .command-chip button {
+      background: transparent;
+      border: none;
+      color: #0c4d92;
+      cursor: pointer;
+      font-weight: 900;
+      font-size: 16px;
+      padding: 0;
+      line-height: 1;
+    }
+
+    .template-summary-box {
+      background: white;
+      border: 1px solid #d9e6f8;
+      border-radius: 10px;
+      padding: 14px;
+      margin-bottom: 16px;
+    }
+
+    .summary-label {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #597ca5;
+      font-weight: 700;
+    }
+
+    .summary-value {
+      margin-top: 8px;
+      font-size: 14px;
+      color: #163f6a;
+      font-weight: 700;
+    }
+
+    .template-action-row {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .template-card-list {
+      display: grid;
+      gap: 12px;
+      margin-top: 18px;
+    }
+
+    .template-row-card {
+      background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+      border: 1px solid #dfeeff;
+      border-radius: 12px;
+      padding: 14px 16px;
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .template-row-card h4 {
+      margin: 0 0 6px;
+      color: #123b6a;
+      font-size: 15px;
+    }
+
+    .template-row-card p {
+      margin: 0;
+      color: #597ca5;
+      font-size: 12px;
+    }
+
+    .template-badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 8px;
+    }
+
+    .mini-badge {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: #edf5ff;
+      border: 1px solid #d6e5ff;
+      color: #0b4f96;
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .sidebar {
+        width: 100%;
+        height: auto;
+        position: relative;
+        box-shadow: none;
+        border-bottom: 1px solid var(--color-border);
+      }
+
+      .main-content {
+        margin-left: 0;
+      }
+
+      .header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+      }
+
+      .header-actions {
+        width: 100%;
+        justify-content: flex-start;
+      }
+
+      .sidebar-nav {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .sidebar-footer {
+        position: relative;
+        bottom: auto;
+        left: auto;
+        right: auto;
+        margin-top: 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <div class="admin-container">
+      <!-- Sidebar -->
+      <aside class="sidebar">
+        <div class="sidebar-header">
+          <span class="sidebar-logo">🛡️</span>
+          <span>Admin Panel</span>
+        </div>
+
+        <ul class="sidebar-nav">
+          <li>
+            <a @click="currentPage = 'overview'" :class="{ active: currentPage === 'overview' }">
+              📊 Vue d'ensemble
+            </a>
+          </li>
+          <li>
+            <a @click="currentPage = 'agents'" :class="{ active: currentPage === 'agents' }">
+              👥 Agents
+            </a>
+          </li>
+          <li>
+            <a @click="currentPage = 'tasks'" :class="{ active: currentPage === 'tasks' }">
+              ✓ Gestion des commandes
+            </a>
+          </li>
+          <li>
+            <a @click="currentPage = 'templates'" :class="{ active: currentPage === 'templates' }">
+              🧩 Templates
+            </a>
+          </li>
+          <li>
+            <a @click="currentPage = 'results'" :class="{ active: currentPage === 'results' }">
+              📋 Résultats
+            </a>
+          </li>
+          <li>
+            <a @click="currentPage = 'alerts'" :class="{ active: currentPage === 'alerts' }">
+              🚨 Alertes
+            </a>
+          </li>
+          <li>
+            <a @click="currentPage = 'settings'" :class="{ active: currentPage === 'settings' }">
+              ⚙️ Paramètres
+            </a>
+          </li>
+        </ul>
+
+        <div class="sidebar-footer">
+          <div class="user-info">
+            <div class="user-avatar">A</div>
+            <div class="user-details">
+              <span class="user-name">Administrateur</span>
+              <span class="user-role">Connecté</span>
+            </div>
+          </div>
+          <a href="#" @click="logout" class="btn-secondary" style="width: 100%; text-align: center; margin-top: 12px;">
+            Déconnexion
+          </a>
+        </div>
+      </aside>
+
+      <!-- Main Content -->
+      <div class="main-content">
+        <!-- Header -->
+        <header class="header">
+          <div class="header-left"></div>
+          <div class="header-actions">
+            <button class="btn-secondary" @click="refreshData">
+              🔄 Actualiser
+            </button>
+          </div>
+        </header>
+
+        <!-- Content -->
+        <div class="content">
+          <!-- Overview Page -->
+          <div v-if="currentPage === 'overview'">
+            <div v-if="isLoading" class="loading">
+              <div class="spinner"></div>
+              <p>Chargement...</p>
+            </div>
+            <div v-else>
+              <div class="alert alert-info">
+                ℹ️ Bienvenue dans le panneau d'administration. Vous pouvez surveiller tous les agents et les tâches d'audit.
+              </div>
+
+              <h2 class="section-title">Statistiques Système</h2>
+              <div class="dashboard-grid">
+                <div class="card">
+                  <div class="card-title">Agents Totaux</div>
+                  <div class="card-value">{{ overview.agents?.total || 0 }}</div>
+                  <div class="card-subtitle">
+                    <span class="card-status">{{ overview.agents?.by_status?.active || 0 }} actifs</span>
+                  </div>
+                </div>
+
+                <div class="card">
+                  <div class="card-title">Résultats</div>
+                  <div class="card-value">{{ overview.results?.total || 0 }}</div>
+                  <div class="card-subtitle">
+                    Taux de succès: <strong>{{ ((overview.results?.by_status?.success / overview.results?.total || 0) * 100).toFixed(1) }}%</strong>
+                  </div>
+                </div>
+
+                <div class="card">
+                  <div class="card-title">Temps Moyen</div>
+                  <div class="card-value">{{ overview?.results?.avg_execution_time_ms || 0 }}ms</div>
+                  <div class="card-subtitle">Exécution moyenne des audits</div>
+                </div>
+
+                <div class="card">
+                  <div class="card-title">Santé Système</div>
+                  <div class="card-value" style="color: var(--color-success);">✓</div>
+                  <div class="card-subtitle">Tous les systèmes opérationnels</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Agents Page -->
+          <div v-else-if="currentPage === 'agents'">
+            <div v-if="isLoading" class="loading">
+              <div class="spinner"></div>
+              <p>Chargement des agents...</p>
+            </div>
+            <div v-else class="section">
+              <h2 class="section-title">Gestion des Agents</h2>
+
+              <div style="display:flex; flex-wrap:wrap; justify-content:space-between; align-items:flex-end; gap:12px; margin-bottom:18px;">
+                <p style="color: var(--color-muted); margin:0;">
+                  Total: <strong>{{ agentsList.length }}</strong> agents enregistrés
+                </p>
+
+                <div style="display:flex; flex-direction:row; align-items:center; justify-content:flex-end; gap:10px; margin-bottom: 12px;">
+                  <select v-model="auditTemplateSelection" class="premium-select" style="min-width:240px; height: 42px; border-radius: 10px;">
+                    <option value="">Choisir un template d’audit...</option>
+                    <option v-for="template in templatesList" :key="template.template_id" :value="template.template_id">
+                      {{ template.name }}
+                    </option>
+                  </select>
+
+                  <button class="btn-primary" @click="applyTemplateToSelectedAgents" :disabled="!auditTemplateSelection || !agentTableSelection.length || isLoading" title="Envoyer aux agents cochés" style="padding: 10px 12px; width: 46px; height: 42px; display:inline-flex; align-items:center; justify-content:center; border-radius: 10px;">
+                    ✉️
+                  </button>
+                </div>
+              </div>
+
+              <table class="table" v-if="agentsList.length > 0">
+                <thead>
+                  <tr>
+                    <th style="width:48px;">
+                      <input type="checkbox" @change="toggleSelectAllActiveAgents" :checked="agentTableSelection.length === getActiveAgents().length && getActiveAgents().length > 0" style="cursor:pointer;">
+                    </th>
+                    <th>Nom</th>
+                    <th>Hostname</th>
+                    <th>Utilisateur</th>
+                    <th>Statut</th>
+                    <th>Succès</th>
+                    <th>Tâches</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="agent in agentsList" :key="agent.agent_id">
+                    <td>
+                      <input v-if="agent.status === 'active'" type="checkbox" :checked="agentTableSelection.includes(agent.agent_id)" @change="toggleAgentSelection(agent.agent_id)" style="cursor:pointer;">
+                    </td>
+                    <td><strong>{{ agent.agent_name }}</strong></td>
+                    <td>{{ agent.hostname }}</td>
+                    <td>{{ agent.username }}</td>
+                    <td>
+                      <span :style="{ color: agent.status === 'active' ? 'var(--color-success)' : 'var(--color-muted)' }">
+                        {{ agent.status === 'active' ? '● Actif' : '○ Inactif' }}
+                      </span>
+                    </td>
+                    <td>{{ agent.success_rate || 0 }}%</td>
+                    <td>
+                      <span v-if="agentDispatchStats[agent.agent_id] !== undefined" style="font-weight:700; color: var(--color-primary);">{{ agentDispatchStats[agent.agent_id] }} tâches</span>
+                      <span v-else style="color: var(--color-muted);">-</span>
+                    </td>
+                    <td>
+                      <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+                        <button 
+                          class="btn-danger" 
+                          style="padding: 6px 12px; font-size: 12px; cursor: pointer;"
+                          @click="deleteAgent(agent.agent_id, agent.agent_name)"
+                          :disabled="isLoading">
+                          🗑️ Supprimer
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+              <p v-else style="text-align: center; color: var(--color-muted); padding: 40px;">
+                Aucun agent enregistré
+              </p>
+            </div>
+          </div>
+
+          <!-- Tasks Page - PowerShell command library -->
+          <div v-else-if="currentPage === 'tasks'">
+            <div v-if="isLoading" class="loading">
+              <div class="spinner"></div>
+              <p>Chargement du registre de commandes...</p>
+            </div>
+            <div v-else class="section command-manager">
+              <div class="command-toolbar">
+                <div class="command-toolbar-title">
+                  <h2>Gestion des commandes</h2>
+                  <span class="command-toolbar-subtitle">{{ powershellCommandList.length }} commandes enregistrées</span>
+                </div>
+
+                <div class="command-actions">
+                  <button class="btn-secondary" @click="exportSelectedCommands" :disabled="!commandTableSelection.length">Exporter JSON</button>
+                  <button class="btn-secondary" @click="createCompositeCommand" :disabled="!commandTableSelection.length">Commande composite</button>
+                </div>
+              </div>
+
+              <div class="command-table-shell">
+                <table class="command-table" v-if="powershellCommandList.length">
+                  <thead>
+                    <tr>
+                      <th style="width: 48px;">
+                        <input type="checkbox" :checked="commandTableSelection.length === powershellCommandList.length && powershellCommandList.length > 0" @change="toggleSelectAllCommands" style="cursor:pointer;">
+                      </th>
+                      <th>Nom</th>
+                      <th>Description</th>
+                      <th>Créé par</th>
+                      <th style="width: 180px;">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="command in powershellCommandList" :key="command.command_id">
+                      <td>
+                        <input type="checkbox" :checked="commandTableSelection.includes(command.command_id)" @change="toggleCommandSelection(command.command_id)" style="cursor:pointer;">
+                      </td>
+                      <td class="cell-name">{{ command.name }}</td>
+                      <td>{{ command.description || 'Aucune description' }}</td>
+                      <td>{{ command.created_by || 'admin' }}</td>
+                      <td>
+                        <div class="command-cell-actions">
+                          <button class="btn-secondary" @click="openCommandForm('edit', command)" title="Modifier" style="padding:8px 10px; cursor:pointer; font-size:14px; width:36px; height:36px; display:inline-flex; align-items:center; justify-content:center;">✏️</button>
+                          <button class="btn-danger" @click="deleteCommand(command.command_id)" title="Supprimer" style="padding:8px 10px; cursor:pointer; font-size:14px; width:36px; height:36px; display:inline-flex; align-items:center; justify-content:center;">🗑️</button>
+                        </div>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+                <p v-else style="text-align:center; color:var(--color-muted); padding: 40px; margin: 0;">Aucune commande enregistrée pour le moment.</p>
+              </div>
+
+              <button class="fab" @click="openCommandForm('create')" title="Nouvelle commande">＋</button>
+
+              <div v-if="showCommandForm" class="drawer-backdrop" @click="resetCommandForm"></div>
+              <aside v-if="showCommandForm" class="command-drawer">
+                <div class="command-drawer-header">
+                  <h3>{{ commandFormMode === 'edit' ? 'Modifier la commande' : 'Créer une commande' }}</h3>
+                  <button class="btn-secondary" @click="resetCommandForm" style="padding: 8px 12px; cursor:pointer;">Fermer</button>
+                </div>
+
+                <div class="command-drawer-body">
+                  <div class="drawer-field">
+                    <label>Nom de la commande</label>
+                    <input v-model="newCommand.name" type="text" placeholder="Get-ADUserCustom">
+                  </div>
+
+                  <div class="drawer-field">
+                    <label>Créé par</label>
+                    <input v-model="newCommand.created_by" type="text" placeholder="admin">
+                  </div>
+
+                  <div class="drawer-field">
+                    <label>Description</label>
+                    <input v-model="newCommand.description" type="text" placeholder="Retourne les utilisateurs AD">
+                  </div>
+
+                  <div class="drawer-field">
+                    <label>Code PowerShell</label>
+                    <textarea v-model="newCommand.script" placeholder="Get-ADUser -Filter * | Select-Object Name, SamAccountName"></textarea>
+                  </div>
+
+                  <div class="drawer-upload-row">
+                    <label class="btn-secondary" style="padding: 10px 14px; cursor:pointer; display:inline-block; font-weight:700;">
+                      ⤴️ Importer un script
+                      <input type="file" accept=".ps1,.txt,.psm1" @change="uploadCommandScript" style="display:none;">
+                    </label>
+                    <button class="btn-secondary" @click="pasteSampleCustomCommand" style="padding: 10px 14px; cursor:pointer; font-weight:700;">🧩 Exemple</button>
+                  </div>
+
+                  <div class="drawer-actions">
+                    <button class="btn-primary" @click="saveCommand" :disabled="isLoading || !newCommand.name || !newCommand.script" style="padding: 12px 18px; cursor:pointer; font-weight:700;">
+                      {{ commandFormMode === 'edit' ? 'Mettre à jour' : 'Enregistrer' }}
+                    </button>
+                    <button class="btn-secondary" @click="resetCommandForm" style="padding: 12px 18px; cursor:pointer; font-weight:700;">
+                      Réinitialiser
+                    </button>
+                  </div>
+                </div>
+              </aside>
+            </div>
+          </div>
+
+          <!-- Templates Page -->
+          <div v-else-if="currentPage === 'templates'">
+            <div v-if="isLoading" class="loading">
+              <div class="spinner"></div>
+              <p>Chargement des templates...</p>
+            </div>
+            <div v-else class="section command-manager">
+              <div class="command-toolbar">
+                <div class="command-toolbar-title">
+                  <h2>Gestion des templates</h2>
+                  <span class="command-toolbar-subtitle">{{ templatesList.length }} templates enregistrés</span>
+                </div>
+
+                <div class="command-actions">
+                  <button class="btn-secondary" @click="exportSelectedTemplates" :disabled="!templateTableSelection.length">Exporter JSON</button>
+                  <button class="btn-secondary" @click="duplicateSelectedTemplates" :disabled="!templateTableSelection.length">Dupliquer</button>
+                  <button class="btn-danger" @click="deleteSelectedTemplates" :disabled="!templateTableSelection.length">Supprimer</button>
+                  <label class="btn-secondary" style="padding: 10px 16px; cursor:pointer; display:inline-block; font-weight:700;">
+                    Importer JSON
+                    <input type="file" accept="application/json" @change="importTemplateFile" style="display:none;">
+                  </label>
+                </div>
+              </div>
+
+              <div class="command-table-shell">
+                <table class="command-table" v-if="templatesList.length">
+                  <thead>
+                    <tr>
+                      <th style="width: 48px;">
+                        <input type="checkbox" :checked="templateTableSelection.length === templatesList.length && templatesList.length > 0" @change="toggleSelectAllTemplates" style="cursor:pointer;">
+                      </th>
+                      <th>Nom</th>
+                      <th>Description</th>
+                      <th>Commandes</th>
+                      <th>Créé par</th>
+                      <th style="width: 180px;">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="template in templatesList" :key="template.template_id">
+                      <td>
+                        <input type="checkbox" :checked="templateTableSelection.includes(template.template_id)" @change="toggleTemplateSelection(template.template_id)" style="cursor:pointer;">
+                      </td>
+                      <td class="cell-name">{{ template.name }}</td>
+                      <td>{{ template.description || 'Aucune description' }}</td>
+                      <td>{{ (template.commands || []).length }}</td>
+                      <td>{{ template.created_by || 'admin' }}</td>
+                      <td>
+                        <div class="command-cell-actions">
+                          <button class="btn-secondary" @click="openTemplateForm('edit', template)" title="Modifier" style="padding:8px 10px; cursor:pointer; font-size:14px; width:36px; height:36px; display:inline-flex; align-items:center; justify-content:center;">✏️</button>
+                          <button class="btn-secondary" @click="duplicateTemplate(template.template_id)" title="Dupliquer" style="padding:8px 10px; cursor:pointer; font-size:14px; width:36px; height:36px; display:inline-flex; align-items:center; justify-content:center;">⧉</button>
+                          <button class="btn-danger" @click="deleteTemplate(template.template_id)" title="Supprimer" style="padding:8px 10px; cursor:pointer; font-size:14px; width:36px; height:36px; display:inline-flex; align-items:center; justify-content:center;">🗑️</button>
+                        </div>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+                <p v-else style="text-align:center; color:var(--color-muted); padding: 40px; margin: 0;">Aucun template enregistré pour le moment.</p>
+              </div>
+
+              <button class="fab" @click="openTemplateForm('create')" title="Nouveau template">＋</button>
+
+              <div v-if="showTemplateForm" class="drawer-backdrop" @click="resetTemplateForm"></div>
+              <aside v-if="showTemplateForm" class="command-drawer">
+                <div class="command-drawer-header">
+                  <h3>{{ templateFormMode === 'edit' ? 'Modifier le template' : 'Créer un template' }}</h3>
+                  <button class="btn-secondary" @click="resetTemplateForm" style="padding: 8px 12px; cursor:pointer;">Fermer</button>
+                </div>
+
+                <div class="command-drawer-body">
+                  <div class="drawer-field">
+                    <label>Nom du template</label>
+                    <input v-model="auditTemplate.name" type="text" placeholder="Audit système standard">
+                  </div>
+
+                  <div class="drawer-field">
+                    <label>Créé par</label>
+                    <input v-model="auditTemplate.created_by" type="text" placeholder="admin">
+                  </div>
+
+                  <div class="drawer-field">
+                    <label>Description</label>
+                    <textarea v-model="auditTemplate.description" rows="3" placeholder="Description du template"></textarea>
+                  </div>
+
+                  <div class="drawer-field">
+                    <label>Commandes du template</label>
+                    <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+                      <select v-model="templateCommandSelection" class="premium-select" style="flex:1; min-width:220px;">
+                        <option value="">Sélectionner une commande...</option>
+                        <option v-for="command in availableTemplateCommands()" :key="command" :value="command">
+                          {{ command }}
+                        </option>
+                      </select>
+                      <button class="btn-secondary" type="button" @click="addTemplateCommand(templateCommandSelection)" :disabled="!templateCommandSelection" style="padding:10px 14px; cursor:pointer;">
+                        Ajouter
+                      </button>
+                    </div>
+
+                    <div v-if="(auditTemplate?.commands || []).length" class="selected-command-list" style="margin-top: 12px;">
+                      <span v-for="(command, index) in (auditTemplate?.commands || [])" :key="command + '-' + index" class="command-chip">
+                        {{ command }}
+                        <button @click.prevent="removeTemplateCommand(index)">×</button>
+                      </span>
+                    </div>
+                  </div>
+
+                  <div class="drawer-upload-row">
+                    <label class="btn-secondary" style="padding: 10px 14px; cursor:pointer; display:inline-block; font-weight:700;">
+                      ⤴️ Importer JSON
+                      <input type="file" accept="application/json" @change="importTemplateFile" style="display:none;">
+                    </label>
+                    <button class="btn-secondary" @click="loadDemoTemplate" style="padding: 10px 14px; cursor:pointer; font-weight:700;">🧩 Exemple</button>
+                  </div>
+
+                  <div class="drawer-field">
+                    <label>Coller le JSON</label>
+                    <textarea v-model="templateJsonInput" rows="5" placeholder='{"name":"Audit standard","commands":["Get-Process","Get-Service"]}'></textarea>
+                  </div>
+
+                  <div class="drawer-actions">
+                    <button class="btn-primary" @click="templateFormMode === 'edit' ? updateSelectedTemplate() : createAuditTemplate(); resetTemplateForm();" :disabled="isLoading || !auditTemplate.name.trim() || !auditTemplate.commands.length" style="padding: 12px 18px; cursor:pointer; font-weight:700;">
+                      {{ templateFormMode === 'edit' ? 'Mettre à jour' : 'Enregistrer' }}
+                    </button>
+                    <button class="btn-secondary" @click="importTemplateFromJsonText" style="padding: 12px 18px; cursor:pointer; font-weight:700;">
+                      Précharger JSON
+                    </button>
+                  </div>
+                </div>
+              </aside>
+            </div>
+          </div>
+
+          <!-- Results Page -->
+          <div v-else-if="currentPage === 'results'">
+            <div v-if="isLoading" class="loading">
+              <div class="spinner"></div>
+              <p>Chargement des résultats...</p>
+            </div>
+            <div v-else class="section command-manager">
+              <div class="command-toolbar">
+                <div class="command-toolbar-title">
+                  <h2>Résultats d'audit</h2>
+                  <span class="command-toolbar-subtitle">{{ filteredResults.length }} résultats affichés sur {{ resultsList.length }}</span>
+                </div>
+                <button class="btn-secondary" @click="refreshData">🔄 Actualiser</button>
+              </div>
+
+              <div class="results-kpis">
+                <div class="results-stat-card">
+                  <div class="label">Total</div>
+                  <div class="value">{{ resultsList.length }}</div>
+                  <div class="trend">Audit exécutés</div>
+                </div>
+                <div class="results-stat-card">
+                  <div class="label">Succès</div>
+                  <div class="value" style="color: var(--color-success);">{{ resultStats.success }}</div>
+                  <div class="trend">{{ resultStats.successRate }}% de réussite</div>
+                </div>
+                <div class="results-stat-card">
+                  <div class="label">Échecs</div>
+                  <div class="value" style="color: var(--color-danger);">{{ resultStats.failed }}</div>
+                  <div class="trend">À corriger</div>
+                </div>
+                <div class="results-stat-card">
+                  <div class="label">Temps moyen</div>
+                  <div class="value" style="font-size:26px;">{{ resultStats.avgTime }} ms</div>
+                  <div class="trend">Exécution moyenne</div>
+                </div>
+              </div>
+
+              <div class="results-controls">
+                <div class="results-filter-bar">
+                  <select v-model="resultsFilterAgent" class="results-filter">
+                    <option value="">Tous les agents</option>
+                    <option v-for="agent in uniqueAgents" :key="agent.agent_id" :value="agent.agent_id">
+                      {{ agent.agent_name || agent.agent_id }}
+                    </option>
+                  </select>
+
+                  <select v-model="resultsFilterStatus" class="results-filter">
+                    <option value="">Tous les statuts</option>
+                    <option value="success">Succès</option>
+                    <option value="failed">Échec</option>
+                  </select>
+                </div>
+              </div>
+
+              <div v-if="filteredResults.length" class="results-layout">
+                <div class="results-panel">
+                  <table class="results-table">
+                    <thead>
+                      <tr>
+                        <th>Agent</th>
+                        <th>Tâche</th>
+                        <th>Statut</th>
+                        <th>Date</th>
+                        <th>Durée</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr v-for="result in filteredResults" :key="result.result_id" @click="selectResult(result)" :class="{ 'active-row': selectedResultId === result.result_id }">
+                        <td>{{ result.agent_name || result.agent_id || 'Inconnu' }}</td>
+                        <td>{{ result.task_id || '—' }}</td>
+                        <td>
+                          <span :class="['status-pill', result.status === 'success' ? 'success' : 'failed']">
+                            {{ result.status === 'success' ? '✅ Succès' : '❌ Échec' }}
+                          </span>
+                        </td>
+                        <td>{{ formatDate(result.created_at) }}</td>
+                        <td>{{ result.execution_time_ms || 0 }} ms</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <div v-else class="results-empty">
+                Aucun résultat correspondant aux filtres sélectionnés.
+              </div>
+
+              <div v-if="showResultModal && selectedResultData" class="drawer-backdrop" @click="closeResultModal"></div>
+              <aside v-if="showResultModal && selectedResultData" class="command-drawer" @click.stop>
+                <div class="command-drawer-header">
+                  <h3>Détail du résultat</h3>
+                  <button class="btn-secondary" @click="closeResultModal" style="padding: 8px 12px; cursor:pointer;">Fermer</button>
+                </div>
+
+                <div class="command-drawer-body">
+                  <div class="detail-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 16px;">
+                    <span :class="['status-pill', selectedResultData.status === 'success' ? 'success' : 'failed']">
+                      {{ selectedResultData.status === 'success' ? '✅ Succès' : '❌ Échec' }}
+                    </span>
+                  </div>
+
+                  <div class="detail-grid">
+                    <div class="detail-field">
+                      <label>Agent</label>
+                      <span class="detail-value">{{ selectedResultData.agent_name || selectedResultData.agent_id }}</span>
+                    </div>
+                    <div class="detail-field">
+                      <label>Tâche</label>
+                      <span class="detail-value">{{ selectedResultData.task_id || '—' }}</span>
+                    </div>
+                    <div class="detail-field">
+                      <label>Date</label>
+                      <span class="detail-value">{{ formatDate(selectedResultData.created_at) }}</span>
+                    </div>
+                    <div class="detail-field">
+                      <label>Durée</label>
+                      <span class="detail-value">{{ selectedResultData.execution_time_ms || 0 }} ms</span>
+                    </div>
+                  </div>
+
+                  <div class="detail-field" style="margin-bottom: 14px;">
+                    <label>Résultat</label>
+                    <div class="detail-output">{{ selectedResultData.result || selectedResultData.result_preview || 'Aucun contenu retourné.' }}</div>
+                  </div>
+
+                  <div v-if="selectedResultData.error_message" class="detail-field">
+                    <label>Erreur</label>
+                    <span class="detail-value">{{ selectedResultData.error_message }}</span>
+                  </div>
+                </div>
+              </aside>
+            </div>
+          </div>
+
+      </div>
+    </div>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script src="js/admin-dashboard.js"></script>
+</body>
+</html>

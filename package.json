@@ -1,0 +1,52 @@
+{
+  "name": "c2-server-frontend",
+  "version": "1.0.0",
+  "description": "Tests unitaires et d'intégration pour le frontend C2 Server",
+  "scripts": {
+    "test:frontend": "jest test/frontend/",
+    "test:frontend:watch": "jest test/frontend/ --watch",
+    "test:frontend:coverage": "jest test/frontend/ --coverage",
+    "test:frontend:verbose": "jest test/frontend/ -v",
+    "test:all": "jest",
+    "test": "npm run test:all"
+  },
+  "keywords": [
+    "C2",
+    "tests",
+    "frontend",
+    "vue",
+    "jest"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "babel-jest": "^29.7.0",
+    "@babel/preset-env": "^7.23.0",
+    "@vue/test-utils": "^2.4.1",
+    "vue": "^3.3.4",
+    "jest-environment-jsdom": "^29.7.0"
+  },
+  "jest": {
+    "testEnvironment": "jsdom",
+    "testMatch": [
+      "**/test/frontend/test_*.js"
+    ],
+    "collectCoverageFrom": [
+      "web/js/**/*.js",
+      "!web/js/**/*.min.js"
+    ],
+    "coverageThreshold": {
+      "global": {
+        "branches": 70,
+        "functions": 70,
+        "lines": 70,
+        "statements": 70
+      }
+    },
+    "setupFilesAfterEnv": [
+      "<rootDir>/test/frontend/setup.js"
+    ],
+    "testTimeout": 10000
+  }
+}

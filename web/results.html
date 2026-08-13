@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>C2 Server - Résultats des Audits</title>
+    
+    <!-- Authentication Guard -->
+    <script src="js/auth-guard.js"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        h1 {
+            color: #667eea;
+            font-size: 28px;
+        }
+
+        .back-link {
+            display: inline-block;
+            padding: 8px 16px;
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: background 0.3s;
+        }
+
+        .back-link:hover {
+            background: #764ba2;
+        }
+
+        .content {
+            display: grid;
+            grid-template-columns: 1fr 1.5fr;
+            gap: 20px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .card h2 {
+            color: #667eea;
+            font-size: 18px;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .filters {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+
+        .filters input,
+        .filters select {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        .filters button {
+            padding: 8px 16px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .filters button:hover {
+            background: #764ba2;
+        }
+
+        .results-list {
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .result-item {
+            padding: 12px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: #f9f9f9;
+        }
+
+        .result-item:hover {
+            background: #f0f0f0;
+            border-color: #667eea;
+            box-shadow: 0 2px 4px rgba(102, 126, 234, 0.2);
+        }
+
+        .result-item.active {
+            background: #e8f0fe;
+            border-color: #667eea;
+            border-left: 4px solid #667eea;
+        }
+
+        .result-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+
+        .result-id {
+            font-weight: bold;
+            color: #333;
+            font-size: 13px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .status-badge {
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .status-badge.success {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-badge.failed {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .result-meta {
+            font-size: 12px;
+            color: #666;
+        }
+
+        .result-detail {
+            display: none;
+        }
+
+        .result-detail.active {
+            display: block;
+        }
+
+        .detail-section {
+            margin-bottom: 20px;
+        }
+
+        .detail-section h3 {
+            color: #667eea;
+            font-size: 14px;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 5px;
+        }
+
+        .detail-content {
+            background: #f5f5f5;
+            padding: 12px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            max-height: 400px;
+            overflow-y: auto;
+            line-height: 1.5;
+        }
+
+        .detail-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .detail-field {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .detail-field label {
+            font-weight: bold;
+            color: #667eea;
+            font-size: 12px;
+            margin-bottom: 5px;
+        }
+
+        .detail-field value {
+            background: #f5f5f5;
+            padding: 8px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            word-break: break-all;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #999;
+        }
+
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #999;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .stat-box {
+            background: #f9f9f9;
+            padding: 12px;
+            border-radius: 5px;
+            text-align: center;
+            border: 1px solid #ddd;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #666;
+            text-transform: uppercase;
+        }
+
+        @media (max-width: 900px) {
+            .content {
+                grid-template-columns: 1fr;
+            }
+
+            .results-list {
+                max-height: 300px;
+            }
+        }
+
+        .error-message {
+            color: #721c24;
+            background: #f8d7da;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+
+        .success-message {
+            color: #155724;
+            background: #d4edda;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📊 Résultats des Audits</h1>
+            <a href="index.html" class="back-link">← Retour au Dashboard</a>
+        </header>
+
+        <div class="content">
+            <!-- Liste des résultats -->
+            <div class="card">
+                <h2>📋 Résultats</h2>
+                
+                <div class="filters">
+                    <select id="agentFilter">
+                        <option value="">Tous les agents</option>
+                    </select>
+                    <select id="statusFilter">
+                        <option value="">Tous les statuts</option>
+                        <option value="success">✅ Succès</option>
+                        <option value="failed">❌ Échec</option>
+                    </select>
+                    <button onclick="loadResults()">🔄 Rafraîchir</button>
+                </div>
+
+                <div class="results-list" id="resultsList">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📭</div>
+                        <p>Aucun résultat</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Détails du résultat -->
+            <div class="card">
+                <h2>🔍 Détails du Résultat</h2>
+                
+                <div id="detailContainer">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">👈</div>
+                        <p>Sélectionnez un résultat pour voir les détails</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'http://localhost:8000/api';
+        let allResults = [];
+        let allAgents = [];
+
+        function getAuthHeaders() {
+            const token = localStorage.getItem('admin_token');
+            return {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            };
+        }
+
+        // Charger tous les agents au démarrage
+        async function loadAgents() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/monitoring/agents`, {
+                    headers: getAuthHeaders()
+                });
+
+                if (response.status === 401) {
+                    localStorage.removeItem('admin_token');
+                    localStorage.removeItem('admin_token_exp');
+                    window.location.href = 'admin-login.html';
+                    return;
+                }
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+
+                const data = await response.json();
+                
+                allAgents = data.agents || [];
+                
+                // Remplir le filtre des agents
+                const agentFilter = document.getElementById('agentFilter');
+                allAgents.forEach(agent => {
+                    const option = document.createElement('option');
+                    option.value = agent.agent_id;
+                    option.textContent = `${agent.agent_name} (${agent.agent_id.substring(0, 8)}...)`;
+                    agentFilter.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Erreur lors du chargement des agents:', error);
+            }
+        }
+
+        // Charger tous les résultats
+        async function loadResults() {
+            const resultsList = document.getElementById('resultsList');
+            resultsList.innerHTML = '<div class="loading"><div class="spinner"></div> Chargement...</div>';
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/monitoring/results`, {
+                    headers: getAuthHeaders()
+                });
+
+                if (response.status === 401) {
+                    localStorage.removeItem('admin_token');
+                    localStorage.removeItem('admin_token_exp');
+                    window.location.href = 'admin-login.html';
+                    return;
+                }
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+
+                const data = await response.json();
+                
+                // Utiliser le tableau results s'il existe, sinon construire à partir de results_by_agent
+                if (data.results && Array.isArray(data.results)) {
+                    allResults = data.results;
+                } else if (data.results_by_agent) {
+                    allResults = [];
+                    Object.values(data.results_by_agent).forEach(agentData => {
+                        if (agentData.results && Array.isArray(agentData.results)) {
+                            allResults = allResults.concat(agentData.results);
+                        }
+                    });
+                } else {
+                    allResults = [];
+                }
+
+                applyFilters();
+            } catch (error) {
+                console.error('Erreur lors du chargement des résultats:', error);
+                resultsList.innerHTML = `<div class="error-message">Erreur: ${error.message}</div>`;
+            }
+        }
+
+        // Appliquer les filtres
+        function applyFilters() {
+            const agentFilter = document.getElementById('agentFilter').value;
+            const statusFilter = document.getElementById('statusFilter').value;
+            const resultsList = document.getElementById('resultsList');
+
+            let filtered = allResults;
+
+            if (agentFilter) {
+                filtered = filtered.filter(r => r && r.agent_id === agentFilter);
+            }
+
+            if (statusFilter) {
+                filtered = filtered.filter(r => {
+                    if (!r) return false;
+                    if (statusFilter === 'success') return r.status === 'success';
+                    if (statusFilter === 'failed') return r.status === 'failed';
+                    return true;
+                });
+            }
+
+            // Trier par date décroissante
+            filtered.sort((a, b) => {
+                if (!a || !b) return 0;
+                return new Date(b.created_at) - new Date(a.created_at);
+            });
+
+            if (filtered.length === 0) {
+                resultsList.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📭</div><p>Aucun résultat correspondant</p></div>';
+                return;
+            }
+
+            resultsList.innerHTML = filtered.map(result => {
+                if (!result || !result.result_id) {
+                    console.warn('Résultat invalide:', result);
+                    return '';
+                }
+                return `
+                    <div class="result-item" onclick="showResultDetail('${result.result_id}')">
+                        <div class="result-item-header">
+                            <span class="result-id">${result.result_id.substring(0, 12)}...</span>
+                            <span class="status-badge ${result.status}">
+                                ${result.status === 'success' ? '✅ Succès' : '❌ Échec'}
+                            </span>
+                        </div>
+                        <div class="result-meta">
+                            <strong>Agent:</strong> ${(result.agent_name || result.agent_id || 'Unknown').substring(0, 20)}<br>
+                            <strong>Date:</strong> ${new Date(result.created_at).toLocaleString('fr-FR')}<br>
+                            <strong>Durée:</strong> ${result.execution_time_ms || 0}ms
+                        </div>
+                    </div>
+                `;
+            }).filter(html => html).join('');
+        }
+
+        // Afficher les détails d'un résultat
+        async function showResultDetail(resultId) {
+            const detailContainer = document.getElementById('detailContainer');
+            
+            if (!resultId) {
+                detailContainer.innerHTML = '<div class="error-message">ID de résultat invalide</div>';
+                return;
+            }
+            
+            detailContainer.innerHTML = '<div class="loading"><div class="spinner"></div> Chargement des détails...</div>';
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/results/detail/${resultId}`, {
+                    headers: getAuthHeaders()
+                });
+                
+                if (response.status === 401) {
+                    localStorage.removeItem('admin_token');
+                    localStorage.removeItem('admin_token_exp');
+                    window.location.href = 'admin-login.html';
+                    return;
+                }
+
+                if (!response.ok) {
+                    throw new Error('Résultat non trouvé');
+                }
+
+                const result = await response.json();
+                
+                if (!result) {
+                    throw new Error('Données de résultat vides');
+                }
+
+                const createdAt = new Date(result.created_at);
+
+                let html = `
+                    <div class="detail-section">
+                        <h3>📊 Informations Générales</h3>
+                        <div class="detail-grid">
+                            <div class="detail-field">
+                                <label>ID Résultat:</label>
+                                <value>${escapeHtml(result.result_id || 'N/A')}</value>
+                            </div>
+                            <div class="detail-field">
+                                <label>ID Tâche:</label>
+                                <value>${escapeHtml(result.task_id || 'N/A')}</value>
+                            </div>
+                            <div class="detail-field">
+                                <label>ID Agent:</label>
+                                <value>${escapeHtml(result.agent_id || 'N/A')}</value>
+                            </div>
+                            <div class="detail-field">
+                                <label>Statut:</label>
+                                <value>
+                                    <span class="status-badge ${result.status}">
+                                        ${result.status === 'success' ? '✅ Succès' : '❌ Échec'}
+                                    </span>
+                                </value>
+                            </div>
+                            <div class="detail-field">
+                                <label>Date d'exécution:</label>
+                                <value>${createdAt.toLocaleString('fr-FR')}</value>
+                            </div>
+                            <div class="detail-field">
+                                <label>Durée d'exécution:</label>
+                                <value>${result.execution_time_ms || 0}ms</value>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                if (result.result && result.result.trim && result.result.trim()) {
+                    html += `
+                        <div class="detail-section">
+                            <h3>📝 Résultat de Commande</h3>
+                            <div class="detail-content">${escapeHtml(result.result)}</div>
+                        </div>
+                    `;
+                }
+
+                if (result.error_message && result.error_message.trim && result.error_message.trim()) {
+                    html += `
+                        <div class="detail-section">
+                            <h3>❌ Message d'Erreur</h3>
+                            <div class="detail-content" style="color: #721c24; background: #f8d7da;">${escapeHtml(result.error_message)}</div>
+                        </div>
+                    `;
+                }
+
+                detailContainer.innerHTML = html;
+
+                // Marquer l'élément comme actif dans la liste
+                document.querySelectorAll('.result-item').forEach(item => item.classList.remove('active'));
+                if (event && event.currentTarget) {
+                    event.currentTarget.classList.add('active');
+                }
+
+            } catch (error) {
+                console.error('Erreur:', error);
+                detailContainer.innerHTML = `<div class="error-message">Erreur: ${escapeHtml(error.message)}</div>`;
+            }
+        }
+
+        // Échapper le HTML pour l'affichage sécurisé
+        function escapeHtml(text) {
+            const map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            };
+            return text.replace(/[&<>"']/g, m => map[m]);
+        }
+
+        // Charger les données au démarrage
+        document.addEventListener('DOMContentLoaded', () => {
+            loadAgents();
+            loadResults();
+
+            // Rafraîchir automatiquement toutes les 10 secondes
+            setInterval(loadResults, 10000);
+
+            // Écouteurs pour les filtres
+            document.getElementById('agentFilter').addEventListener('change', applyFilters);
+            document.getElementById('statusFilter').addEventListener('change', applyFilters);
+        });
+    </script>
+</body>
+</html>
