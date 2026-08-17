@@ -2,12 +2,98 @@
 Système de monitoring pour tracker l'état global du système C2.
 Fournit des stats agrégées sur les agents, tâches et résultats.
 """
-from typing import Dict, List
+import json
+import re
+from typing import Dict, List, Any
 from datetime import datetime, timedelta
 from .db import get_db
 from .logger import get_logger
 
 logger = get_logger(__name__)
+
+
+def _normalize_result_payload(result_value: Any) -> Any:
+    """Normaliser le payload d'un résultat pour l'analyse de conformité."""
+    if result_value is None:
+        return None
+
+    if isinstance(result_value, dict):
+        return result_value
+
+    if isinstance(result_value, str):
+        stripped = result_value.strip()
+        if not stripped:
+            return None
+        if stripped.startswith('{') or stripped.startswith('['):
+            try:
+                return json.loads(stripped)
+            except (TypeError, ValueError):
+                pass
+        return stripped
+
+    return result_value
+
+
+def evaluate_result_compliance(result: Any) -> Dict[str, Any]:
+    """Évaluer si un résultat d'audit est conforme ou non conforme."""
+    payload = _normalize_result_payload(result)
+    issue_markers = [
+        'non compliant', 'non-compliant', 'not compliant', 'failed', 'critical',
+        'vulnerable', 'warning', 'misconfig', 'misconfiguration', 'out of compliance',
+        'degraded', 'risk', 'insecure', 'disabled', 'not enabled', 'non conforme'
+    ]
+    safe_markers = [
+        'compliant', 'ok', 'healthy', 'secure', 'success', 'passed', 'enabled', 'normal',
+        'satisfying', 'good', 'acceptable'
+    ]
+
+    issues = []
+    severity = 'info'
+    status = 'compliant'
+
+    if isinstance(payload, dict):
+        flattened = json.dumps(payload, ensure_ascii=False).lower()
+        for key, value in payload.items():
+            if isinstance(value, (bool, int, float)):
+                low_key = str(key).lower()
+                if low_key in {'compliant', 'passed', 'ok', 'secure'} and value is False:
+                    issues.append(f"{key} est faux")
+                if low_key in {'failed', 'non_compliant', 'out_of_compliance'} and bool(value):
+                    issues.append(f"{key} indique un écart de conformité")
+            else:
+                text_val = str(value).lower()
+                if any(token in text_val for token in issue_markers):
+                    issues.append(f"{key} indique un état défavorable")
+                if any(token in text_val for token in safe_markers):
+                    pass
+
+        if any(token in flattened for token in issue_markers):
+            issues.append('Le résultat contient des indicateurs de non-conformité')
+
+    elif isinstance(payload, str):
+        lowered = payload.lower()
+        if any(token in lowered for token in issue_markers):
+            issues.append('Le message de résultat contient des signaux de non-conformité')
+
+    if issue_markers and any(any(token in (json.dumps(payload, ensure_ascii=False).lower() if isinstance(payload, (dict, list)) else str(payload).lower()) for token in issue_markers) for _ in [0]):
+        pass
+
+    if issues:
+        status = 'non_compliant'
+        if any(token in str(payload).lower() for token in ['critical', 'vulnerable', 'insecure', 'failed']):
+            severity = 'critical'
+        elif any(token in str(payload).lower() for token in ['warning', 'misconfig', 'risk', 'degraded']):
+            severity = 'warning'
+        else:
+            severity = 'warning'
+
+    summary = 'Conforme' if status == 'compliant' else 'Non conforme'
+    return {
+        'status': status,
+        'severity': severity,
+        'summary': summary,
+        'issues': list(dict.fromkeys(issues))[:5],
+    }
 
 
 def get_system_overview() -> Dict:
@@ -232,6 +318,7 @@ def get_results_dashboard() -> Dict:
     for result in results:
         agent = agents.get(result.agent_id)
         agent_name = agent.agent_name if agent else "Unknown Agent"
+        compliance = evaluate_result_compliance(result.result)
         
         result_data = {
             "result_id": result.result_id,
@@ -244,6 +331,7 @@ def get_results_dashboard() -> Dict:
             "created_at": result.created_at.isoformat(),
             "result": result.result,  # Contenu du résultat
             "result_preview": result.result_preview,  # Aperçu du résultat
+            "compliance": compliance,
         }
         
         all_results_list.append(result_data)
@@ -281,7 +369,11 @@ def get_results_dashboard() -> Dict:
         }
         for r in results if r.status == "failed"
     ]
-    
+
+    non_compliant_count = sum(
+        1 for item in all_results_list if item.get("compliance", {}).get("status") == "non_compliant"
+    )
+
     return {
         "timestamp": datetime.now().isoformat(),
         "total_results": len(results),
@@ -294,6 +386,10 @@ def get_results_dashboard() -> Dict:
             "rate_percent": round(100 - success_rate, 2),
             "details": failed_results[:10]
         },
+        "non_compliant": {
+            "count": non_compliant_count,
+            "rate_percent": round((non_compliant_count / len(results) * 100) if results else 0, 2),
+        },
         "avg_execution_time_ms": round(avg_execution_time, 2),
         "results": all_results_list,
         "results_by_agent": {
@@ -302,6 +398,7 @@ def get_results_dashboard() -> Dict:
                 "count": len(data["results"]),
                 "success": len([r for r in data["results"] if r["status"] == "success"]),
                 "failed": len([r for r in data["results"] if r["status"] == "failed"]),
+                "non_compliant": len([r for r in data["results"] if r.get("compliance", {}).get("status") == "non_compliant"]),
                 "results": data["results"]
             }
             for agent_id, data in results_by_agent.items()
@@ -366,6 +463,23 @@ def get_alerts() -> Dict:
                     "message": f"Task timeout exceeded by {time_assigned.total_seconds() - task.timeout_seconds:.0f}s",
                     "timestamp": datetime.now().isoformat()
                 })
+
+    # Détecter les résultats non conformes
+    for result in list(db.results.values()):
+        compliance = evaluate_result_compliance(result.result)
+        if compliance["status"] == "non_compliant":
+            agent = db.get_agent(result.agent_id)
+            alerts.append({
+                "level": compliance["severity"],
+                "type": "audit_non_compliant",
+                "agent_id": result.agent_id,
+                "agent_name": agent.agent_name if agent else "Unknown Agent",
+                "task_id": result.task_id,
+                "result_id": result.result_id,
+                "message": f"Résultat audit non conforme sur l'agent {agent.agent_name if agent else result.agent_id}: {', '.join(compliance['issues'][:2]) if compliance['issues'] else 'Écart détecté'}",
+                "timestamp": result.created_at.isoformat() if result.created_at else datetime.now().isoformat(),
+                "compliance": compliance,
+            })
     
     # Déterminer le niveau global d'alerte
     critical_alerts = len([a for a in alerts if a["level"] == "critical"])

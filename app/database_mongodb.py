@@ -187,16 +187,50 @@ class MongoDatabase:
     
     # ===== TASKS =====
     
+    def _normalize_task_parameters(self, parameters: dict = None) -> dict:
+        """Normaliser les paramètres pour garantir un format JSON standard."""
+        if parameters is None:
+            return None
+
+        if not isinstance(parameters, dict):
+            try:
+                parameters = dict(parameters)
+            except (TypeError, ValueError):
+                return {"raw": str(parameters)}
+
+        normalized = {}
+        for key, value in parameters.items():
+            if value is None or isinstance(value, (str, int, float, bool, list, dict)):
+                normalized[key] = value
+            else:
+                normalized[key] = str(value)
+        return normalized
+
+    def _attach_command_script_to_parameters(self, command_name: str, parameters: dict = None) -> dict:
+        """Ajoute le script PowerShell associé à une commande enregistrée dans la tâche."""
+        normalized_parameters = self._normalize_task_parameters(parameters)
+        if not normalized_parameters:
+            normalized_parameters = {}
+
+        command_def = self.get_powershell_command_by_name(command_name)
+        if command_def and command_def.script and str(command_def.script).strip():
+            normalized_parameters.setdefault("script", command_def.script)
+            normalized_parameters.setdefault("script_body", command_def.script)
+            normalized_parameters.setdefault("command_name", command_name)
+
+        return normalized_parameters
+
     def create_task(self, agent_id: str, command: str, parameters: dict = None, priority: int = 0) -> Task:
         """Créer une nouvelle tâche"""
         task_id = str(uuid.uuid4())
         now = datetime.now()
+        normalized_parameters = self._attach_command_script_to_parameters(command, parameters)
         
         task_doc = {
             "task_id": task_id,
             "agent_id": agent_id,
             "command": command,
-            "parameters": parameters,
+            "parameters": normalized_parameters,
             "priority": priority,
             "status": "pending",
             "timeout_seconds": 300,
@@ -592,17 +626,26 @@ class MongoDatabase:
         return docs
 
     def build_tasks_from_template(self, template_id: str, agent_id: str):
-        """Créer des tâches pour un agent à partir d'un template"""
+        """Créer des tâches standardisées pour un agent à partir d'un template."""
         template = self.get_audit_template(template_id)
         if not template:
             raise ValueError("Template d'audit introuvable")
 
         created_tasks = []
-        for command in template.commands:
+        total_commands = len(template.commands)
+
+        for index, command in enumerate(template.commands, start=1):
             created_tasks.append(self.create_task(
                 agent_id=agent_id,
                 command=command,
-                parameters={"template_id": template.template_id, "template_name": template.name},
+                parameters={
+                    "execution_context": "template",
+                    "template_id": template.template_id,
+                    "template_name": template.name,
+                    "command_name": command,
+                    "command_index": index,
+                    "command_total": total_commands,
+                },
                 priority=0,
             ))
         return created_tasks

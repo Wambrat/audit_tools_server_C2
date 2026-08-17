@@ -198,6 +198,29 @@ class TestDefaultModuleSeed:
         assert any(cmd.name == "Get-ADPolPassAudit" for cmd in db.list_powershell_commands())
         assert any(t.name for t in db.list_audit_templates())
 
+    def test_template_tasks_include_registered_command_script(self):
+        """Test: les tâches générées depuis un template doivent inclure le script enregistré pour le command"""
+        db = Database()
+        agent = db.create_agent("agent-a", "Windows 11", "HOSTA", "admin")
+        db.create_powershell_command(
+            name="Get-FirewallAudit",
+            description="Audit firewall",
+            script="function Get-FirewallAudit { 'firewall ok' }",
+            created_by="system",
+        )
+        template = db.create_audit_template(
+            name="Audit firewall",
+            description="Template de test",
+            commands=["Get-FirewallAudit"],
+            created_by="admin",
+        )
+
+        tasks = db.build_tasks_from_template(template.template_id, agent.agent_id)
+
+        assert len(tasks) == 1
+        assert tasks[0].parameters is not None
+        assert tasks[0].parameters["script"] == "function Get-FirewallAudit { 'firewall ok' }"
+
 
 class TestDatabaseResults:
     """Tests pour les opérations de résultats"""

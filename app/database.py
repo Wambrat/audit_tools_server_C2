@@ -1,4 +1,5 @@
 import json
+import re
 from typing import List, Optional, Dict
 from datetime import datetime
 import uuid
@@ -28,6 +29,27 @@ class Database:
     def _normalize_command_name(command_name: str) -> str:
         """Normaliser le nom d'une commande pour la déduplication."""
         return str(command_name or '').strip()
+
+    @staticmethod
+    def _ensure_script_invokes_function(script: str) -> str:
+        """Ajoute un appel final à la fonction définie dans un script PowerShell pour éviter les sorties vides."""
+        if not script or not str(script).strip():
+            return script or ""
+
+        content = script.rstrip()
+        match = re.search(r'(?m)^\s*function\s+([A-Za-z0-9_-]+)\s*(?:\{|\()', content)
+        if not match:
+            return content
+
+        function_name = match.group(1)
+        call_pattern = rf'(?m)^\s*(?:&\s*)?{re.escape(function_name)}\s*(?:\(|$)'
+        if re.search(call_pattern, content):
+            return content
+
+        if not content.endswith('\n'):
+            content += '\n'
+        content += f'\n{function_name}\n'
+        return content
 
     def _get_valid_command_names(self) -> set[str]:
         """Renvoie les commandes autorisées: builtins + commandes custom enregistrées."""
@@ -195,17 +217,52 @@ class Database:
         return True
     
     # ===== Tasks =====
+
+    def _normalize_task_parameters(self, parameters: Optional[dict]) -> Optional[dict]:
+        """Normaliser les paramètres d'une tâche pour qu'ils restent JSON-friendly et cohérents."""
+        if parameters is None:
+            return None
+
+        if not isinstance(parameters, dict):
+            try:
+                parameters = dict(parameters)
+            except (TypeError, ValueError):
+                return {"raw": str(parameters)}
+
+        normalized = {}
+        for key, value in parameters.items():
+            if value is None or isinstance(value, (str, int, float, bool, list, dict)):
+                normalized[key] = value
+            else:
+                normalized[key] = str(value)
+
+        return normalized
     
+    def _attach_command_script_to_parameters(self, command_name: str, parameters: Optional[dict]) -> Optional[dict]:
+        """Ajoute le script PowerShell enregistré à la charge utile d'une tâche lorsque la commande existe."""
+        normalized_parameters = self._normalize_task_parameters(parameters)
+        if not normalized_parameters:
+            normalized_parameters = {}
+
+        command_def = self.get_powershell_command_by_name(command_name)
+        if command_def and command_def.script and str(command_def.script).strip():
+            normalized_parameters.setdefault("script", command_def.script)
+            normalized_parameters.setdefault("script_body", command_def.script)
+            normalized_parameters.setdefault("command_name", command_name)
+
+        return normalized_parameters
+
     def create_task(self, agent_id: str, command: str, parameters: Optional[dict] = None, 
                    priority: int = 0, timeout_seconds: int = 300) -> Task:
         """Créer une nouvelle tâche pour un agent"""
         task_id = str(uuid.uuid4())
+        normalized_parameters = self._attach_command_script_to_parameters(command, parameters)
         
         task = Task(
             task_id=task_id,
             agent_id=agent_id,
             command=command,
-            parameters=parameters,
+            parameters=normalized_parameters,
             priority=priority,
             status=TaskStatus.PENDING,
             timeout_seconds=timeout_seconds,
@@ -496,6 +553,7 @@ class Database:
                     script_name = os.path.basename(relative_name)
                     command_name = script_name[:-4]
                     script_content = archive.read(relative_name).decode('utf-8', errors='replace')
+                    script_content = self._ensure_script_invokes_function(script_content)
 
                     if command_name.startswith('Get-') or command_name.startswith('Test-') or command_name.startswith('Set-'):
                         try:
@@ -508,6 +566,10 @@ class Database:
                                     created_by='system'
                                 )
                                 command_count += 1
+                            elif existing.script != script_content:
+                                existing.script = script_content
+                                existing.description = f"Module importé depuis {relative_name}"
+                                self.powershell_commands[existing.command_id] = existing
                         except ValueError:
                             continue
 
@@ -577,17 +639,37 @@ class Database:
             return {"commands": 0, "templates": 0}
 
     def build_tasks_from_template(self, template_id: str, agent_id: str) -> List[Task]:
-        """Transformer une configuration d'audit en plusieurs tâches pour un agent"""
+        """Transformer une configuration d'audit en plusieurs tâches pour un agent.
+
+        Paramètres standardisés côté backend :
+        {
+          "execution_context": "template",
+          "template_id": "...",
+          "template_name": "Audit Sécurité Réseau",
+          "command_name": "Get-FirewallAudit",
+          "command_index": 1,
+          "command_total": 7
+        }
+        """
         template = self.get_audit_template(template_id)
         if not template:
             raise ValueError("Template d'audit introuvable")
 
         created_tasks = []
-        for command in template.commands:
+        total_commands = len(template.commands)
+
+        for index, command in enumerate(template.commands, start=1):
             task = self.create_task(
                 agent_id=agent_id,
                 command=command,
-                parameters={"template_id": template.template_id, "template_name": template.name},
+                parameters={
+                    "execution_context": "template",
+                    "template_id": template.template_id,
+                    "template_name": template.name,
+                    "command_name": command,
+                    "command_index": index,
+                    "command_total": total_commands,
+                },
                 priority=0,
                 timeout_seconds=300,
             )

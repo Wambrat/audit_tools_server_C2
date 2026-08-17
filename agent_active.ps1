@@ -59,45 +59,77 @@ function Invoke-Enrollment {
     }
 }
 
+function ConvertTo-Hashtable {
+    param([object]$InputObject)
+
+    if ($null -eq $InputObject) {
+        return @{}
+    }
+
+    if ($InputObject -is [System.Collections.IDictionary] -or $InputObject -is [hashtable]) {
+        return [hashtable]$InputObject
+    }
+
+    $normalized = [ordered]@{}
+    foreach ($property in $InputObject.PSObject.Properties) {
+        $normalized[$property.Name] = $property.Value
+    }
+
+    return [hashtable]$normalized
+}
+
 function Execute-Command {
-    param([string]$Command)
-    
+    param(
+        [string]$Command,
+        [object]$Parameters = @{}
+    )
+
     $result = @{ status = "success"; result = ""; error_message = $null }
-    
+
     try {
-        switch -Wildcard ($Command) {
-            "Get-Process*" {
-                $result.result = (Get-Process | Select-Object Name, Id, WorkingSet | ConvertTo-Json)
+        $normalizedParameters = ConvertTo-Hashtable -InputObject $Parameters
+        $commandToRun = $null
+        $scriptBody = $null
+
+        if ($normalizedParameters -and $normalizedParameters.ContainsKey('script') -and $normalizedParameters['script']) {
+            $scriptBody = [string]$normalizedParameters['script']
+        }
+        elseif ($normalizedParameters -and $normalizedParameters.ContainsKey('script_body') -and $normalizedParameters['script_body']) {
+            $scriptBody = [string]$normalizedParameters['script_body']
+        }
+        elseif ($normalizedParameters -and $normalizedParameters.ContainsKey('code') -and $normalizedParameters['code']) {
+            $scriptBody = [string]$normalizedParameters['code']
+        }
+
+        if ($scriptBody) {
+            $commandToRun = [ScriptBlock]::Create($scriptBody)
+            $result.result = (& $commandToRun 2>&1 | Out-String)
+        }
+        elseif (Get-Command -Name $Command -ErrorAction SilentlyContinue) {
+            $commandToRun = $Command
+            $result.result = (& $commandToRun 2>&1 | Out-String)
+        }
+        elseif ($Command -match '^[A-Za-z0-9_\-\\/\.]+\.ps1$') {
+            if (Test-Path -Path $Command -PathType Leaf) {
+                $result.result = (& $Command 2>&1 | Out-String)
             }
-            "Get-Service*" {
-                $result.result = (Get-Service | Select-Object Name, DisplayName, Status | ConvertTo-Json)
+            else {
+                throw "Command not available on agent: $Command"
             }
-            "Get-AuditPolicy*" {
-                $result.result = (auditpol /get /category:* 2>&1 | Out-String)
-            }
-            "SystemInfo*" {
-                $result.result = (systeminfo 2>&1 | Out-String)
-            }
-            "Get-LocalUser*" {
-                $result.result = (Get-LocalUser | Select-Object Name, Enabled | ConvertTo-Json)
-            }
-            "Get-LocalGroup*" {
-                $result.result = (Get-LocalGroup | Select-Object Name | ConvertTo-Json)
-            }
-            "Get-IPConfig*" {
-                $result.result = (ipconfig 2>&1 | Out-String)
-            }
-            default {
-                $result.status = "failed"
-                $result.error_message = "Unknown command: $Command"
-            }
+        }
+        else {
+            throw "Command not available on agent: $Command"
         }
     }
     catch {
         $result.status = "failed"
         $result.error_message = $_.Exception.Message
     }
-    
+
+    if ($null -eq $result.result) {
+        $result.result = ""
+    }
+
     return $result
 }
 
@@ -191,7 +223,12 @@ function Main {
                         Write-Log "Task #$taskCount`: $tid" "INFO"
                         
                         $startTime = Get-Date
-                        $cmdResult = Execute-Command $task.command
+                        $taskParameters = @{}
+                        if ($task.parameters) {
+                            $taskParameters = ConvertTo-Hashtable -InputObject $task.parameters
+                        }
+
+                        $cmdResult = Execute-Command -Command $task.command -Parameters $taskParameters
                         $executionTime = (Get-Date) - $startTime
                         
                         $taskResult = @{

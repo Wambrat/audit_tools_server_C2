@@ -22,6 +22,8 @@ createApp({
       resultsList: [],
       resultsFilterAgent: '',
       resultsFilterStatus: '',
+      alertsList: [],
+      alertsFilterLevel: '',
       templatesList: [],
       selectedResultId: null,
       showResultModal: false,
@@ -120,9 +122,18 @@ createApp({
 
     filteredResults() {
       return (this.resultsList || []).filter(result => {
+        const complianceStatus = result?.compliance?.status || 'compliant';
         const matchesAgent = !this.resultsFilterAgent || result.agent_id === this.resultsFilterAgent;
-        const matchesStatus = !this.resultsFilterStatus || result.status === this.resultsFilterStatus;
+        const matchesStatus = !this.resultsFilterStatus
+          || (this.resultsFilterStatus === 'non_compliant' ? complianceStatus === 'non_compliant' : result.status === this.resultsFilterStatus);
         return matchesAgent && matchesStatus;
+      });
+    },
+
+    filteredAlerts() {
+      return (this.alertsList || []).filter(alert => {
+        const matchesLevel = !this.alertsFilterLevel || alert.level === this.alertsFilterLevel;
+        return matchesLevel;
       });
     },
 
@@ -130,12 +141,14 @@ createApp({
       const total = this.resultsList.length;
       const success = (this.resultsList || []).filter(r => r.status === 'success').length;
       const failed = total - success;
+      const nonCompliant = (this.resultsList || []).filter(r => (r?.compliance?.status || 'compliant') === 'non_compliant').length;
       const avgTime = total
         ? Math.round((this.resultsList.reduce((sum, r) => sum + (Number(r.execution_time_ms) || 0), 0) / total))
         : 0;
       return {
         success,
         failed,
+        nonCompliant,
         total,
         successRate: total ? Math.round((success / total) * 100) : 0,
         avgTime
@@ -145,6 +158,17 @@ createApp({
     selectedResultData() {
       if (!this.selectedResultId) return null;
       return (this.resultsList || []).find(result => result.result_id === this.selectedResultId) || null;
+    },
+
+    alertSummary() {
+      const alerts = this.alertsList || [];
+      const critical = alerts.filter(alert => (alert.level || '').toLowerCase() === 'critical').length;
+      const warning = alerts.filter(alert => (alert.level || '').toLowerCase() === 'warning').length;
+      const info = alerts.filter(alert => (alert.level || '').toLowerCase() === 'info').length;
+      let overall = 'ok';
+      if (critical > 0) overall = 'critical';
+      else if (warning > 0 || info > 0) overall = 'warning';
+      return { critical, warning, info, overall };
     }
   },
 
@@ -1564,11 +1588,23 @@ createApp({
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
         const data = await response.json();
-        // Store alerts data
+        this.alertsList = Array.isArray(data.alerts) ? data.alerts : [];
       } catch (error) {
         console.error('Error loading alerts:', error);
         throw error;
       }
+    },
+
+    getAlertLevelClass(level) {
+      const normalized = (level || '').toLowerCase();
+      if (normalized === 'critical') return 'danger';
+      if (normalized === 'warning') return 'warning';
+      return 'success';
+    },
+
+    getComplianceLabel(value) {
+      if (!value) return 'Conforme';
+      return value === 'non_compliant' ? 'Non conforme' : 'Conforme';
     },
 
     /**
@@ -1678,9 +1714,18 @@ createApp({
 
     filteredResults() {
       return (this.resultsList || []).filter(result => {
+        const complianceStatus = result?.compliance?.status || 'compliant';
         const matchesAgent = !this.resultsFilterAgent || result.agent_id === this.resultsFilterAgent;
-        const matchesStatus = !this.resultsFilterStatus || result.status === this.resultsFilterStatus;
+        const matchesStatus = !this.resultsFilterStatus
+          || (this.resultsFilterStatus === 'non_compliant' ? complianceStatus === 'non_compliant' : result.status === this.resultsFilterStatus);
         return matchesAgent && matchesStatus;
+      });
+    },
+
+    filteredAlerts() {
+      return (this.alertsList || []).filter(alert => {
+        const matchesLevel = !this.alertsFilterLevel || alert.level === this.alertsFilterLevel;
+        return matchesLevel;
       });
     },
 
@@ -1688,12 +1733,14 @@ createApp({
       const total = this.resultsList.length;
       const success = (this.resultsList || []).filter(r => r.status === 'success').length;
       const failed = total - success;
+      const nonCompliant = (this.resultsList || []).filter(r => (r?.compliance?.status || 'compliant') === 'non_compliant').length;
       const avgTime = total
         ? Math.round((this.resultsList.reduce((sum, r) => sum + (Number(r.execution_time_ms) || 0), 0) / total))
         : 0;
       return {
         success,
         failed,
+        nonCompliant,
         total,
         successRate: total ? Math.round((success / total) * 100) : 0,
         avgTime
@@ -1703,6 +1750,17 @@ createApp({
     selectedResultData() {
       if (!this.selectedResultId) return null;
       return (this.resultsList || []).find(result => result.result_id === this.selectedResultId) || null;
+    },
+
+    alertSummary() {
+      const alerts = this.alertsList || [];
+      const critical = alerts.filter(alert => (alert.level || '').toLowerCase() === 'critical').length;
+      const warning = alerts.filter(alert => (alert.level || '').toLowerCase() === 'warning').length;
+      const info = alerts.filter(alert => (alert.level || '').toLowerCase() === 'info').length;
+      let overall = 'ok';
+      if (critical > 0) overall = 'critical';
+      else if (warning > 0 || info > 0) overall = 'warning';
+      return { critical, warning, info, overall };
     },
 
     filteredTemplates() {
