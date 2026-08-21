@@ -1,3 +1,5 @@
+import json
+from datetime import datetime
 from fastapi import APIRouter, HTTPException, status, Header, Depends, Request
 from .models import (
     EnrollRequest, EnrollResponse,
@@ -5,7 +7,8 @@ from .models import (
     AuditResultRequest, AuditResultResponse,
     AdminLoginRequest, AdminLoginResponse,
     AuditTemplateCreateRequest, AuditTemplateResponse, AuditTemplate,
-    PowerShellCommandCreateRequest, PowerShellCommandDefinition
+    PowerShellCommandCreateRequest, PowerShellCommandDefinition,
+    AgentStatus
 )
 from .db import get_db
 from .auth import verify_agent_credentials
@@ -144,19 +147,30 @@ async def enroll_agent(request: EnrollRequest):
         f"Agent enrollment requested: {request.agent_name} ({request.hostname}\\{request.username})"
     )
     
-    # Vérifier que l'agent n'existe pas déjà
-    existing = [
-        a for a in db.list_agents()
-        if a.hostname == request.hostname and a.username == request.username
-    ]
-    
+    # Si l'agent s'est déjà enregistré sur ce host/user, on gère le cas actif vs inactif
+    existing = db.get_agent_by_identity(request.hostname, request.username)
     if existing:
-        logger.warning(
-            f"Enrollment rejected - agent already exists: {request.hostname}\\{request.username}"
+        current_status = existing.status
+        if current_status == AgentStatus.ACTIVE:
+            logger.warning(
+                f"Enrollment rejected - agent already active: {request.hostname}\\{request.username}"
+            )
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Agent already active on this host. Please wait for the current session to disconnect before re-enrolling."
+            )
+
+        existing.agent_name = request.agent_name
+        existing.os_version = request.os_version
+        existing.status = AgentStatus.ACTIVE
+        existing.last_beacon = datetime.now()
+        logger.info(
+            f"Agent reconnected and resumed session: {request.agent_name} ({existing.agent_id})"
         )
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="Agent already enrolled on this host"
+        return EnrollResponse(
+            agent_id=existing.agent_id,
+            api_key=existing.api_key,
+            message=f"Agent {request.agent_name} resumed previous session"
         )
     
     # Créer le nouvel agent
@@ -396,7 +410,14 @@ async def submit_result(request: AuditResultRequest):
     )
     
     # Audit log result submission
-    result_size = len(request.result.encode('utf-8')) if request.result else 0
+    if isinstance(request.result, (dict, list)):
+        result_serialized = json.dumps(request.result, ensure_ascii=False, default=str)
+        result_size = len(result_serialized.encode('utf-8'))
+    elif isinstance(request.result, str):
+        result_size = len(request.result.encode('utf-8'))
+    else:
+        result_size = len(str(request.result).encode('utf-8')) if request.result is not None else 0
+
     audit_logger.log_result_submission(
         agent_id=request.agent_id,
         task_id=request.task_id,

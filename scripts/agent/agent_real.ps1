@@ -44,7 +44,15 @@ function Invoke-Enrollment {
         }
     }
     catch {
-        Write-Log "Enrollment failed: $_" "Error"
+        $statusCode = if ($_.Exception -and $_.Exception.Response) { [int]$_.Exception.Response.StatusCode } else { $null }
+        $errorMessage = if ($_.ErrorDetails -and $_.ErrorDetails.Message) { $_.ErrorDetails.Message } else { $_.Exception.Message }
+
+        if ($statusCode -eq 409) {
+            Write-Log "Enrollment blocked: Agent already active on this host. Please wait for the current session to disconnect before re-enrolling." "Warning"
+            return $null
+        }
+
+        Write-Log "Enrollment failed: $errorMessage" "Error"
         return $null
     }
 }
@@ -154,6 +162,37 @@ function Invoke-Beacon {
     }
 }
 
+function ConvertTo-JsonStringLiteral {
+    param([AllowNull()][string]$Value)
+
+    if ($null -eq $Value) {
+        return "null"
+    }
+
+    $escaped = [string]$Value
+    $escaped = $escaped.Replace('\\', '\\\\')
+    $escaped = $escaped.Replace('"', '\\"')
+    $escaped = $escaped.Replace("`r", '\\r')
+    $escaped = $escaped.Replace("`n", '\\n')
+    $escaped = $escaped.Replace("`t", '\\t')
+    $escaped = $escaped.Replace("`b", '\\b')
+    $escaped = $escaped.Replace("`f", '\\f')
+
+    $builder = New-Object System.Text.StringBuilder
+    foreach ($char in $escaped.ToCharArray()) {
+        $code = [int][char]$char
+        if ($code -lt 0x20) {
+            [void]$builder.Append("\\u")
+            [void]$builder.Append($code.ToString("x4"))
+        }
+        else {
+            [void]$builder.Append($char)
+        }
+    }
+
+    return '"' + $builder.ToString() + '"'
+}
+
 function Submit-Result {
     param(
         [string]$ServerUrl,
@@ -166,17 +205,20 @@ function Submit-Result {
     Write-Log "Submitting result for task $TaskId..." "Info"
     
     try {
-        $body = @{
+        $payload = [ordered]@{
             agent_id = $AgentId
             api_key = $ApiKey
             task_id = $TaskId
-            status = $TaskResult.status
-            result = $TaskResult.result
-            execution_time_ms = $TaskResult.execution_time_ms
-            error_message = $TaskResult.error_message
-        } | ConvertTo-Json -Depth 10
+            status = [string]$TaskResult.status
+            result = if ($null -eq $TaskResult.result) { $null } else { [string]$TaskResult.result }
+            execution_time_ms = [int]$TaskResult.execution_time_ms
+            error_message = if ($null -eq $TaskResult.error_message) { $null } else { [string]$TaskResult.error_message }
+        }
+
+        $body = $payload | ConvertTo-Json -Depth 25 -Compress
+        $bodyBytes = [System.Text.Encoding]::UTF8.GetBytes($body)
         
-        $response = Invoke-WebRequest -Uri "$ServerUrl/results" -Method POST -ContentType "application/json" -Body $body -ErrorAction Stop
+        $response = Invoke-WebRequest -Uri "$ServerUrl/results" -Method POST -ContentType "application/json; charset=utf-8" -Body $bodyBytes -ErrorAction Stop
         $result = $response.Content | ConvertFrom-Json
         Write-Log "Result submitted: $($result.message)" "Success"
         
@@ -184,6 +226,7 @@ function Submit-Result {
     }
     catch {
         Write-Log "Result submission failed: $_" "Error"
+        Write-Log "Body sent: $body" "Debug"
         return $false
     }
 }

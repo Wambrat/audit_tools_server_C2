@@ -54,7 +54,15 @@ function Invoke-Enrollment {
         return @{ agent_id = $result.agent_id; api_key = $result.api_key; agent_name = $systemInfo.agent_name }
     }
     catch {
-        Write-Log "Enrollment failed: $_" "ERROR"
+        $statusCode = if ($_.Exception -and $_.Exception.Response) { [int]$_.Exception.Response.StatusCode } else { $null }
+        $errorMessage = if ($_.ErrorDetails -and $_.ErrorDetails.Message) { $_.ErrorDetails.Message } else { $_.Exception.Message }
+
+        if ($statusCode -eq 409) {
+            Write-Log "Enrollment blocked: Agent already active on this host. Please wait for the current session to disconnect before re-enrolling." "WARNING"
+            return $null
+        }
+
+        Write-Log "Enrollment failed: $errorMessage" "ERROR"
         return $null
     }
 }
@@ -78,13 +86,34 @@ function ConvertTo-Hashtable {
     return [hashtable]$normalized
 }
 
+function New-ExecutionEnvelope {
+    param(
+        [string]$Command,
+        [string]$ExecutionStatus,
+        [string]$OutputType,
+        [string]$Output,
+        [string]$ErrorMessage,
+        [string]$EmptyReason
+    )
+
+    return [ordered]@{
+        schema_version = 1
+        command = $Command
+        execution_status = $ExecutionStatus
+        output_type = $OutputType
+        output = if ($null -eq $Output) { "" } else { [string]$Output }
+        error_message = if ($null -eq $ErrorMessage) { $null } else { [string]$ErrorMessage }
+        empty_reason = if ($null -eq $EmptyReason) { $null } else { [string]$EmptyReason }
+    }
+}
+
 function Execute-Command {
     param(
         [string]$Command,
         [object]$Parameters = @{}
     )
 
-    $result = @{ status = "success"; result = ""; error_message = $null }
+    $result = New-ExecutionEnvelope -Command $Command -ExecutionStatus "success" -OutputType "empty" -Output "" -ErrorMessage $null -EmptyReason $null
 
     try {
         $normalizedParameters = ConvertTo-Hashtable -InputObject $Parameters
@@ -103,15 +132,15 @@ function Execute-Command {
 
         if ($scriptBody) {
             $commandToRun = [ScriptBlock]::Create($scriptBody)
-            $result.result = (& $commandToRun 2>&1 | Out-String)
+            $output = (& $commandToRun 2>&1 | Out-String)
         }
         elseif (Get-Command -Name $Command -ErrorAction SilentlyContinue) {
             $commandToRun = $Command
-            $result.result = (& $commandToRun 2>&1 | Out-String)
+            $output = (& $commandToRun 2>&1 | Out-String)
         }
         elseif ($Command -match '^[A-Za-z0-9_\-\\/\.]+\.ps1$') {
             if (Test-Path -Path $Command -PathType Leaf) {
-                $result.result = (& $Command 2>&1 | Out-String)
+                $output = (& $Command 2>&1 | Out-String)
             }
             else {
                 throw "Command not available on agent: $Command"
@@ -120,14 +149,26 @@ function Execute-Command {
         else {
             throw "Command not available on agent: $Command"
         }
+        if ($null -eq $output) {
+            $output = ""
+        }
+
+        if ([string]::IsNullOrWhiteSpace([string]$output)) {
+            $result.output_type = "empty"
+            $result.empty_reason = "No output captured by the command."
+            $result.output = ""
+        }
+        else {
+            $result.output_type = "text"
+            $result.output = [string]$output
+        }
     }
     catch {
-        $result.status = "failed"
+        $result.execution_status = "failed"
+        $result.output_type = "error"
+        $result.output = ""
         $result.error_message = $_.Exception.Message
-    }
-
-    if ($null -eq $result.result) {
-        $result.result = ""
+        $result.empty_reason = $null
     }
 
     return $result
@@ -156,26 +197,91 @@ function Invoke-Beacon {
     }
 }
 
+function ConvertTo-JsonStringLiteral {
+    param([AllowNull()][string]$Value)
+
+    if ($null -eq $Value) {
+        return "null"
+    }
+
+    $escaped = [string]$Value
+    $escaped = $escaped.Replace('\\', '\\\\')
+    $escaped = $escaped.Replace('"', '\\"')
+    $escaped = $escaped.Replace("`r", '\\r')
+    $escaped = $escaped.Replace("`n", '\\n')
+    $escaped = $escaped.Replace("`t", '\\t')
+    $escaped = $escaped.Replace("`b", '\\b')
+    $escaped = $escaped.Replace("`f", '\\f')
+
+    $builder = New-Object System.Text.StringBuilder
+    foreach ($char in $escaped.ToCharArray()) {
+        $code = [int][char]$char
+        if ($code -lt 0x20) {
+            [void]$builder.Append("\\u")
+            [void]$builder.Append($code.ToString("x4"))
+        }
+        else {
+            [void]$builder.Append($char)
+        }
+    }
+
+    return '"' + $builder.ToString() + '"'
+}
+
+function Normalize-ResultForJson {
+    param([object]$Value)
+
+    if ($null -eq $Value) {
+        return ""
+    }
+
+    if ($Value -is [string]) {
+        return [string]$Value
+    }
+
+    try {
+        if ($Value -is [System.Collections.IDictionary] -or
+            ($Value -is [System.Collections.IEnumerable] -and -not ($Value -is [string])) -or
+            $Value -is [System.Management.Automation.PSCustomObject]) {
+            return ($Value | ConvertTo-Json -Depth 25 -Compress)
+        }
+    }
+    catch {
+        # Fall back to string form if the object cannot be JSON serialized cleanly.
+    }
+
+    try {
+        return [string]$Value
+    }
+    catch {
+        return ($Value | Out-String).Trim()
+    }
+}
+
 function Submit-Result {
     param([string]$ServerUrl, [string]$AgentId, [string]$ApiKey, [object]$TaskResult)
-    
-    $body = @{
-        agent_id = $AgentId
-        api_key = $ApiKey
-        task_id = $TaskResult.task_id
-        status = $TaskResult.status
-        result = $TaskResult.result
-        execution_time_ms = $TaskResult.execution_time_ms
-        error_message = $TaskResult.error_message
-    } | ConvertTo-Json -Depth 10
-    
+
     try {
-        $response = Invoke-WebRequest -Uri "$ServerUrl/results" -Method POST -ContentType "application/json" -Body $body -ErrorAction Stop -UseBasicParsing
+        $payload = [ordered]@{
+            agent_id = $AgentId
+            api_key = $ApiKey
+            task_id = [string]$TaskResult.task_id
+            status = [string]$TaskResult.status
+            result = if ($null -eq $TaskResult.result) { $null } else { $TaskResult.result }
+            execution_time_ms = [int]$TaskResult.execution_time_ms
+            error_message = if ($null -eq $TaskResult.error_message) { $null } else { [string]$TaskResult.error_message }
+        }
+
+        $body = $payload | ConvertTo-Json -Depth 25 -Compress
+        $bodyBytes = [System.Text.Encoding]::UTF8.GetBytes($body)
+
+        $response = Invoke-WebRequest -Uri "$ServerUrl/results" -Method POST -ContentType "application/json; charset=utf-8" -Body $bodyBytes -ErrorAction Stop -UseBasicParsing
         Write-Log "Result submitted for task $($TaskResult.task_id)" "SUCCESS"
         return $true
     }
     catch {
         Write-Log "Result submission failed: $_" "ERROR"
+        Write-Log "Body sent: $body" "DEBUG"
         return $false
     }
 }
@@ -233,8 +339,8 @@ function Main {
                         
                         $taskResult = @{
                             task_id = $task.task_id
-                            status = $cmdResult.status
-                            result = $cmdResult.result
+                            status = if ($cmdResult.execution_status -eq 'failed') { 'failed' } else { 'success' }
+                            result = $cmdResult
                             error_message = $cmdResult.error_message
                             execution_time_ms = [int]$executionTime.TotalMilliseconds
                         }

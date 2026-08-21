@@ -140,8 +140,20 @@ app.add_middleware(SecurityHeadersMiddleware)
 
 
 # ===== Middleware CORS =====
-# À adapter selon vos besoins
-origins = [origin.strip() for origin in os.getenv("ALLOWED_ORIGINS", "http://localhost:3000").split(",")]
+# Autoriser explicitement les frontends locaux utilisés par le projet
+configured_origins = [origin.strip() for origin in os.getenv(
+    "ALLOWED_ORIGINS",
+    "http://localhost:3000,http://localhost:5500,http://localhost:8080,http://127.0.0.1:5500,http://127.0.0.1:8000,http://127.0.0.1:8080"
+).split(",") if origin.strip()]
+origins = list(dict.fromkeys(configured_origins + [
+    "http://localhost:3000",
+    "http://localhost:5500",
+    "http://localhost:8080",
+    "http://127.0.0.1:3000",
+    "http://127.0.0.1:5500",
+    "http://127.0.0.1:8080",
+    "http://127.0.0.1:8000",
+]))
 logger.info(f"Setting up CORS with {len(origins)} allowed origins: {origins}")
 
 app.add_middleware(

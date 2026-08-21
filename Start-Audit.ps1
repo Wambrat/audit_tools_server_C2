@@ -1,82 +1,2609 @@
-<!DOCTYPE html>
-<!--
+﻿# --- Configuration ---
+$ErrorActionPreference = "Stop"
+$ScriptPath = $PSScriptRoot
+$ModulePath = Join-Path -Path $ScriptPath -ChildPath "Modules\AuditCore"
 
-Hello future GitHubber! I bet you're here to remove those nasty inline styles,
-DRY up these templates and make 'em nice and re-usable, right?
+# --- Collection for remediation actions (XML export) ---
+$remediationActions = @()
 
-Please, don't. https://github.com/styleguide/templates/2.0
+# --- Importation du Module ---
+Write-Host "Chargement du module d'audit..." -ForegroundColor Cyan
+if (Test-Path $ModulePath) {
+    Import-Module -Name $ModulePath -Force
+}
+else {
+    Write-Error "Le module AuditCore est introuvable dans $ModulePath"
+    exit
+}
 
--->
-<html>
-  <head>
-    <title>Unicorn! &middot; GitHub</title>
-    <style type="text/css" media="screen">
-      body {
-        background-color: #f1f1f1;
-        margin: 0;
-        font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-      }
+# Initialize auditResults structure
+$auditResults = @{
+    HostContext = $null
+    AccountSecurity = @{
+        LocalAdminAccount = @{status = ""; automatable = $false; recommendations = @(); comments = ""}
+        LocalGuestAccount = @{status = ""; automatable = $false; recommendations = @(); comments = ""}
+        LAPS = @{status = ""; automatable = $false; recommendations = @(); comments = ""}
+        ADPasswordPolicy = @{status = ""; automatable = $false; recommendations = @(); comments = ""}
+        LocalPasswordPolicy = @{status = ""; automatable = $false; recommendations = @(); comments = ""}
+        AuthentificationLevel = @{status = ""; automatable = $false; recommendations = @(); comments = ""}
+        UAC = @{status = ""; automatable = $false; recommendations = @(); comments = ""}
+        JEA = @{status = ""; automatable = $false; recommendations = @(); comments = ""}
+        LocalGroups = @{status = ""; automatable = $false; recommendations = @(); comments = ""}
+        SMBShares = @{status = ""; automatable = $false; recommendations = @(); comments = ""}
+        NTFS = @{status = ""; automatable = $false; recommendations = @(); comments = ""}
+    }
+    ServicesAndApplications = @{
+        RDP = @{status = ""; automatable = $false; recommendations = @(); comments = ""}
+        WinRM = @{status = ""; automatable = $false; recommendations = @(); comments = ""}
+        SMB = @{status = ""; automatable = $false; recommendations = @(); comments = ""}
+        Updates = @{status = ""; automatable = $false; recommendations = @(); comments = ""}
+        InstalledApplications = @{status = ""; automatable = $false; recommendations = @(); comments = ""}
+    }
+    NetworkSecurity = @{
+        IPv6 = @{status = ""; automatable = $false; recommendations = @(); comments = ""}
+        LLMNR = @{status = ""; automatable = $false; recommendations = @(); comments = ""}
+        NetBIOS = @{status = ""; automatable = $false; recommendations = @(); comments = ""}
+        Firewall = @{status = ""; automatable = $false; recommendations = @(); comments = ""}
+        VPN = @{status = ""; automatable = $false; recommendations = @(); comments = ""}
+    }
+    DeviceSecurity = @{
+        AutoRun = @{status = ""; automatable = $false; recommendations = @(); comments = ""}
+        BitLocker = @{status = ""; automatable = $false; recommendations = @(); comments = ""}
+        ThirdPartyEncryptionIndicators = @{status = ""; automatable = $false; recommendations = @(); comments = ""}
+    }
+    OSSecurity = @{
+        OptionalFeatures = @{status = ""; automatable = $false; recommendations = @(); comments = ""}
+        AppLocker = @{status = ""; automatable = $false; recommendations = @(); comments = ""}
+        SRP = @{status = ""; automatable = $false; recommendations = @(); comments = ""}
+        ServerAntivirusStatus = @{status = ""; automatable = $false; recommendations = @(); comments = ""}
+        LMHash = @{status = ""; automatable = $false; recommendations = @(); comments = ""}
+        LSASSProtection = @{status = ""; automatable = $false; recommendations = @(); comments = ""}
+        CredentialGuard = @{status = ""; automatable = $false; recommendations = @(); comments = ""}
+        ExploitProtection = @{status = ""; automatable = $false; recommendations = @(); comments = ""}
+        ASR = @{status = ""; automatable = $false; recommendations = @(); comments = ""}
+        NetworkProtection = @{status = ""; automatable = $false; recommendations = @(); comments = ""}
+        ControlledFolderAccess = @{status = ""; automatable = $false; recommendations = @(); comments = ""}
+        SmartAppControl = @{status = ""; automatable = $false; recommendations = @(); comments = ""}
+        PowershellLanguageMode = @{status = ""; automatable = $false; recommendations = @(); comments = ""}
+    }
+    Logging = @{
+        LogStatus = @{status = ""; automatable = $false; recommendations = @(); comments = ""}
+        EventForwardingStatus = @{status = ""; automatable = $false; recommendations = @(); comments = ""}
+        LogAgentStatus = @{status = ""; automatable = $false; recommendations = @(); comments = ""}
+    }
+    UpdateManagement = @{
+        LastReboot = @{status = ""; automatable = $false; recommendations = @(); comments = ""}
+        NTFS = @{status = ""; automatable = $false; recommendations = @(); comments = ""}
+    }
+}
 
-      .container { margin: 50px auto 40px auto; width: 600px; text-align: center; }
+$scriptStartDate = Get-Date -Format 'yyyyMMdd_HHmmss'
 
-      a { color: #4183c4; text-decoration: none; }
-      a:hover { text-decoration: underline; }
+# --- Helper Function to Merge Audit Results ---
+function Merge-AuditResults {
+    param(
+        [Parameter(Mandatory=$true)]
+        $Section,
+        
+        [Parameter(Mandatory=$false)]
+        $AuditData
+    )
+    
+    try {
+        if ($null -eq $AuditData) { return }
+        
+        # Handle hashtables (dynamic objects)
+        if ($AuditData -is [System.Collections.IDictionary]) {
+            foreach ($key in $AuditData.Keys) {
+                if ($key -notmatch "recommendation") {
+                    $value = $AuditData[$key]
+                    if ($null -ne $value) {
+                        $Section[$key] = $value
+                    }
+                }
+            }
+        }
+        # Handle PSObjects
+        else {
+            $properties = $AuditData | Get-Member -MemberType Properties
+            foreach ($prop in $properties) {
+                $propName = $prop.Name
+                if ($propName -notmatch "recommendation") {
+                    $value = $AuditData.$propName
+                    if ($null -ne $value) {
+                        if ($Section -is [System.Collections.IDictionary]) {
+                            $Section[$propName] = $value
+                        } else {
+                            if ($Section | Get-Member -Name $propName -ErrorAction SilentlyContinue) {
+                                $Section.$propName = $value
+                            } else {
+                                $Section | Add-Member -MemberType NoteProperty -Name $propName -Value $value -ErrorAction SilentlyContinue
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    catch {
+        Write-Warning "Erreur lors de la fusion des resultats d'audit : $_"
+    }
+}
 
-      h1 { letter-spacing: -1px; line-height: 60px; font-size: 60px; font-weight: 100; margin: 0px; text-shadow: 0 1px 0 #fff; }
-      p { color: rgba(0, 0, 0, 0.5); margin: 10px 0 10px; font-size: 18px; font-weight: 200; line-height: 1.6em;}
+# --- Export Audit Results Function ---
+function Export-AuditResultsToJson {
+    param(
+        [Parameter(Mandatory=$true)]
+        [PSObject]$AuditData,
+        
+        [Parameter(Mandatory=$false)]
+        [string]$OutputPath = $PSScriptRoot,
 
-      ul { list-style: none; margin: 25px 0; padding: 0; }
-      li { display: table-cell; font-weight: bold; width: 1%; }
+        [Parameter(Mandatory=$false)]
+        [string]$scriptStartDate,
+        
+        [Parameter(Mandatory=$false)]
+        [int]$Depth = 10
+    )
+    
+    try {
+        $timestamp = Get-Date -Format 'yyyy-MM-dd_HHmmss'
+        $jsonFile = Join-Path -Path $OutputPath -ChildPath "auditResults\auditResults_$scriptStartDate.json"
+        
+        $AuditData | ConvertTo-Json -Depth $Depth | Out-File -FilePath $jsonFile -Encoding UTF8 -Force
+        
+        Write-Host "[✓] Resultats exportes : $jsonFile" -ForegroundColor Green
+        return $jsonFile
+    }
+    catch {
+        Write-Error "Erreur export JSON : $($_.Exception.Message)"
+        return $null
+    }
+}
 
-      .logo { display: inline-block; margin-top: 35px; }
-      .logo-img-2x { display: none; }
-      @media
-      only screen and (-webkit-min-device-pixel-ratio: 2),
-      only screen and (   min--moz-device-pixel-ratio: 2),
-      only screen and (     -o-min-device-pixel-ratio: 2/1),
-      only screen and (        min-device-pixel-ratio: 2),
-      only screen and (                min-resolution: 192dpi),
-      only screen and (                min-resolution: 2dppx) {
-        .logo-img-1x { display: none; }
-        .logo-img-2x { display: inline-block; }
-      }
+function Add-ToLog {
+    param (
+        [string]$Message,
+        [string]$ForegroundColor = "White"
+    )
 
-      #suggestions {
-        margin-top: 35px;
-        color: #ccc;
-      }
-      #suggestions a {
-        color: #666666;
-        font-weight: 200;
-        font-size: 14px;
-        margin: 0 10px;
-      }
+    Write-Host $Message -ForegroundColor $ForegroundColor
+    #ajouter dans le fichier de log
+    Add-Content -Path "$PSScriptRoot\audit.log" -Value "$((Get-Date).ToString('yyyy-MM-dd HH:mm:ss')) - $Message"
+}
 
-    </style>
-  </head>
-  <body>
+# --- Execution de l'Audit ---
+Add-ToLog -Message "Demarrage de l'audit sur $env:COMPUTERNAME..." -ForegroundColor Green
 
-    <div class="container">
-      <p>
-        <img width="200" src="data:image/png;base64,
-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">
-      </p>
+# 1. Recuperation du contexte (appel de notre fonction importee)
+$context = Get-HostContext
 
-      <p><strong>We couldn't respond to your request in time.</strong></p>
-      <p>Sorry about that. Please try refreshing and contact us if the problem persists.</p>
-      <div id="suggestions">
-        <a href="https://github.com/contact">Contact Support</a> &mdash;
-        <a href="https://www.githubstatus.com">GitHub Status</a> &mdash;
-        <a href="https://twitter.com/githubstatus">@githubstatus</a>
-      </div>
+$auditResults.HostContext = $context
 
-      <a href="/" class="logo logo-img-1x">
-        <img width="32" height="32" title="" alt="" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAyRpVFh0WE1MOmNvbS5hZG9iZS54bXAAAAAAADw/eHBhY2tldCBiZWdpbj0i77u/IiBpZD0iVzVNME1wQ2VoaUh6cmVTek5UY3prYzlkIj8+IDx4OnhtcG1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iIHg6eG1wdGs9IkFkb2JlIFhNUCBDb3JlIDUuMy1jMDExIDY2LjE0NTY2MSwgMjAxMi8wMi8wNi0xNDo1NjoyNyAgICAgICAgIj4gPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4gPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIgeG1sbnM6eG1wPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvIiB4bWxuczp4bXBNTT0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wL21tLyIgeG1sbnM6c3RSZWY9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9zVHlwZS9SZXNvdXJjZVJlZiMiIHhtcDpDcmVhdG9yVG9vbD0iQWRvYmUgUGhvdG9zaG9wIENTNiAoTWFjaW50b3NoKSIgeG1wTU06SW5zdGFuY2VJRD0ieG1wLmlpZDpFMTZCRDY3REIzRjAxMUUyQUQzREIxQzRENUFFNUM5NiIgeG1wTU06RG9jdW1lbnRJRD0ieG1wLmRpZDpFMTZCRDY3RUIzRjAxMUUyQUQzREIxQzRENUFFNUM5NiI+IDx4bXBNTTpEZXJpdmVkRnJvbSBzdFJlZjppbnN0YW5jZUlEPSJ4bXAuaWlkOkUxNkJENjdCQjNGMDExRTJBRDNEQjFDNEQ1QUU1Qzk2IiBzdFJlZjpkb2N1bWVudElEPSJ4bXAuZGlkOkUxNkJENjdDQjNGMDExRTJBRDNEQjFDNEQ1QUU1Qzk2Ii8+IDwvcmRmOkRlc2NyaXB0aW9uPiA8L3JkZjpSREY+IDwveDp4bXBtZXRhPiA8P3hwYWNrZXQgZW5kPSJyIj8+SM9MCAAAA+5JREFUeNrEV11Ik1EY3s4+ddOp29Q5b0opCgKFsoKoi5Kg6CIhuwi6zLJLoYLopq4qsKKgi4i6CYIoU/q5iDAKs6syoS76IRWtyJ+p7cdt7sf1PGOD+e0c3dygAx/67ZzzPM95/877GYdHRg3ZjMXFxepQKNS6sLCwJxqNNuFpiMfjVs4ZjUa/pmmjeD6VlJS8NpvNT4QQ7mxwjSsJiEQim/1+/9lgMHgIr5ohuxG1WCw9Vqv1clFR0dCqBODElV6v90ogEDjGdYbVjXhpaendioqK07CIR7ZAqE49PT09BPL2PMgTByQGsYiZlQD4uMXtdr+JxWINhgINYhGT2MsKgMrm2dnZXgRXhaHAg5jEJodUAHxux4LudHJE9RdEdA+i3Juz7bGHe4mhE9FNrgwBCLirMFV9Okh5eflFh8PR5nK5nDabrR2BNJlKO0T35+Li4n4+/J+/JQCxhmu5h3uJoXNHPbmWZAHMshWB8l5/ipqammaAf0zPDDx1ONV3vurdidqwAQL+pEc8sLcAe1CCvQ3YHxIW8Pl85xSWNC1hADDIv0rIE/o4J0k3kww4xSlwIhcq3EFFOm7KN/hUGOQkt0CFa5WpNJlMvxBEz/IVQAxg/ZRZl9wiHA63yDYieM7DnLP5CiAGsC7I5sgtYKJGWe2A8seFqgFJrJjEPY1Cn3pJ8/9W1e5VWsFDTEmFrBcoDhZJEQkXuhICMyKpjhahqN21hRYATKfUOlDmkygrR4o4C0VOLGJKrOITKB4jijzdXygBKixyC5TDQdnk/Pz8qRw6oOWGlsTKGOQW6OH6FBWsyePxdOXLTgxiyebILZCjz+GLgMIKnXNzc49YMlcRdHXcSwxFVgTInQhC9G33UhNoJLuqq6t345p9y3eUy8OTk5PjAHuI9uo4b07FBaOhsu0A4Unc+T1TU1Nj3KsSSE5yJ65jqF2DDd8QqWYmAZrIM2VlZTdnZmb6AbpdV9V6ec9znf5Q7HjYumdRE0JOp3MjitO4SFa+cZz8Umqe3TCbSLvdfkR/kWDdNQl5InuTcysOcpFT35ZrbBxx4p3JAHlZVVW1D/634VRt+FvLBgK/v5LV9WS+10xMTEwtRw7XvqOL+e2Q8V3AYIOIAXQ26/heWVnZCVfcyKHg2CBgTpmPmjYM8l24GyaUHyaIh7XwfR9ErE8qHoDfn2LTNAVC0HX6MFcBIP8Bi+6F6cdW/DICkANRfx99fEYFQ7Nph5i/uQiA214gno7K+guhaiKg9gC62+M8eR7XsBsYJ4ilam60Fb7r7uAj8wFyuwM1oIOWgfmDy6RXEEQzJMPe23DXrVS7rtyD3Df8z/FPgAEAzWU5Ku59ZAUAAAAASUVORK5CYII=" />
-      </a>
+if ($context) {
+    Add-ToLog -Message "`n[+] Contexte Identifie :" -ForegroundColor Yellow
+    $context | Format-List
+    
+    # Logique conditionnelle base sur le contexte
+    if ($context.OSRole -eq "Server") {
+        Add-ToLog -Message ">> Mode Audit Serveur active." -ForegroundColor Gray
+    }
+    elseif ($context.HardwareType -eq "Virtual Machine") {
+        Add-ToLog -Message ">> Machine Virtuelle detectee : Verification des Integration Tools requise." -ForegroundColor Gray
+    }
+}
+else {
+    Write-Error "Impossible de determiner le contexte de la machine."
+}
 
-      <a href="/" class="logo logo-img-2x">
-        <img width="32" height="32" title="" alt="" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAyRpVFh0WE1MOmNvbS5hZG9iZS54bXAAAAAAADw/eHBhY2tldCBiZWdpbj0i77u/IiBpZD0iVzVNME1wQ2VoaUh6cmVTek5UY3prYzlkIj8+IDx4OnhtcG1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iIHg6eG1wdGs9IkFkb2JlIFhNUCBDb3JlIDUuMy1jMDExIDY2LjE0NTY2MSwgMjAxMi8wMi8wNi0xNDo1NjoyNyAgICAgICAgIj4gPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4gPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIgeG1sbnM6eG1wPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvIiB4bWxuczp4bXBNTT0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wL21tLyIgeG1sbnM6c3RSZWY9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9zVHlwZS9SZXNvdXJjZVJlZiMiIHhtcDpDcmVhdG9yVG9vbD0iQWRvYmUgUGhvdG9zaG9wIENTNiAoTWFjaW50b3NoKSIgeG1wTU06SW5zdGFuY2VJRD0ieG1wLmlpZDpEQUM1QkUxRUI0MUMxMUUyQUQzREIxQzRENUFFNUM5NiIgeG1wTU06RG9jdW1lbnRJRD0ieG1wLmRpZDpEQUM1QkUxRkI0MUMxMUUyQUQzREIxQzRENUFFNUM5NiI+IDx4bXBNTTpEZXJpdmVkRnJvbSBzdFJlZjppbnN0YW5jZUlEPSJ4bXAuaWlkOkUxNkJENjdGQjNGMDExRTJBRDNEQjFDNEQ1QUU1Qzk2IiBzdFJlZjpkb2N1bWVudElEPSJ4bXAuZGlkOkUxNkJENjgwQjNGMDExRTJBRDNEQjFDNEQ1QUU1Qzk2Ii8+IDwvcmRmOkRlc2NyaXB0aW9uPiA8L3JkZjpSREY+IDwveDp4bXBtZXRhPiA8P3hwYWNrZXQgZW5kPSJyIj8+hfPRaQAAB6lJREFUeNrsW2mM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" />
-      </a>
-    </div>
-  </body>
-</html>
+######################################
+#       Account Security Audits      #
+######################################
+
+$auditResults.AccountSecurity = @{}
+
+########## Local User Audit ##########
+
+$localUserAudit = Get-LocalUserAudit
+
+if ($localUserAudit) {
+    Add-ToLog -Message "`n[+] Comptes locaux identifies :" -ForegroundColor Gray
+    $auditResults.AccountSecurity.LocalAdminAccount = @{
+        status = ""
+        automatable = $false
+        recommendations = @()
+        comments = ""
+    }
+    if (($localUserAudit.Value.AdminAccountSID -match "-500$") -and ($localUserAudit.Value.AdminEnabled -eq $true)){
+        Add-ToLog -Message "`nLe compte Administrateur par defaut est active" -ForegroundColor Red
+        Add-ToLog -Message $localUserAudit.Value.AdminRecommandation.Enabled -ForegroundColor Yellow
+        $auditResults.AccountSecurity.LocalAdminAccount.status = "FAIL"
+        $auditResults.AccountSecurity.LocalAdminAccount.recommendations += $localUserAudit.Value.AdminRecommandation.Enabled
+        $auditResults.AccountSecurity.LocalAdminAccount.comments += "Administrator default account is enabled."     
+    }
+    else {
+        Add-ToLog -Message "$($localUserAudit.Value.AdminRecommandation.Disabled)" -ForegroundColor Green
+        
+        $auditResults.AccountSecurity.LocalAdminAccount.status = "PASS"
+        $auditResults.AccountSecurity.LocalAdminAccount.recommendations += $localUserAudit.Value.AdminRecommandation.Disabled
+        $auditResults.AccountSecurity.LocalAdminAccount.comments += "Administrator default account is disabled."
+    }
+
+    $auditResults.AccountSecurity.LocalGuestAccount = @{
+        status = ""
+        automatable = $false
+        recommendations = @()
+        comments = ""
+    }
+    if (($localUserAudit.Value.GuestAccountSID -match "-501$") -and ($localUserAudit.Value.GuestEnabled -eq $true)){
+        Add-ToLog -Message "`nLe compte Invite par defaut est active" -ForegroundColor Red
+        Add-ToLog -Message $localUserAudit.Value.GuestRecommandation.Enabled -ForegroundColor Yellow
+        $auditResults.AccountSecurity.LocalGuestAccount.status = "FAIL"
+        $auditResults.AccountSecurity.LocalGuestAccount.recommendations += $localUserAudit.Value.GuestRecommandation.Enabled
+        $auditResults.AccountSecurity.LocalGuestAccount.comments += "Guest default account is enabled."
+
+    } else {
+        Add-ToLog -Message $localUserAudit.Value.GuestRecommandation.Disabled -ForegroundColor Green
+        $auditResults.AccountSecurity.LocalGuestAccount.status = "PASS"
+        $auditResults.AccountSecurity.LocalGuestAccount.recommendations += $localUserAudit.Value.GuestRecommandation.Disabled
+        $auditResults.AccountSecurity.LocalGuestAccount.comments += "Guest default account is disabled."
+    }
+}
+else {
+    Write-Error "Impossible d'auditer les utilisateurs locaux"
+}
+
+Merge-AuditResults -Section $auditResults.AccountSecurity.LocalAdminAccount -AuditData $localUserAudit
+Merge-AuditResults -Section $auditResults.AccountSecurity.LocalGuestAccount -AuditData $localUserAudit
+
+########## Privilege Audit ##########
+
+$privilegeAudits = Get-Privilege
+
+foreach ($audit in $privilegeAudits) {
+    Add-ToLog -Message "`n[+] Audit du privilege $($audit.Privilege) :" -ForegroundColor Gray
+    $auditResults.AccountSecurity.Privilege = @{
+        status = ""
+        automatable = $false
+        recommendations = @()
+        comments = ""
+    }
+    $auditResults.AccountSecurity.Privilege.recommendations += $audit.Recommendation
+    if ($audit.Configured) {
+        Add-ToLog -Message "Privilege configure : $($audit.Privilege)" -ForegroundColor Yellow
+        Add-ToLog -Message "Assigne a : $($audit.AssignedTo -join ', ')" -ForegroundColor Gray
+        Add-ToLog -Message "Administrateurs presents : $($audit.IsAdminPresent)" -ForegroundColor Gray
+        Add-ToLog -Message "Recommandation : $($audit.Recommendation)" -ForegroundColor Yellow
+        $auditResults.AccountSecurity.Privilege.status = "WARNING"
+        $auditResults.AccountSecurity.Privilege.comments += "Privilege $($audit.Privilege), assigned to $($audit.AssignedTo -join ', '). Admins present: $($audit.IsAdminPresent)."
+    } else {
+        Add-ToLog -Message "Privilege non configure." -ForegroundColor Green
+        Add-ToLog -Message "Recommandation : $($audit.Recommendation)" -ForegroundColor Yellow
+        $auditResults.AccountSecurity.Privilege.status = "PASS"
+        $auditResults.AccountSecurity.Privilege.comments += "Privilege $($audit.Privilege) is not configured."
+
+    }
+}
+Merge-AuditResults -Section $auditResults.AccountSecurity.Privilege -AuditData $audit
+
+
+
+########## LAPS Audit ##########
+$auditResults.AccountSecurity.LAPS = @{
+    status = ""
+    automatable = $false
+    recommendations = @()
+    comments = ""
+}
+
+$lapsAudit = Get-LAPSAudit
+Add-ToLog -Message "`n[+] Audit de la configuration LAPS :" -Foregroundcolor Gray
+
+if ($lapsaudit){
+
+    if ($context.isDomainjoined -eq $true) {
+        $auditResults.AccountSecurity.LAPS.recommendations += $lapsAudit.Recommendation
+
+        # Affichage dynamique selon le resultat
+        switch ($lapsAudit.Status) {
+            "PASS" {
+                Add-ToLog -Message "   [OK] $($lapsAudit.DetectedMethods)" -ForegroundColor Green
+                # Si on a un warning mineur (ex: Legacy + Modern en meme temps)
+                if ($lapsAudit.Recommendation -match "ATTENTION") {
+                    Add-ToLog -Message "   $($lapsAudit.Recommendation)" -ForegroundColor Magenta
+                }
+                $auditResults.AccountSecurity.LAPS.status = "PASS"
+                $auditResults.AccountSecurity.LAPS.comments += "LAPS configuration is compliant."
+            }
+            "WARNING" {
+                # Cas specifique Legacy seul
+                Add-ToLog -Message "   [OBSOLETE] $($lapsAudit.DetectedMethods)" -ForegroundColor Orange
+                Add-ToLog -Message "   -> $($lapsAudit.Recommendation)" -ForegroundColor Yellow
+                $auditResults.AccountSecurity.LAPS.status = "WARNING"
+                $auditResults.AccountSecurity.LAPS.comments += "LAPS configuration uses obsolete methods."
+            }
+            "FAIL" {
+                Add-ToLog -Message "   [ALERTE] $($lapsAudit.Recommendation)" -ForegroundColor Red
+                $auditResults.AccountSecurity.LAPS.status = "FAIL"
+                $auditResults.AccountSecurity.LAPS.comments += "LAPS is not configured."
+            }
+        }
+
+    }
+    else {
+        Add-ToLog -Message "`rLa machine n'est pas jointe a un domaine. LAPS n'est pas auditable" -ForegroundColor Magenta
+    }
+}
+
+Merge-AuditResults -Section $auditResults.AccountSecurity.LAPS -AuditData $lapsAudit
+
+########## Active Directory Password Policy Audit ##########
+$auditResults.AccountSecurity.ADPasswordPolicy = @{
+    status = ""
+    automatable = $false
+    recommendations = @()
+    comments = ""
+}
+
+if ($context.isDomainjoined -eq $true){
+    $auditResults.AccountSecurity.ADPasswordPolicy = @{
+        status = ""
+        automatable = $false
+        recommendations = @()
+        comments = ""
+    }
+
+    $adPasswordPolicy = Get-ADPolPassAudit
+
+    if ($adPasswordPolicy -and $context.isDomainjoined -eq $true) {
+        $auditResults.AccountSecurity.ADPasswordPolicy.status = "PASS"
+
+        Add-ToLog -Message "`n[+] Audit des politiques de mots de passe Active Directory :" -Foregroundcolor Gray
+        try {
+            $auditResults.AccountSecurity.ADPasswordPolicy.recommendations += "AD Password Policy length must be at least $($adPasswordPolicy.MinLengthReco)"
+            $auditResults.AccountSecurity.ADPasswordPolicy.recommendations += "AD Password Complexity must be $($adPasswordPolicy.ComplexityReco)"
+            $auditResults.AccountSecurity.ADPasswordPolicy.recommendations += "AD Account Lockout Policy must be $($adPasswordPolicy.LockoutReco)"
+                
+            # Affichage Longueur
+            if ($adPasswordPolicy.MinLengthStatus -eq "FAIL") {
+                Add-ToLog -Message "   [LONGUEUR]   [ALERTE] $($adPasswordPolicy.MinLengthReco)" -ForegroundColor Red
+                $auditResults.AccountSecurity.ADPasswordPolicy.status = "FAIL"
+                $auditResults.AccountSecurity.ADPasswordPolicy.comments += "AD Password length requirement is not met."
+            } else {
+                Add-ToLog -Message "   [LONGUEUR]   [OK] $($adPasswordPolicy.MinLengthReco)" -ForegroundColor Green
+                $auditResults.AccountSecurity.ADPasswordPolicy.comments += "AD Password length requirement is met."
+            }
+
+            # Affichage Complexite
+            if ($adPasswordPolicy.ComplexityStatus -eq "FAIL") {
+                Add-ToLog -Message "   [COMPLEXITE] [ALERTE] $($adPasswordPolicy.ComplexityReco)" -ForegroundColor Red
+                $auditResults.AccountSecurity.ADPasswordPolicy.status = "FAIL"
+                $auditResults.AccountSecurity.ADPasswordPolicy.comments += "AD Password complexity requirement is not met."
+            } else {
+                Add-ToLog -Message "   [COMPLEXITE] [OK] $($adPasswordPolicy.ComplexityReco)" -ForegroundColor Green
+                $auditResults.AccountSecurity.ADPasswordPolicy.comments += "AD Password complexity requirement is met."
+            }
+
+            # Affichage Verrouillage
+            if ($adPasswordPolicy.LockoutStatus -eq "FAIL") {
+                Add-ToLog -Message "   [BLOCAGE]    [ALERTE] $($adPasswordPolicy.LockoutReco)" -ForegroundColor Red
+                $auditResults.AccountSecurity.ADPasswordPolicy.status = "FAIL"
+                $auditResults.AccountSecurity.ADPasswordPolicy.comments += "AD Account lockout requirement is not met."
+            } elseif ($adPasswordPolicy.LockoutStatus -eq "WARNING") {
+                Add-ToLog -Message "   [BLOCAGE]    [MOYEN] $($adPasswordPolicy.LockoutReco)" -ForegroundColor Magenta
+                if ($auditResults.AccountSecurity.ADPasswordPolicy.status -ne "FAIL") {
+                    $auditResults.AccountSecurity.ADPasswordPolicy.status = "WARNING"
+                }
+                $auditResults.AccountSecurity.ADPasswordPolicy.comments += "AD Account lockout requirement is partially met."
+            } else {
+                Add-ToLog -Message "   [BLOCAGE]    [OK] $($adPasswordPolicy.LockoutReco)" -ForegroundColor Green
+                $auditResults.AccountSecurity.ADPasswordPolicy.comments += "AD Account lockout requirement is met."
+            }
+        }
+        catch {
+            Add-ToLog -Message "Erreur lors de l'affichage des resultats de l'audit de la politique de mot de passe AD"
+        }
+    }
+    Merge-AuditResults -Section $auditResults.AccountSecurity.ADPasswordPolicy -AuditData $adPasswordPolicy
+} else {
+    ########## Local Password Policy Audit ##########
+    $auditResults.AccountSecurity.LocalPasswordPolicy = @{
+        status = ""
+        automatable = $false
+        recommendations = @()
+        comments = ""
+    }
+
+    Add-ToLog -Message "`n[+] Audit des politiques de mots de passe :" -Foregroundcolor Gray
+
+    
+    try {
+        $passwordPolicy = Get-PolPassAudit
+
+        if ($passwordPolicy){
+            $auditResults.AccountSecurity.LocalPasswordPolicy.status = "PASS"
+            $auditResults.AccountSecurity.LocalPasswordPolicy.recommendations += "Password Policy length must be at least $($passwordPolicy.MinLengthReco)"
+            $auditResults.AccountSecurity.LocalPasswordPolicy.recommendations += "Password Complexity must be $($passwordPolicy.ComplexityReco)"
+            $auditResults.AccountSecurity.LocalPasswordPolicy.recommendations += "Account Lockout Policy must be $($passwordPolicy.LockoutReco)"
+                
+            # Affichage Longueur
+            if ($passwordPolicy.MinLengthStatus -eq "FAIL") {
+                Add-ToLog -Message "   [LONGUEUR]   [ALERTE] $($passwordPolicy.MinLengthReco)" -ForegroundColor Red
+                $auditResults.AccountSecurity.LocalPasswordPolicy.status = "FAIL"
+                $auditResults.AccountSecurity.LocalPasswordPolicy.comments += "Password length requirement is not met."
+            } else {
+                Add-ToLog -Message "   [LONGUEUR]   [OK] $($passwordPolicy.MinLengthReco)" -ForegroundColor Green
+                $auditResults.AccountSecurity.LocalPasswordPolicy.comments += "Password length requirement is met."
+            }
+
+            # Affichage Complexite
+            if ($passwordPolicy.ComplexityStatus -eq "FAIL") {
+                Add-ToLog -Message "   [COMPLEXITE] [ALERTE] $($passwordPolicy.ComplexityReco)" -ForegroundColor Red
+                $auditResults.AccountSecurity.LocalPasswordPolicy.status = "FAIL"
+                $auditResults.AccountSecurity.LocalPasswordPolicy.comments += "Password complexity requirement is not met."
+            } else {
+                Add-ToLog -Message "   [COMPLEXITE] [OK] $($passwordPolicy.ComplexityReco)" -ForegroundColor Green
+                $auditResults.AccountSecurity.LocalPasswordPolicy.comments += "Password complexity requirement is met."
+            }
+
+            # Affichage Verrouillage
+            if ($passwordPolicy.LockoutStatus -eq "FAIL") {
+                Add-ToLog -Message "   [BLOCAGE]    [ALERTE] $($passwordPolicy.LockoutReco)" -ForegroundColor Red
+                $auditResults.AccountSecurity.LocalPasswordPolicy.status = "FAIL"
+                $auditResults.AccountSecurity.LocalPasswordPolicy.comments += "Account lockout requirement is not met."
+            } elseif ($passwordPolicy.LockoutStatus -eq "WARNING") {
+                Add-ToLog -Message "   [BLOCAGE]    [MOYEN] $($passwordPolicy.LockoutReco)" -ForegroundColor Magenta
+                if ($auditResults.AccountSecurity.LocalPasswordPolicy.status -ne "FAIL") {
+                    $auditResults.AccountSecurity.LocalPasswordPolicy.status = "WARNING"
+                }
+                $auditResults.AccountSecurity.LocalPasswordPolicy.comments += "Account lockout requirement is partially met."
+            } else {
+                Add-ToLog -Message "   [BLOCAGE]    [OK] $($passwordPolicy.LockoutReco)" -ForegroundColor Green
+                $auditResults.AccountSecurity.LocalPasswordPolicy.comments += "Account lockout requirement is met."
+            }
+        }
+        
+    } catch {
+        Add-ToLog -Message "Erreur lors de l'affichage des resultats de l'audit de la politique de mot de passe"
+    }
+    
+    Merge-AuditResults -Section $auditResults.AccountSecurity.LocalPasswordPolicy -AuditData $passwordPolicy
+}
+
+
+
+########## Authentication Level Audit ##########
+$auditResults.AccountSecurity.AuthentificationLevel = @{
+    status = ""
+    automatable = $false
+    recommendations = @()
+    comments = ""
+}
+
+Add-ToLog -Message "`n[+] Audit du niveau d'authentification :" -Foregroundcolor Gray
+$authLevelAudit = Get-AuthenticationLevelAudit
+
+if ($context.osRole -eq "Workstation" -and $context.isDomainjoined -eq $true) {
+    $auditResults.AccountSecurity.AuthentificationLevel.status = "PASS"
+    $auditResults.AccountSecurity.AuthentificationLevel.recommendations += "Enable Windows Hello for Business via GPO or CSP."
+
+    if ($authLevelAudit.GPO -eq $true) {
+        Add-ToLog -Message "   [OK] Windows Hello for Business est active via : GPO" -ForegroundColor Green
+        $auditResults.AccountSecurity.AuthentificationLevel.comments += "Windows Hello for Business is enabled via GPO."
+    }
+    if ($authLevelAudit.CSP -eq $true) {
+        Add-ToLog -Message "   [OK] Windows Hello for Business est active via : CSP" -ForegroundColor Green
+        $auditResults.AccountSecurity.AuthentificationLevel.comments += "Windows Hello for Business is enabled via CSP."
+    }
+    if (($authLevelAudit.GPO -eq $false) -and ($authLevelAudit.CSP -eq $false)) {
+        Add-ToLog -Message "   [ALERTE] Windows Hello for Business n'est pas active." -ForegroundColor Red
+        $auditResults.AccountSecurity.AuthentificationLevel.status = "FAIL"
+        $auditResults.AccountSecurity.AuthentificationLevel.comments += "Windows Hello for Business is not enabled."
+    }
+} elseif ($context.osRole -eq "Workstation" -and $context.isDomainjoined -eq $false) {
+    $auditResults.AccountSecurity.AuthentificationLevel.recommendations += "Consider using Windows Hello even in a no domain-joined environment."
+
+    if ($authLevelAudit.Consumer -eq $true) {
+        Add-ToLog -Message "   [OK] Windows Hello (Consumer/Local) est active." -ForegroundColor Green
+        $auditResults.AccountSecurity.AuthentificationLevel.status = "PASS"
+        $auditResults.AccountSecurity.AuthentificationLevel.comments += "Windows Hello (Consumer/Local) is enabled."
+    } else {
+        Add-ToLog -Message "   [ALERTE] Windows Hello (Consumer/Local) n'est pas active." -ForegroundColor Red
+        $auditResults.AccountSecurity.AuthentificationLevel.status = "FAIL"
+        $auditResults.AccountSecurity.AuthentificationLevel.comments += "Windows Hello (Consumer/Local) is not enabled."
+    }
+} elseif ($context.osRole -eq "Server" -and $context.isDomainjoined -eq $true) {
+    $auditResults.AccountSecurity.AuthentificationLevel.status = "PASS"
+    $auditResults.AccountSecurity.AuthentificationLevel.recommendations += "Enable Windows Hello for Business via GPO or CSP."
+
+    if ($authLevelAudit.GPO -eq $true) {
+        Add-ToLog -Message "   [OK] Windows Hello for Business est active via : GPO" -ForegroundColor Green
+        $auditResults.AccountSecurity.AuthentificationLevel.comments += "Windows Hello for Business is enabled via GPO."
+    }
+    if ($authLevelAudit.CSP -eq $true) {
+        Add-ToLog -Message "   [OK] Windows Hello for Business est active via : CSP" -ForegroundColor Green
+        $auditResults.AccountSecurity.AuthentificationLevel.comments += "Windows Hello for Business is enabled via CSP."
+    }
+    if (($authLevelAudit.GPO -eq $false) -and ($authLevelAudit.CSP -eq $false)) {
+        Add-ToLog -Message "   [ALERTE] Windows Hello for Business n'est pas active." -ForegroundColor Red
+        $auditResults.AccountSecurity.AuthentificationLevel.status = "FAIL"
+        $auditResults.AccountSecurity.AuthentificationLevel.comments += "Windows Hello for Business is not enabled."
+    }
+} elseif ($context.osRole -eq "Server" -and $context.isDomainjoined -eq $false) {
+    $auditResults.AccountSecurity.AuthentificationLevel.recommendations += "Disable Windows Hello (Consumer/Local) on servers."
+
+    if ($authLevelAudit.Consumer -eq $true) {
+        Add-ToLog -Message "   [ALERTE] Windows Hello (Consumer/Local) est active. Il est plutot recommande de desactiver cette fonctionnalite sur les serveurs." -ForegroundColor Red
+        $auditResults.AccountSecurity.AuthentificationLevel.status = "FAIL"
+        $auditResults.AccountSecurity.AuthentificationLevel.comments += "Windows Hello (Consumer/Local) is enabled on a server."
+    } else {
+        Add-ToLog -Message "   [OK] Windows Hello (Consumer/Local) n'est pas active." -ForegroundColor Green
+        $auditResults.AccountSecurity.AuthentificationLevel.status = "PASS"
+        $auditResults.AccountSecurity.AuthentificationLevel.comments += "Windows Hello (Consumer/Local) is not enabled on the server."
+    }
+} else {
+    Add-ToLog -Message "   [INFORMATION] Le niveau d'authentification n'a pas pu etre audite dans ce contexte." -ForegroundColor Yellow
+}
+
+Merge-AuditResults -Section $auditResults.AccountSecurity.AuthentificationLevel -AuditData $authLevelAudit
+
+########## UAC Audit ##########
+$auditResults.AccountSecurity.UAC = @{
+    status = ""
+    automatable = $false
+    recommendations = @()
+    comments = ""
+}
+
+Add-ToLog -Message "`n[+] Audit de la configuration de l'UAC :" -Foregroundcolor Gray
+$uacAudit = Get-UACAudit
+
+try {
+    $auditResults.AccountSecurity.UAC.status = "PASS"
+    $auditResults.AccountSecurity.UAC.recommendations += "Enable UAC to enhance security."
+    $auditResults.AccountSecurity.UAC.recommendations += "Enable Administrator Token Filtering to enhance security."
+    $auditResults.AccountSecurity.UAC.recommendations += "Enable Local Account Token Filter Policy to prevent non-administrator network access."
+
+    if ($uacAudit.UACEnabled -eq 1) {
+        Add-ToLog -Message "   [OK] L'UAC est active." -ForegroundColor Green
+        $auditResults.AccountSecurity.UAC.comments += "UAC is enabled."
+    } else {
+        Add-ToLog -Message "   [ALERTE] L'UAC est desactive." -ForegroundColor Red
+        $auditResults.AccountSecurity.UAC.status = "FAIL"
+        $auditResults.AccountSecurity.UAC.comments += "UAC is disabled."
+    }
+
+    if ($uacAudit.FilterAdministratorToken -eq 1) {
+        Add-ToLog -Message "   [OK] Le filtrage du token administrateur est active." -ForegroundColor Green
+        $auditResults.AccountSecurity.UAC.comments += "Administrator Token Filtering is enabled."
+    } else {
+        Add-ToLog -Message "   [ALERTE] Le filtrage du token administrateur est desactive." -ForegroundColor Red
+        $auditResults.AccountSecurity.UAC.status = "FAIL"
+        $auditResults.AccountSecurity.UAC.comments += "Administrator Token Filtering is disabled." 
+    }
+
+    if ($uacAudit.LocalAccountTokenFilterPolicy -eq 1) {
+        Add-ToLog -Message "   [OK] La politique de filtrage des tokens pour les comptes locaux est activee." -ForegroundColor Red
+        $auditResults.AccountSecurity.UAC.status = "FAIL"
+        $auditResults.AccountSecurity.UAC.comments += "Local Account Token Filter Policy is enabled."
+    } else {
+        Add-ToLog -Message "   [OK] La politique de filtrage des tokens pour les comptes locaux est desactivee." -ForegroundColor Green
+        $auditResults.AccountSecurity.UAC.comments += "Local Account Token Filter Policy is disabled."
+    }
+}
+catch {
+    Add-ToLog -Message "Erreur lors de l'affichage des resultats de l'audit UAC"
+}
+
+Merge-AuditResults -Section $auditResults.AccountSecurity.UAC -AuditData $uacAudit
+
+
+########## JEA Audit ##########
+$auditResults.AccountSecurity.JEA = @{
+    status = ""
+    automatable = $false
+    recommendations = @()
+    comments = ""
+}
+
+Add-ToLog -Message "`n[+] Audit de la configuration JEA :" -Foregroundcolor Gray
+$JEAAudit = Get-JEAAudit
+try {
+    $auditResults.AccountSecurity.JEA.recommendations += $JEAAudit.Recommandation
+
+    if ($JEAAudit.WinRmState -eq 'NotInstalled'){
+        Add-ToLog -Message "   [INFORMATION] WinRM n'est pas installe. JEA ne peut pas etre configure." -ForegroundColor Red
+        $auditResults.AccountSecurity.JEA.comments += "WinRM is not installed; JEA cannot be used."
+    } elseif ($JEAAudit.WinRmState -eq 'Stopped') {
+        Add-ToLog -Message "   [ALERTE] WinRM est installe mais arrete. JEA ne peut pas etre utilise tant que WinRM n'est pas demarre." -ForegroundColor Red
+        $auditResults.AccountSecurity.JEA.status = "FAIL"
+        $auditResults.AccountSecurity.JEA.comments += "WinRM is stopped; JEA cannot be used."
+    } elseif ($JEAAudit.HasJEASessionConfig -eq $true){
+        Add-ToLog -Message "   [OK] Des endpoints JEA sont configures sur cette machine." -ForegroundColor Green
+        Add-ToLog -Message "       $($JEAAudit.Recommandation)" -ForegroundColor Gray
+        $auditResults.AccountSecurity.JEA.status = "PASS"
+        $auditResults.AccountSecurity.JEA.comments += "JEA endpoints are configured."
+    } elseif ($JEAAudit.HasJEASessionConfig -eq $false){
+        Add-ToLog -Message "   [ALERTE] WinRM est fonctionnel mais aucun endpoint JEA n'est configure." -ForegroundColor Red
+        $auditResults.AccountSecurity.JEA.status = "FAIL"
+        $auditResults.AccountSecurity.JEA.comments += "WinRM is running; No JEA endpoints are configured."
+    } else {
+        Write-Error "   [ERREUR] Impossible d'auditer la configuration JEA." -ForegroundColor Red
+    }
+} catch {
+    Add-ToLog -Message "Erreur lors de l'affichage des resultats de l'audit JEA"
+}
+
+Merge-AuditResults -Section $auditResults.AccountSecurity.JEA -AuditData $JEAAudit
+
+
+########## Local Groups Audit ##########
+$auditResults.AccountSecurity.LocalGroups = @{
+    status = ""
+    automatable = $false
+    recommendations = @()
+    comments = ""
+}
+Add-ToLog -Message "`n[+] Audit des groupes locaux :" -Foregroundcolor Gray
+$groupsAudit = Get-GroupsAudit
+
+Add-ToLog -Message $groupsAudit.GetType()
+
+if ($groupsAudit) {
+    $auditResults.AccountSecurity.LocalGroups.status = "PASS"
+    $auditResults.AccountSecurity.LocalGroups.recommendations += "A group should have at least one member. Verify local groups that have more than 3 members. Verify for unauthorized users."
+
+    foreach ($group in $groupsAudit) {
+        Add-ToLog -Message "`nGroupe : $($group.GroupName)" -ForegroundColor Cyan
+        if ($group.Members -eq 0) {
+            Add-ToLog -Message "   Aucun membre dans ce groupe." -ForegroundColor Yellow
+            $auditResults.AccountSecurity.LocalGroups.status = "WARNING"
+            $auditResults.AccountSecurity.LocalGroups.comments += "The local group '$($group.GroupName)' has no members. Add complexity and increase attack surface."
+        } else {
+            Add-ToLog -Message "   Membres : $($group.Members -join ', ')" -ForegroundColor Yellow
+            # A voir je trouve que c'est un peu trop restreint comme alerte
+            if ($group.MembersCount -gt 3) {
+                Add-ToLog -Message "   [ALERTE] Ce groupe contient un grand nombre de membres ($($group.MembersCount)). Verifiez qu'il n'y a pas d'utilisateurs non autorises." -ForegroundColor Red
+                $auditResults.AccountSecurity.LocalGroups.status = "FAIL"
+                $auditResults.AccountSecurity.LocalGroups.comments += "The local group '$($group.GroupName)' has $($group.MembersCount) members. Verify for unauthorized users."
+            } elseif ( $group.MembersCount -gt 1) {
+                Add-ToLog -Message "   [ATTENTION] Ce groupe contient plusieurs membres ($($group.MembersCount)). Verifiez qu'il n'y a pas d'utilisateurs non autorises." -ForegroundColor Yellow
+                $auditResults.AccountSecurity.LocalGroups.status = "WARNING"
+                $auditResults.AccountSecurity.LocalGroups.comments += "The local group '$($group.GroupName)' has $($group.MembersCount) members. Verify for unauthorized users."
+            } else {
+                Add-ToLog -Message "   [OK] Nombre de membres dans ce groupe : $($group.MembersCount)" -ForegroundColor Green
+                $auditResults.AccountSecurity.LocalGroups.comments += "The local group '$($group.GroupName)' has an acceptable number of members."
+            }
+        }
+    }
+} else {
+    Write-Error "Impossible d'auditer les groupes locaux"
+}
+
+Merge-AuditResults -Section $auditResults.AccountSecurity.LocalGroups -AuditData $groupsAudit
+
+########## SMB Shares Audit ##########
+$auditResults.AccountSecurity.SMBShares = @{
+    status = ""
+    automatable = $false
+    recommendations = @()
+    comments = ""
+}
+
+Add-ToLog -Message "`n[+] Audit des partages SMB :" -Foregroundcolor Gray
+$smbSharesAudit = Get-SMBSharesAudit
+
+if ($smbSharesAudit) {
+    $auditResults.AccountSecurity.SMBShares.recommendations += "Avoid using 'Everyone' group on SMB shares. Review share permissions and NTFS permissions for 'Everyone' group."
+    $smbSharesAudit | ForEach-Object {
+        $share = $_
+        $sharesAccess = Get-SmbShareAccess -Name $share.Name
+        $user = if ($_.AccountName -eq 'Tout le monde') {'Tout le monde'} else {'Everyone'}
+        $sharesAccess | Where-Object { $_.AccountName -eq $user -and $_.AccessControlType -eq 'Allow' } | ForEach-Object {
+            Add-ToLog -Message "`nAttention : Le partage SMB '"$($share.Name)"' est accessible par 'Tout le monde'. Chemin du partage : "$($share.Path) -ForegroundColor Red
+            Add-ToLog -Message "Verification des droits NTFS du groupe 'Tout le monde' sur le repertoire partage..." -ForegroundColor Yellow
+            $NTFSAudit = Get-NTFSAudit -Path $share.Path -User $user
+            if ($NTFSAudit.IsFullControl -eq $true -and $localUserAudit.GuestEnabled -eq $true) {
+                Add-ToLog -Message "Le groupe 'Tout le monde' dispose de droits Full Control sur le repertoire partage." -ForegroundColor Red
+                Add-ToLog -Message "Le compte invite est active sur ce systeme, le partage est accessible sans mot de passe" -ForegroundColor Red
+                $auditResults.AccountSecurity.SMBShares.status = "FAIL"
+                $auditResults.AccountSecurity.SMBShares.comments += "The 'Everyone' group has Full Control on the SMB share '$($share.Name)'. Guest account is enabled, allowing unauthenticated access."
+            } elseif ($NTFSAudit.CanWrite -eq $true -and $NTFSAudit.CanRead -eq $true -and $localUserAudit.GuestEnabled -eq $true) {
+                Add-ToLog -Message "Le groupe 'Tout le monde' dispose de droits en lecture et ecriture sur le repertoire partage." -ForegroundColor Red
+                Add-ToLog -Message "Le compte invite est active sur ce systeme, le partage est accessible en lecture ecriture sans mot de passe" -ForegroundColor Red
+                $auditResults.AccountSecurity.SMBShares.status = "FAIL"
+                $auditResults.AccountSecurity.SMBShares.comments += "The 'Everyone' group has Read and Write access on the SMB share '$($share.Name)'. Guest account is enabled, allowing unauthenticated access."
+            } elseif ($NTFSAudit.CanWrite -eq $true -and $localUserAudit.GuestEnabled -eq $true) {
+                Add-ToLog -Message "Le groupe 'Tout le monde' dispose de droits en ecriture sur le repertoire partage." -ForegroundColor Red
+                Add-ToLog -Message "Le compte invite est active sur ce systeme, le partage est accessible en ecriture sans mot de passe" -ForegroundColor Red
+                $auditResults.AccountSecurity.SMBShares.status = "FAIL"
+                $auditResults.AccountSecurity.SMBShares.comments += "The 'Everyone' group has Write access on the SMB share '$($share.Name)'. Guest account is enabled, allowing unauthenticated access."
+            } elseif ($NTFSAudit.CanRead -eq $true -and $localUserAudit.GuestEnabled -eq $true) {
+                Add-ToLog -Message "Le groupe 'Tout le monde' dispose de droits en lecture sur le repertoire partage." -ForegroundColor Yellow
+                Add-ToLog -Message "Le compte invite est active sur ce systeme, le partage est accessible en lecture sans mot de passe" -ForegroundColor Yellow
+                $auditResults.AccountSecurity.SMBShares.status = "WARNING"
+                $auditResults.AccountSecurity.SMBShares.comments += "The 'Everyone' group has Read access on the SMB share '$($share.Name)'. Guest account is enabled, allowing unauthenticated access."
+            } elseif ($NTFSAudit.RawRights -eq 0 -and $localUserAudit.GuestEnabled -eq $true) {
+                Add-ToLog -Message "Le groupe 'Tout le monde' dispose de droits personnalises sur le repertoire partage." -ForegroundColor Yellow
+                Add-ToLog -Message "Le compte invite est active sur ce systeme, le partage est possiblement accessible sans mot de passe" -ForegroundColor Yellow
+                $auditResults.AccountSecurity.SMBShares.status = "WARNING"
+                $auditResults.AccountSecurity.SMBShares.comments += "The 'Everyone' group has custom rights on the SMB share '$($share.Name)'. Guest account is enabled, possibly allowing unauthenticated access."
+            } elseif ($localUserAudit.GuestEnabled -eq $false) {
+                Add-ToLog -Message "Le compte invite est desactive sur ce systeme, le partage n'est pas accessible sans mot de passe." -ForegroundColor Green
+                $auditResults.AccountSecurity.SMBShares.status = "PASS"
+                $auditResults.AccountSecurity.SMBShares.comments += "The 'Everyone' group has access on the SMB share '$($share.Name)', but the Guest account is disabled, preventing unauthenticated access."
+            } else {
+                Add-ToLog -Message "Le groupe 'Tout le monde' ne dispose pas de droits de lecture ou ecriture sur le repertoire partage." -ForegroundColor Green
+                $auditResults.AccountSecurity.SMBShares.status = "PASS"
+                $auditResults.AccountSecurity.SMBShares.comments += "The 'Everyone' group has no Read or Write access on the SMB share '$($share.Name)'."
+            }
+        }
+    }
+}
+
+Merge-AuditResults -Section $auditResults.AccountSecurity.SMBShares -AuditData $smbSharesAudit
+
+Export-AuditResultsToJson -AuditData $auditResults -OutputPath $ScriptPath -scriptStartDate $scriptStartDate -Depth 10
+
+######################################
+#    Service & Application Audits    #
+######################################
+$auditResults.ServicesAndApplications = @{}
+
+
+########## RDP Audit ##########
+$auditResults.ServicesAndApplications.RDP = @{
+    status = ""
+    automatable = $false
+    recommendations = @()
+    comments = ""
+}
+Add-ToLog -Message "`n[+] Audit des services RDP :" -ForegroundColor Gray
+$rdpAudit = Get-RDPAudit
+
+if ($rdpAudit -and $rdpAudit.Value) {
+    $r = $rdpAudit.Value
+
+    if ($r.RDPEnabled -eq $true) {
+        Add-ToLog -Message "   [ENABLED] RDP est active sur cette machine." -ForegroundColor Red
+        $auditResults.ServicesAndApplications.RDP.status = "FAIL"
+        $auditResults.ServicesAndApplications.RDP.comments += "RDP is enabled."
+    }
+    else {
+        Add-ToLog -Message "   [DISABLED] RDP est desactive au niveau OS." -ForegroundColor Green
+        $auditResults.ServicesAndApplications.RDP.status = "PASS"
+        $auditResults.ServicesAndApplications.RDP.comments += "RDP is disabled. "
+    }
+
+    Add-ToLog -Message "   [ADMIN RESTREINT] DisableRestrictedAdmin : $($r.DisableRestrictedAdmin)" -ForegroundColor Gray
+    Add-ToLog -Message "   [CHIFFREMENT] MinEncryptionLevel : $($r.MinEncryptionLevel)" -ForegroundColor Gray
+    Add-ToLog -Message "   [COUCHE DE SECURITE] SecurityLayer : $($r.SecurityLayer)" -ForegroundColor Gray
+    Add-ToLog -Message "   [NLA] UserAuthentication : $($r.UserAuthentication)" -ForegroundColor Gray
+
+    if ($r.fEncryptRPCTraffic -eq $true) {
+        Add-ToLog -Message "   [RPC] fEncryptRPCTraffic : Enabled" -ForegroundColor Green
+        $auditResults.ServicesAndApplications.RDP.comments += "RPC traffic encryption is enabled. "
+    } else {
+        Add-ToLog -Message "   [RPC] fEncryptRPCTraffic : Disabled" -ForegroundColor Red
+        $auditResults.ServicesAndApplications.RDP.comments += "RPC traffic encryption is disabled. "
+        if ($auditResults.ServicesAndApplications.RDP.status -ne "FAIL") {
+            $auditResults.ServicesAndApplications.RDP.status = "WARNING"
+        }
+    }
+
+    if ($r.Recommendation) {
+        Add-ToLog -Message "`n   Recommandation : $($r.Recommendation)" -ForegroundColor Yellow
+        $auditResults.ServicesAndApplications.RDP.recommendations += "$($r.Recommendation) | "
+    }
+
+    if ($rdpAudit.Xml) {
+        Add-ToLog -Message "`n   Actions proposees :" -ForegroundColor Gray
+        foreach ($item in $rdpAudit.Xml) {
+            Add-ToLog -Message "      - $($item.Category) : $($item.Description)" -ForegroundColor Yellow
+            Add-ToLog -Message "         Commande : $($item.Command)" -ForegroundColor DarkGray
+            $auditResults.ServicesAndApplications.RDP.automatable = $true
+            $remediationActions += $item
+        }
+
+    }
+
+} else {
+    Write-Error "Impossible d'auditer RDP (Get-RDPAudit n'a pas retourne de resultat)"
+    $auditResults.ServicesAndApplications.RDP.status = "WARNING"
+}
+
+Merge-AuditResults -Section $auditResults.ServicesAndApplications.RDP -AuditData $rdpAudit
+
+
+########## WinRM Audit ##########
+
+$auditResults.ServicesAndApplications.WinRM = @{
+    status = ""
+    automatable = $false
+    recommendations = @()
+    comments = ""
+}
+
+Add-ToLog -Message "`n[+] Audit WinRM :" -ForegroundColor Gray
+try {
+    $winrmAudit = Get-WinRMAudit
+
+    if (-not $winrmAudit.WinRmEnabled) {
+        Add-ToLog -Message "   [INACTIF] WinRM n'est pas installe ou le service est arrete." -ForegroundColor Magenta
+        Add-ToLog -Message "   Recommandation :" -ForegroundColor Yellow
+        foreach ($r in $winrmAudit.Recommendations) { 
+            Add-ToLog -Message "      - $r" -ForegroundColor Yellow
+            $auditResults.ServicesAndApplications.WinRM.recommendations += "$r | "
+        }
+        $auditResults.ServicesAndApplications.WinRM.status = "FAIL"
+        $auditResults.ServicesAndApplications.WinRM.comments += "WinRM is not enabled. "
+    }
+    else {
+        Add-ToLog -Message "   [ACTIF] WinRM est active." -ForegroundColor Yellow
+        Add-ToLog -Message "   [TRANSPORT] ListenerTransport : $($winrmAudit.ListenerTransport)" -ForegroundColor Gray
+        Add-ToLog -Message "   [ECOUTE] ListeningOn        : $($winrmAudit.ListeningOn)" -ForegroundColor Gray
+        Add-ToLog -Message "   [FILTRES IP] IPv4 : $($winrmAudit.IPv4Filter)    IPv6 : $($winrmAudit.IPv6Filter)" -ForegroundColor Gray
+        
+        $auditResults.ServicesAndApplications.WinRM.status = "PASS"
+        $auditResults.ServicesAndApplications.WinRM.comments += "WinRM is enabled. "
+
+        if ($winrmAudit.ServiceAuth) {
+            Add-ToLog -Message "   [AUTH SERVICE] Basic : $($winrmAudit.ServiceAuth.Basic)    Unencrypted : $($winrmAudit.ServiceAuth.Unencrypted)" -ForegroundColor Gray
+            $auditResults.ServicesAndApplications.WinRM.comments += "Service Auth Basic: $($winrmAudit.ServiceAuth.Basic), Unencrypted: $($winrmAudit.ServiceAuth.Unencrypted). "
+        }
+        if ($winrmAudit.ClientAuth) {
+            Add-ToLog -Message "   [AUTH CLIENT]  Basic : $($winrmAudit.ClientAuth.Basic)" -ForegroundColor Gray
+            $auditResults.ServicesAndApplications.WinRM.comments += "Client Auth Basic: $($winrmAudit.ClientAuth.Basic). "
+        }
+
+        if ($winrmAudit.RmUsersNotAdmins) {
+            Add-ToLog -Message "   [UTILISATEURS] Comptes dans Remote Management Users (non-admin) : $($winrmAudit.RmUsersNotAdmins -join ', ')" -ForegroundColor Yellow
+            $auditResults.ServicesAndApplications.WinRM.comments += "Non-admin Remote Management Users: $($winrmAudit.RmUsersNotAdmins -join ', '). "
+        }
+
+        if ($winrmAudit.Recommendations) {
+            Add-ToLog -Message "`n   Recommandations :" -ForegroundColor Yellow
+            foreach ($rec in $winrmAudit.Recommendations) {
+                Add-ToLog -Message "      - $rec" -ForegroundColor Yellow
+                $auditResults.ServicesAndApplications.WinRM.recommendations += "$rec | "
+            }
+        } else {
+            Add-ToLog -Message "   [OK] Configuration WinRM conforme aux bonnes pratiques detectee." -ForegroundColor Green
+            $auditResults.ServicesAndApplications.WinRM.comments += "WinRM configuration complies with best practices. "
+        }
+    }
+    Merge-AuditResults -Section $auditResults.ServicesAndApplications.WinRM -AuditData $winrmAudit
+}
+catch {
+    Write-Warning "Get-WinRMAudit a echoue : $($_.Exception.Message)"
+    $auditResults.ServicesAndApplications.WinRM.status = "WARNING"
+    $auditResults.ServicesAndApplications.WinRM.comments += "Error auditing WinRM: $($_.Exception.Message). "
+}
+
+
+
+########## SMB Audit ##########
+
+$auditResults.ServicesAndApplications.SMB = @{
+    status = ""
+    automatable = $false
+    recommendations = @()
+    comments = ""
+}
+Add-ToLog -Message "`n[+] Audit SMB :" -ForegroundColor Gray
+
+try {
+    $smbAudit = Get-SMBAudit
+
+    if ($smbAudit -and $smbAudit.Value) {
+        $s = $smbAudit.Value
+        $smbOk = $true
+
+        # Affichage du statut SMBv1
+        if ($s.SMBv1State -eq $true) {
+            Add-ToLog -Message "   [SMBv1] [ALERTE] SMBv1 est active. Il est recommande de le desactiver." -ForegroundColor Red
+            $auditResults.ServicesAndApplications.SMB.comments += "SMBv1 is enabled. "
+            $smbOk = $false
+        } else {
+            Add-ToLog -Message "   [SMBv1] [OK] SMBv1 est desactive." -ForegroundColor Green
+            $auditResults.ServicesAndApplications.SMB.comments += "SMBv1 is disabled. "
+        }
+
+        # Affichage du statut SMBv2/3
+        if ($s.SMBv2State -eq $true) {
+            Add-ToLog -Message "   [SMBv2/3] [OK] SMBv2/3 est active." -ForegroundColor Green
+            $auditResults.ServicesAndApplications.SMB.comments += "SMBv2/3 is enabled. "
+        } else {
+            Add-ToLog -Message "   [SMBv2/3] [ALERTE] SMBv2/3 est desactive." -ForegroundColor Red
+            $auditResults.ServicesAndApplications.SMB.comments += "SMBv2/3 is disabled. "
+            $smbOk = $false
+        }
+
+        # Affichage du statut de la signature SMB
+        if ($s.RequireSecuritySignature -eq $true) {
+            Add-ToLog -Message "   [SIGNING] [OK] La signature de securite SMB est requise." -ForegroundColor Green
+            $auditResults.ServicesAndApplications.SMB.comments += "SMB signing is required. "
+        } else {
+            Add-ToLog -Message "   [SIGNING] [ALERTE] La signature de securite SMB n'est pas requise." -ForegroundColor Red
+            $auditResults.ServicesAndApplications.SMB.comments += "SMB signing is not required. "
+            $smbOk = $false
+        }
+
+        if ($s.Comment) {
+            Add-ToLog -Message "`n   Details : $($s.Comment)" -ForegroundColor Gray
+            $auditResults.ServicesAndApplications.SMB.comments += "$($s.Comment) "
+        }
+
+        if ($s.Recommendation) {
+            Add-ToLog -Message "`n   Recommandation : $($s.Recommendation)" -ForegroundColor Yellow
+            $auditResults.ServicesAndApplications.SMB.recommendations += "$($s.Recommendation) | "
+        }
+
+        # Affichage des actions proposees
+        if ($smbAudit.Xml) {
+            Add-ToLog -Message "`n   Actions proposees :" -ForegroundColor Gray
+            foreach ($item in $smbAudit.Xml) {
+                Add-ToLog -Message "      - $($item.Category) : $($item.Description)" -ForegroundColor Yellow
+                Add-ToLog -Message "         Commande : $($item.Command)" -ForegroundColor DarkGray
+                $auditResults.ServicesAndApplications.SMB.automatable = $true
+                $remediationActions += $item
+            }
+        }
+
+        $auditResults.ServicesAndApplications.SMB.status = if ($smbOk) { "PASS" } else { "FAIL" }
+    } else {
+        Write-Error "Impossible d'auditer SMB (Get-SMBAudit n'a pas retourne de resultat)"
+        $auditResults.ServicesAndApplications.SMB.status = "WARNING"
+    }
+    
+    Merge-AuditResults -Section $auditResults.ServicesAndApplications.SMB -AuditData $smbAudit
+}
+catch {
+    Write-Warning "Get-SMBAudit a echoue : $($_.Exception.Message)"
+    $auditResults.ServicesAndApplications.SMB.status = "WARNING"
+    $auditResults.ServicesAndApplications.SMB.comments += "Error auditing SMB: $($_.Exception.Message). "
+}
+
+
+
+########### Update Audit ##########
+
+$auditResults.ServicesAndApplications.Updates = @{
+    status = ""
+    automatable = $false
+    recommendations = @()
+    comments = ""
+}
+
+Add-ToLog -Message "`n[+] Audit des mises a jour et version OS :" -ForegroundColor Gray
+try {
+    $osInfo = Get-OSVersionInfo
+    if ($osInfo) {
+        Add-ToLog -Message "`n[OS] $($osInfo.Caption) - Version $($osInfo.Version) (Full: $($osInfo.FullVersion))" -ForegroundColor Cyan
+        $auditResults.ServicesAndApplications.Updates.comments += "OS: $($osInfo.Caption), Version: $($osInfo.Version). "
+        
+        if ($osInfo.InstallDate) {
+            $installDate = [datetime]$osInfo.InstallDate
+            Add-ToLog -Message "Build: $($osInfo.BuildNumber)   Installe le: $($installDate.ToString('yyyy-MM-dd HH:mm'))" -ForegroundColor Gray
+            $auditResults.ServicesAndApplications.Updates.comments += "Build: $($osInfo.BuildNumber), Installed: $($installDate.ToString('yyyy-MM-dd HH:mm')). "
+        } else {
+            Add-ToLog -Message "Build: $($osInfo.BuildNumber)   InstallDate: Non disponible" -ForegroundColor Gray
+            $auditResults.ServicesAndApplications.Updates.comments += "Build: $($osInfo.BuildNumber). "
+        }
+        
+        $auditResults.ServicesAndApplications.Updates.status = "PASS"
+        $auditResults.ServicesAndApplications.Updates.recommendations += "Keep the system updated with latest security patches. "
+    }
+
+    $updateSource = Get-UpdateSource
+    Add-ToLog -Message "`n[Source de mises a jour] $updateSource" -ForegroundColor Gray
+    $auditResults.ServicesAndApplications.Updates.comments += "Update source: $updateSource. "
+
+    $kbList = Get-InstalledKB
+    if ($kbList) {
+        Add-ToLog -Message "`n[+] Dernieres mises a jour installees (10 dernieres) :" -ForegroundColor Gray
+        $kbList | Select-Object -First 10 | Format-Table HotFixID, Description, @{Name='InstalledOn';Expression={ ($_.InstalledOn -as [datetime]).ToString('yyyy-MM-dd') }}, InstalledBy -AutoSize
+        $auditResults.ServicesAndApplications.Updates.comments += "$($kbList.Count) KB updates found. "
+    } else {
+        Add-ToLog -Message "Aucune mise a jour detectee via Get-HotFix" -ForegroundColor Yellow
+        $auditResults.ServicesAndApplications.Updates.comments += "No updates found via Get-HotFix. "
+        $auditResults.ServicesAndApplications.Updates.status = "WARNING"
+    }
+    Merge-AuditResults -Section $auditResults.ServicesAndApplications.Updates -AuditData $osInfo
+}
+catch {
+    Write-Warning "Erreur lors de la collecte des informations de mise a jour : $($_.Exception.Message)"
+    $auditResults.ServicesAndApplications.Updates.status = "WARNING"
+    $auditResults.ServicesAndApplications.Updates.comments += "Error collecting update information: $($_.Exception.Message). "
+}
+
+
+########## Installed Applications Audit ##########
+
+$auditResults.ServicesAndApplications.InstalledApplications = @{
+    status = ""
+    automatable = $false
+    recommendations = @()
+    comments = ""
+}
+
+Add-ToLog -Message "`n[+] Audit des applications installees :" -ForegroundColor Gray
+try {
+    $apps = Get-InstalledApplications
+
+    if ($apps) {
+        Add-ToLog -Message "   [INFO] Nombre d'applications detectees : $(($apps | Measure-Object).Count)" -ForegroundColor Gray
+        $auditResults.ServicesAndApplications.InstalledApplications.comments += "$($apps.Count) applications detected. "
+        $apps | Select-Object Name, Version, Publisher, InstallLocation |
+            Sort-Object Name |
+            Format-Table -AutoSize
+        $auditResults.ServicesAndApplications.InstalledApplications.status = "PASS"
+    } else {
+        Add-ToLog -Message "   [INFO] Aucune application installee detectee." -ForegroundColor Yellow
+        $auditResults.ServicesAndApplications.InstalledApplications.comments += "No installed applications detected. "
+        $auditResults.ServicesAndApplications.InstalledApplications.status = "PASS"
+    }
+
+    # Verification des mises a jour applicatives via WinGet (si disponible)
+    $appUpgrades = Get-AppUpgrade -ErrorAction SilentlyContinue
+    if ($appUpgrades) {
+        Add-ToLog -Message "`n   [Mises a jour disponibles via WinGet] :" -ForegroundColor Yellow
+        $appUpgrades |
+            Select-Object Name, InstalledVersion, @{Name='Available';Expression={$_.AvailableVersions -join ','}} |
+            Format-Table -AutoSize
+        Add-ToLog -Message "   Recommandation : utiliser `winget upgrade --all` pour mettre a jour les applications prises en charge." -ForegroundColor Yellow
+        $auditResults.ServicesAndApplications.InstalledApplications.recommendations += "If winget installed, consider to use 'winget upgrade --name ...' to update supported applications. If not installed, please verify manually"
+        $auditResults.ServicesAndApplications.InstalledApplications.comments += "$($appUpgrades.Count) application updates available via WinGet. "
+        $auditResults.ServicesAndApplications.InstalledApplications.status = "WARNING"
+    } elseif ($null -eq $appUpgrades) {
+        Add-ToLog -Message "   [INFO] WinGet non disponible ou aucune donnee de mise a jour." -ForegroundColor Gray
+        $auditResults.ServicesAndApplications.InstalledApplications.comments += "WinGet not available or no update data. "
+    } else {
+        Add-ToLog -Message "   [OK] Aucune mise a jour applicative detectee via WinGet." -ForegroundColor Green
+        $auditResults.ServicesAndApplications.InstalledApplications.comments += "No application updates available via WinGet. "
+        $auditResults.ServicesAndApplications.InstalledApplications.recommendations += "Applications are up to date. "
+    }
+    
+    if ([string]::IsNullOrWhiteSpace($auditResults.ServicesAndApplications.InstalledApplications.status)) {
+        $auditResults.ServicesAndApplications.InstalledApplications.status = "PASS"
+    }
+    Merge-AuditResults -Section $auditResults.ServicesAndApplications.InstalledApplications -AuditData $apps
+}
+catch {
+    Write-Warning "Erreur lors de l'audit des applications installees : $($_.Exception.Message)"
+    $auditResults.ServicesAndApplications.InstalledApplications.status = "WARNING"
+    $auditResults.ServicesAndApplications.InstalledApplications.comments += "Error auditing installed applications: $($_.Exception.Message). "
+}
+
+Export-AuditResultsToJson -AuditData $auditResults -OutputPath $ScriptPath -scriptStartDate $scriptStartDate -Depth 10
+
+######################################
+#      Network Security Audits       #
+######################################
+$auditResults.NetworkSecurity = @{}
+########## IPv6 Audit ##########
+
+$auditResults.NetworkSecurity.IPv6 = @{
+    status = ""
+    automatable = $false
+    recommendations = @()
+    comments = ""
+}
+
+Add-ToLog -Message "`n[+] Audit de la configuration IPv6 :" -ForegroundColor Gray
+$ipv6Audit = Get-IPv6Status
+
+if ($ipv6Audit -and $ipv6Audit.Count -gt 0) {
+    $auditResults.NetworkSecurity.IPv6.status = "PASS"
+    $ipv6Recs = @()
+    foreach ($adapter in $ipv6Audit) {
+        if ($adapter.IPv6Enabled -eq $true) {
+            Add-ToLog -Message "   [ENABLED] Adapter: $($adapter.Adapter) - IPv6 is enabled." -ForegroundColor Red
+            Add-ToLog -Message "       Recommendation: $($adapter.Recommendation)" -ForegroundColor Yellow
+            $auditResults.NetworkSecurity.IPv6.status = "FAIL"
+            $ipv6Recs += $adapter.Recommendation
+            $auditResults.NetworkSecurity.IPv6.comments += "IPv6 is enabled on adapter $($adapter.Adapter). "
+        } else {
+            Add-ToLog -Message "   [DISABLED] Adapter: $($adapter.Adapter) - IPv6 is disabled." -ForegroundColor Green
+            Add-ToLog -Message "       Recommendation: $($adapter.Recommendation)" -ForegroundColor Yellow
+            $ipv6Recs += $adapter.Recommendation
+            $auditResults.NetworkSecurity.IPv6.comments += "IPv6 is disabled on adapter $($adapter.Adapter). "
+        }
+    }
+    $auditResults.NetworkSecurity.IPv6.recommendations = ($ipv6Recs | Select-Object -Unique) -join ", "
+} else {
+    Write-Error "Impossible d'auditer la configuration IPv6 (Get-IPv6Status n'a pas retourne de resultat)"
+}
+
+Merge-AuditResults -Section $auditResults.NetworkSecurity.IPv6 -AuditData $ipv6Audit
+
+########## LLMNR Audit ##########
+
+$auditResults.NetworkSecurity.LLMNR = @{
+    status = ""
+    automatable = $false
+    recommendations = @()
+    comments = ""
+}
+
+Add-ToLog -Message "`n[+] Audit de la configuration LLMNR :" -ForegroundColor Gray
+$llmnrAudit = Get-LLMNRState
+
+if (-not $llmnrAudit.Value) {
+    Add-ToLog -Message "   [DEFAULT] - $($llmnrAudit.LLMNR_Status)" -ForegroundColor Red
+    Add-ToLog -Message "       Recommendation: $($llmnrAudit.Recommendation)" -ForegroundColor Yellow
+    $auditResults.NetworkSecurity.LLMNR.status = "FAIL"
+    $auditResults.NetworkSecurity.LLMNR.comments += "LLMNR is enabled (default). "
+} elseif ($llmnrAudit.Value -eq 1) {
+    Add-ToLog -Message "   [ENABLED] - $($llmnrAudit.LLMNR_Status)" -ForegroundColor Red
+    Add-ToLog -Message "       Recommendation: $($llmnrAudit.Recommendation)" -ForegroundColor Yellow
+    $auditResults.NetworkSecurity.LLMNR.status = "FAIL"
+    $auditResults.NetworkSecurity.LLMNR.comments += "LLMNR is enabled. "
+} elseif ($llmnrAudit.Value -eq 0) {
+    Add-ToLog -Message "   [DISABLED] - $($llmnrAudit.LLMNR_Status)" -ForegroundColor Green
+    Add-ToLog -Message "       Recommendation: $($llmnrAudit.Recommendation)" -ForegroundColor Green
+    $auditResults.NetworkSecurity.LLMNR.status = "PASS"
+    $auditResults.NetworkSecurity.LLMNR.comments += "LLMNR is disabled. "
+} else {
+    Add-ToLog -Message "   [UNKNOWN] - $($llmnrAudit.LLMNR_Status)" -ForegroundColor Yellow
+    Add-ToLog -Message "       Recommendation: $($llmnrAudit.Recommendation)" -ForegroundColor Yellow
+    $auditResults.NetworkSecurity.LLMNR.status = "WARNING"
+    $auditResults.NetworkSecurity.LLMNR.comments += "LLMNR status is unknown. "
+}
+$auditResults.NetworkSecurity.LLMNR.recommendations += $llmnrAudit.Recommendation
+
+Merge-AuditResults -Section $auditResults.NetworkSecurity.LLMNR -AuditData $llmnrAudit
+
+########## NETBIOS Audit ##########
+
+$auditResults.NetworkSecurity.NetBIOS = @{
+    status = ""
+    automatable = $false
+    recommendations = @()
+    comments = ""
+}
+
+Add-ToLog -Message "`n[+] Audit de la configuration NetBIOS :" -ForegroundColor Gray
+$netbiosAudit = Get-NetBiosInfo
+
+if ($netbiosAudit) {
+    $hasIssue = $false
+    $netbiosRecs = @()
+    foreach ($adapter in $netbiosAudit) {
+        Add-ToLog -Message "`n   Interface: $($adapter.Interface)" -ForegroundColor Cyan
+        Add-ToLog -Message "   Statut NetBIOS: $($adapter.NetBIOS_Status)" -ForegroundColor Gray
+        Add-ToLog -Message "   Code TcpipNetbiosOptions: $($adapter.TcpipNetbiosOptions)" -ForegroundColor Gray
+        
+        # Affichage conditionnel selon le statut
+        switch ($adapter.TcpipNetbiosOptions) {
+            2 {
+                Add-ToLog -Message "   [OK] $($adapter.Recommendation)" -ForegroundColor Green
+                $netbiosRecs += $adapter.Recommendation
+                $auditResults.NetworkSecurity.NetBIOS.comments += "NetBIOS is disabled on adapter $($adapter.Interface). "
+            }
+            1 {
+                Add-ToLog -Message "   [ALERTE] $($adapter.Recommendation)" -ForegroundColor Red
+                $netbiosRecs += $adapter.Recommendation
+                $auditResults.NetworkSecurity.NetBIOS.comments += "NetBIOS is enabled via DHCP on adapter $($adapter.Interface). "
+                $hasIssue = $true
+            }
+            0 {
+                Add-ToLog -Message "   [MOYEN] $($adapter.Recommendation)" -ForegroundColor Red
+                $netbiosRecs += $adapter.Recommendation
+                $auditResults.NetworkSecurity.NetBIOS.comments += "NetBIOS is enabled on adapter $($adapter.Interface). "
+                $hasIssue = $true
+            }
+            default {
+                Add-ToLog -Message "   [INFORMATION] $($adapter.Recommendation)" -ForegroundColor Yellow
+                $netbiosRecs += $adapter.Recommendation
+                $auditResults.NetworkSecurity.NetBIOS.comments += "NetBIOS status unknown on adapter $($adapter.Interface). "
+                $hasIssue = $true
+            }
+        }
+    }
+    $auditResults.NetworkSecurity.NetBIOS.status = if ($hasIssue) { "FAIL" } else { "PASS" }
+    $auditResults.NetworkSecurity.NetBIOS.recommendations = ($netbiosRecs | Select-Object -Unique) -join " | "
+} else {
+    Write-Error "Impossible d'auditer la configuration NetBIOS" #-ErrorAction SilentlyContinue
+}
+
+Merge-AuditResults -Section $auditResults.NetworkSecurity.NetBIOS -AuditData $netbiosAudit
+
+########## FIREWALL Audit ##########
+$auditResults.NetworkSecurity.Firewall = @{
+    status = ""
+    automatable = $false
+    recommendations = @()
+    comments = ""
+}
+
+Add-ToLog -Message "`n[+] Audit du pare-feu (Windows Firewall) :" -ForegroundColor Gray
+$fwAudit = Get-FirewallAudit
+
+if ($fwAudit) {
+
+    # Etat du service Firewall
+    if ($fwAudit.FirewallServiceStatus -eq 'NotFound') {
+        Add-ToLog -Message "   [INFORMATION] Le service Windows Firewall (mpssvc) n'a pas ete trouve." -ForegroundColor Red
+        Add-ToLog -Message "       Recommandation : $($fwAudit.GlobalRecommendations -join '; ')" -ForegroundColor Yellow
+        $auditResults.NetworkSecurity.Firewall.status = "FAIL"
+        $auditResults.NetworkSecurity.Firewall.comments += "Windows Firewall service not found. "
+    }
+    elseif (-not $fwAudit.FirewallServiceRunning) {
+        Add-ToLog -Message "   [ALERTE] Le service Windows Firewall existe mais n'est pas demarre : $($fwAudit.FirewallServiceStatus)" -ForegroundColor Red
+        Add-ToLog -Message "       Recommandation : $($fwAudit.GlobalRecommendations -join '; ')" -ForegroundColor Yellow
+        $auditResults.NetworkSecurity.Firewall.status = "FAIL"
+        $auditResults.NetworkSecurity.Firewall.comments += "Windows Firewall service not running: $($fwAudit.FirewallServiceStatus). "
+    }
+    else {
+        Add-ToLog -Message "   [OK] Le service Windows Firewall est en cours d'execution." -ForegroundColor Green
+        Add-ToLog -Message "   [PROFIL ACTIF] : $($fwAudit.ActiveProfile)" -ForegroundColor Gray
+        $auditResults.NetworkSecurity.Firewall.status = "PASS"
+        $auditResults.NetworkSecurity.Firewall.comments += "Windows Firewall service is running on active profile: $($fwAudit.ActiveProfile). "
+    }
+
+    # Details et recommandations RDP
+    $fwRecs = @()
+    if ($fwAudit.RdpRuleDetails) {
+        Add-ToLog -Message "`n   Regles RDP detectees (nom / LocalAddress / RemoteAddress) :" -ForegroundColor Gray
+        foreach ($r in $fwAudit.RdpRuleDetails) {
+            Add-ToLog -Message "      - $($r.Name)    Local: $($r.LocalAddress)    Remote: $($r.RemoteAddress)" -ForegroundColor Yellow
+            $auditResults.NetworkSecurity.Firewall.comments += "RDP rule detected: $($r.Name). "
+        }
+
+        if ($fwAudit.RdpRecommendations) {
+            Add-ToLog -Message "`n   Recommandations RDP :" -ForegroundColor Yellow
+            foreach ($rec in $fwAudit.RdpRecommendations) { 
+                Add-ToLog -Message "      - $rec" -ForegroundColor Yellow
+                $fwRecs += $rec
+            }
+        }
+    }
+    else {
+        Add-ToLog -Message "`n   [INFO] Aucune regle RDP activee detectee." -ForegroundColor Gray
+        if ($fwAudit.RdpRecommendations -and ($fwAudit.RdpRecommendations | Measure-Object).Count -gt 0) {
+            Add-ToLog -Message "   Recommandation : $($fwAudit.RdpRecommendations -join '; ')" -ForegroundColor Yellow
+            foreach ($rec in $fwAudit.RdpRecommendations) {
+                $fwRecs += $rec
+            }
+        }
+    }
+
+    # Recommandations globales
+    if ($fwAudit.GlobalRecommendations -and ($fwAudit.GlobalRecommendations | Measure-Object).Count -gt 0) {
+        Add-ToLog -Message "`n   Recommandations globales :" -ForegroundColor Yellow
+        foreach ($g in $fwAudit.GlobalRecommendations) { 
+            Add-ToLog -Message "      - $g" -ForegroundColor Yellow
+            $fwRecs += $g
+        }
+    }
+    $auditResults.NetworkSecurity.Firewall.recommendations = ($fwRecs | Select-Object -Unique) -join " | "
+}
+else {
+    Write-Error "Impossible d'auditer le pare-feu (Get-FirewallAudit n'a pas retourne de resultat)"
+}
+
+Merge-AuditResults -Section $auditResults.NetworkSecurity.Firewall -AuditData $fwAudit
+
+########## VPN Audit ##########
+$auditResults.NetworkSecurity.VPN = @{
+    status = ""
+    automatable = $false
+    recommendations = @()
+    comments = ""
+}
+
+Add-ToLog -Message "`n[+] Audit des connexions VPN :" -ForegroundColor Gray
+$vpnStatus = Get-VPNStatus
+
+if ($vpnStatus) {
+    Add-ToLog -Message "   Description : $($vpnStatus.Description)" -ForegroundColor Gray
+
+    if ($vpnStatus.HasVpnAdapters) {
+        Add-ToLog -Message "`n   Interfaces VPN/TAP/TUN actives detectees :" -ForegroundColor Gray
+        $auditResults.NetworkSecurity.VPN.status = "WARNING"
+        foreach ($a in $vpnStatus.Adapters) {
+            Add-ToLog -Message "      - $($a.Name) | $($a.InterfaceDescription) | $($a.Status)" -ForegroundColor Yellow
+            $auditResults.NetworkSecurity.VPN.comments += "VPN adapter detected: $($a.Name) ($($a.Status)). "
+        }
+        $auditResults.NetworkSecurity.VPN.recommendations += "Review VPN adapter configurations for security. | "
+    } else {
+        Add-ToLog -Message "   [INFO] Aucune interface VPN/TAP/TUN active detectee." -ForegroundColor Gray
+        $auditResults.NetworkSecurity.VPN.status = "PASS"
+        $auditResults.NetworkSecurity.VPN.comments += "No active VPN/TAP/TUN adapters detected. "
+    }
+
+    if ($vpnStatus.HasVpnProfiles) {
+        Add-ToLog -Message "`n   Profils VPN configures : $($vpnStatus.VpnProfiles.Count)" -ForegroundColor Gray
+        $auditResults.NetworkSecurity.VPN.comments += "$($vpnStatus.VpnProfiles.Count) VPN profile(s) configured. "
+        if ($vpnStatus.HasActiveVpnProfiles) {
+            Add-ToLog -Message "   Profils VPN connectes : $($vpnStatus.ActiveVpnProfiles.Count)" -ForegroundColor Green
+            $auditResults.NetworkSecurity.VPN.comments += "$($vpnStatus.ActiveVpnProfiles.Count) VPN profile(s) connected. "
+            if ([string]::IsNullOrWhiteSpace($auditResults.NetworkSecurity.VPN.status)) {
+                $auditResults.NetworkSecurity.VPN.status = "PASS"
+            }
+        } else {
+            Add-ToLog -Message "   Aucun profil VPN actuellement connecte." -ForegroundColor Yellow
+            $auditResults.NetworkSecurity.VPN.comments += "No active VPN profiles connected. "
+            if ([string]::IsNullOrWhiteSpace($auditResults.NetworkSecurity.VPN.status)) {
+                $auditResults.NetworkSecurity.VPN.status = "PASS"
+            }
+        }
+    } else {
+        Add-ToLog -Message "   [INFO] Aucun profil VPN configure via le client Windows." -ForegroundColor Gray
+        $auditResults.NetworkSecurity.VPN.status = if ([string]::IsNullOrWhiteSpace($auditResults.NetworkSecurity.VPN.status)) { "PASS" } else { $auditResults.NetworkSecurity.VPN.status }
+        $auditResults.NetworkSecurity.VPN.comments += "No VPN profiles configured via Windows VPN client. "
+    }
+} else {
+    Write-Error "Impossible d'auditer le VPN (Get-VPNStatus n'a pas retourne de resultat)"
+}
+
+Merge-AuditResults -Section $auditResults.NetworkSecurity.VPN -AuditData $vpnStatus
+
+Export-AuditResultsToJson -AuditData $auditResults -OutputPath $ScriptPath -scriptStartDate $scriptStartDate -Depth 10
+
+##########################################
+#           OS Security Audit            #
+##########################################
+$auditResults.OSSecurity = @{}
+
+########## Optional Features Audit ##########
+
+$auditResults.OSSecurity.OptionalFeatures = @{
+    status = ""
+    automatable = $false
+    recommendations = @()
+    comments = ""
+}
+
+Add-ToLog -Message "`n[+] Audit des fonctionnalites optionnelles (Windows Optional Features) :" -ForegroundColor Gray
+try {
+    $optFeatures = Get-OptionalFeaturesAudit
+
+    if ($optFeatures) {
+        Add-ToLog -Message "   [INFO] Nombre de fonctionnalites optionnelles activees : $(($optFeatures | Measure-Object).Count)" -ForegroundColor Gray
+
+        # Affichage synthetique
+        $optFeatures |
+            Select-Object FeatureName, State,
+                @{Name='Risk';Expression={ if ($_.RiskNote) { $_.RiskNote } else { 'Aucun risque specifique detecte' } } },
+                Recommendation |
+            Sort-Object @{Expression={ if ($_.Risk -ne 'Aucun risque specifique detecte') { 0 } else { 1 } } }, FeatureName |
+            Format-Table -AutoSize
+
+        # Affichage detaille des elements a risque
+        $risky = $optFeatures | Where-Object { $_.RiskNote -ne '' }
+        if ($risky) {
+            Add-ToLog -Message "`n   [ATTENTION] Fonctions potentiellement dangereuses / exposees :" -ForegroundColor Yellow
+            $auditResults.OSSecurity.OptionalFeatures.status = "FAIL"
+            $featRecs = @()
+            foreach ($f in $risky) {
+                Add-ToLog -Message "      - $($f.FeatureName) : $($f.RiskNote)" -ForegroundColor Yellow
+                Add-ToLog -Message "         Recommandation : $($f.Recommendation)" -ForegroundColor Yellow
+                Add-ToLog -Message "         Action suggeree (exemple) : Disable-WindowsOptionalFeature -Online -FeatureName `"$($f.FeatureName)`" -NoRestart" -ForegroundColor DarkGray
+                $featRecs += $f.Recommendation
+                $auditResults.OSSecurity.OptionalFeatures.comments += "$($f.FeatureName): $($f.RiskNote). "
+                $auditResults.OSSecurity.OptionalFeatures.automatable = $true
+            }
+            $auditResults.OSSecurity.OptionalFeatures.recommendations = ($featRecs | Select-Object -Unique) -join " | "
+        } else {
+            Add-ToLog -Message "   [OK] Aucune fonctionnalite optionnelle notablement risquee detectee." -ForegroundColor Green
+            $auditResults.OSSecurity.OptionalFeatures.status = "PASS"
+            $auditResults.OSSecurity.OptionalFeatures.comments += "No risky optional features detected. "
+        }
+    } else {
+        Add-ToLog -Message "   [INFO] Aucune fonctionnalite optionnelle activee detectee." -ForegroundColor Yellow
+        $auditResults.OSSecurity.OptionalFeatures.status = "PASS"
+        $auditResults.OSSecurity.OptionalFeatures.comments += "No optional features enabled. "
+    }
+}
+catch {
+    Write-Warning "Erreur lors de l'audit des fonctionnalites optionnelles : $($_.Exception.Message)"
+    $auditResults.OSSecurity.OptionalFeatures.status = "WARNING"
+    $auditResults.OSSecurity.OptionalFeatures.comments += "Error auditing optional features: $($_.Exception.Message). "
+}
+
+Merge-AuditResults -Section $auditResults.OSSecurity.OptionalFeatures -AuditData $optFeatures
+
+
+########## AppLocker Audit ##########
+
+$auditResults.OSSecurity.AppLocker = @{
+    status = ""
+    automatable = $false
+    recommendations = @()
+    comments = ""
+}
+
+Add-ToLog -Message "`n[+] Audit de la configuration AppLocker :" -ForegroundColor Gray
+try {
+    $appLockerState = Get-AppLockerState
+
+    if ($appLockerState) {
+        if ($appLockerState.AppLockerPresent) {
+            # AppLocker est present
+            if ($appLockerState.AnyRuleEnabled) {
+                Add-ToLog -Message "   [OK] AppLocker est present et au moins une collection de regles est en mode Enforced." -ForegroundColor Green
+                Add-ToLog -Message "       Statut : $($appLockerState.Comment)" -ForegroundColor Green
+                $auditResults.OSSecurity.AppLocker.status = "PASS"
+                $auditResults.OSSecurity.AppLocker.comments += "AppLocker is present and at least one rule collection is in Enforced mode. $($appLockerState.Comment). "
+            } else {
+                Add-ToLog -Message "   [INFO] AppLocker est present mais aucune collection de regles n'est en mode Enforced." -ForegroundColor Yellow
+                Add-ToLog -Message "       Statut : $($appLockerState.Comment)" -ForegroundColor Yellow
+                $auditResults.OSSecurity.AppLocker.status = "WARNING"
+                $auditResults.OSSecurity.AppLocker.comments += "AppLocker is present but no rule collection is in Enforced mode. $($appLockerState.Comment). "
+            }
+        } else {
+            # Aucune politique AppLocker effective
+            Add-ToLog -Message "   [ALERTE] Aucune politique AppLocker effective detectee sur ce systeme." -ForegroundColor Red
+            Add-ToLog -Message "       Statut : $($appLockerState.Comment)" -ForegroundColor Yellow
+            $auditResults.OSSecurity.AppLocker.status = "FAIL"
+            $auditResults.OSSecurity.AppLocker.comments += "No effective AppLocker policy detected. $($appLockerState.Comment). "
+        }
+
+        # Affichage de la recommandation
+        Add-ToLog -Message "       Recommandation : $($appLockerState.Recommendation)" -ForegroundColor Yellow
+        $auditResults.OSSecurity.AppLocker.recommendations += $appLockerState.Recommendation
+    } else {
+        Write-Error "Impossible d'auditer AppLocker (Get-AppLockerState n'a pas retourne de resultat)"
+    }
+}
+catch {
+    Write-Warning "Erreur lors de l'audit AppLocker : $($_.Exception.Message)"
+    $auditResults.OSSecurity.AppLocker.status = "WARNING"
+    $auditResults.OSSecurity.AppLocker.comments += "Error auditing AppLocker: $($_.Exception.Message). "
+}
+
+Merge-AuditResults -Section $auditResults.OSSecurity.AppLocker -AuditData $appLockerState
+
+########## SRP Audit ##########
+
+
+$auditResults.OSSecurity.SRP = @{
+    status = ""
+    automatable = $false
+    recommendations = @()
+    comments = ""
+}
+
+Add-ToLog -Message "`n[+] Audit de la configuration SRP (Software Restriction Policies) :" -ForegroundColor Gray
+try {
+    $srpAudit = Get-SRPState
+
+    if ($srpAudit) {
+        $srpDetected = $false
+        foreach ($srp in $srpAudit) {
+            Add-ToLog -Message "`n   Scope: $($srp.Scope)" -ForegroundColor Cyan
+            
+            if ($srp.SRPPresent) {
+                Add-ToLog -Message "   [DeTECTe] SRP est configure pour ce scope." -ForegroundColor Yellow
+                $auditResults.OSSecurity.SRP.status = "PASS"
+                $srpDetected = $true
+                $auditResults.OSSecurity.SRP.comments += "SRP is configured for scope: $($srp.Scope). "
+            } else {
+                Add-ToLog -Message "   [ABSENT] Aucune SRP detectee pour ce scope." -ForegroundColor Green
+                if (-not $srpDetected) { $auditResults.OSSecurity.SRP.status = "FAIL" }
+                $auditResults.OSSecurity.SRP.comments += "No SRP for scope $($srp.Scope). "
+            }
+            
+            Add-ToLog -Message "   Chemin du registre: $($srp.RegistryPath)" -ForegroundColor Gray
+            Add-ToLog -Message "   Statut: $($srp.Comment)" -ForegroundColor Gray
+            Add-ToLog -Message "   Recommandation: $($srp.Recommendation)" -ForegroundColor Yellow
+            $auditResults.OSSecurity.SRP.recommendations += $srp.Recommendation
+        }
+        if (-not $srpDetected) { $auditResults.OSSecurity.SRP.status = "FAIL" }
+    } else {
+        Write-Error "Impossible d'auditer SRP (Get-SRPState n'a pas retourne de resultat)"
+        $auditResults.OSSecurity.SRP.status = "WARNING"
+        $auditResults.OSSecurity.SRP.comments += "No SRP audit results returned. "
+    }
+}
+catch {
+    Write-Warning "Get-SRPState a echoue : $($_.Exception.Message)"
+    $auditResults.OSSecurity.SRP.status = "WARNING"
+    $auditResults.OSSecurity.SRP.comments += "Error auditing SRP: $($_.Exception.Message). "
+}
+
+Merge-AuditResults -Section $auditResults.OSSecurity.SRP -AuditData $srpAudit
+
+
+########## Server Antivirus Status Audit ##########
+
+$auditResults.OSSecurity.ServerAntivirusStatus = @{
+    status = ""
+    automatable = $false
+    recommendations = @()
+    comments = ""
+}
+
+Add-ToLog -Message "`n[+] Audit de l'etat des services antivirus :" -ForegroundColor Gray
+$antivirusStatus = Get-ServerAntivirusStatus
+
+if ($antivirusStatus) {
+    $hasIssue = $false
+    $avRecs = @()
+    foreach ($av in $antivirusStatus) {
+        Add-ToLog -Message "`nService : $($av.Name)" -ForegroundColor Cyan
+        
+        if ($av.Present -eq $false) {
+            Add-ToLog -Message "   [ALERTE] Aucune solution antivirus detectee sur ce serveur." -ForegroundColor Red
+            Add-ToLog -Message "   Recommandation : $($av.Recommendation)" -ForegroundColor Yellow
+            $auditResults.OSSecurity.ServerAntivirusStatus.status = "FAIL"
+            $auditResults.OSSecurity.ServerAntivirusStatus.comments += "No antivirus solution detected. "
+            $auditResults.OSSecurity.ServerAntivirusStatus.recommendations += $av.Recommendation
+            $hasIssue = $true
+        } else {
+            # Statut du service
+            if ($av.ServiceRunning) {
+                Add-ToLog -Message "   [OK] Le service antivirus est en cours d'execution." -ForegroundColor Green
+                $auditResults.OSSecurity.ServerAntivirusStatus.comments += "Antivirus service is running. "
+            } else {
+                Add-ToLog -Message "   [ALERTE] Le service antivirus n'est pas en cours d'execution." -ForegroundColor Red
+                $auditResults.OSSecurity.ServerAntivirusStatus.comments += "Antivirus service is not running. "
+                $hasIssue = $true
+            }
+
+            # Monitoring en temps reel (pour Defender uniquement)
+            if ($null -ne $av.RealtimeMonitoring) {
+                if ($av.RealtimeMonitoring) {
+                    Add-ToLog -Message "   [OK] La protection en temps reel est activee." -ForegroundColor Green
+                    $auditResults.OSSecurity.ServerAntivirusStatus.comments += "Real-time monitoring is enabled. "
+                } else {
+                    Add-ToLog -Message "   [ALERTE] La protection en temps reel est desactivee." -ForegroundColor Red
+                    $auditResults.OSSecurity.ServerAntivirusStatus.comments += "Real-time monitoring is disabled. "
+                    $hasIssue = $true
+                }
+            }
+
+            # Status global
+            if ($av.OverallProtected) {
+                Add-ToLog -Message "   [OK] Protection globale : Active" -ForegroundColor Green
+            } else {
+                Add-ToLog -Message "   [ALERTE] Protection globale : Inactive ou degradee" -ForegroundColor Red
+                $auditResults.OSSecurity.ServerAntivirusStatus.comments += "Global protection is inactive or degraded. "
+                $hasIssue = $true
+            }
+
+            # Contexte serveur
+            if ($av.IsDomainController) {
+                Add-ToLog -Message "   [INFO] Cette machine est un controleur de domaine." -ForegroundColor Magenta
+                $auditResults.OSSecurity.ServerAntivirusStatus.comments += "This machine is a Domain Controller. "
+            }
+
+            # Description et recommandation
+            Add-ToLog -Message "   Description : $($av.Description)" -ForegroundColor Gray
+            Add-ToLog -Message "   Recommandation : $($av.Recommendation)" -ForegroundColor Yellow
+            $avRecs += $av.Recommendation
+        }
+    }
+    $auditResults.OSSecurity.ServerAntivirusStatus.status = if ($hasIssue) { "FAIL" } else { "PASS" }
+    $auditResults.OSSecurity.ServerAntivirusStatus.recommendations = ($avRecs | Select-Object -Unique) -join " | "
+} else {
+    Write-Error "Impossible d'auditer l'etat des services antivirus (Get-ServerAntivirusStatus n'a pas retourne de resultat)"
+    $auditResults.OSSecurity.ServerAntivirusStatus.status = "WARNING"
+}
+
+Merge-AuditResults -Section $auditResults.OSSecurity.ServerAntivirusStatus -AuditData $antivirusStatus
+
+########## LM Hash Status Audit ##########
+
+$auditResults.OSSecurity.LMHash = @{
+    status = ""
+    automatable = $false
+    recommendations = @()
+    comments = ""
+}
+
+Add-ToLog -Message "`n[+] Audit de la configuration LM Hash :" -ForegroundColor Gray
+try {
+    $lmHashStatus = Get-LMHashStatus
+
+    if ($lmHashStatus -and $lmHashStatus.Value) {
+        $lm = $lmHashStatus.Value
+
+        Add-ToLog -Message "   Path: $($lm.Path)" -ForegroundColor Gray
+        Add-ToLog -Message "   NoLMHash Value: $($lm.NoLMHash)" -ForegroundColor Gray
+
+        if ($lm.LMStored -eq $true) {
+            Add-ToLog -Message "   [ALERTE] Les hachs LM peuvent etre stockes sur ce systeme." -ForegroundColor Red
+            Add-ToLog -Message "   Recommandation : $($lm.Recommendation)" -ForegroundColor Yellow
+            $auditResults.OSSecurity.LMHash.status = "FAIL"
+            $auditResults.OSSecurity.LMHash.comments += "LM hashes may be stored on this system (NoLMHash != 1). "
+        } else {
+            Add-ToLog -Message "   [OK] Les hachs LM ne sont pas stockes (NoLMHash = 1)." -ForegroundColor Green
+            Add-ToLog -Message "   Recommandation : $($lm.Recommendation)" -ForegroundColor Yellow
+            $auditResults.OSSecurity.LMHash.status = "PASS"
+            $auditResults.OSSecurity.LMHash.comments += "LM hashes are not stored (NoLMHash = 1). "
+        }
+        $auditResults.OSSecurity.LMHash.recommendations += $lm.Recommendation
+
+        # Affichage des actions proposees
+        if ($lmHashStatus.Xml) {
+            Add-ToLog -Message "`n   Action proposee :" -ForegroundColor Gray
+            Add-ToLog -Message "      - $($lmHashStatus.Xml.Category) : $($lmHashStatus.Xml.Description)" -ForegroundColor Yellow
+            Add-ToLog -Message "         Commande : $($lmHashStatus.Xml.Command)" -ForegroundColor DarkGray
+            $auditResults.OSSecurity.LMHash.automatable = $true
+            $remediationActions += $lmHashStatus.Xml
+        }
+    } else {
+        Write-Error "Impossible d'auditer la configuration LM Hash (Get-LMHashStatus n'a pas retourne de resultat)"
+    }
+}
+catch {
+    Write-Warning "Get-LMHashStatus a echoue : $($_.Exception.Message)"
+    $auditResults.OSSecurity.LMHash.status = "WARNING"
+    $auditResults.OSSecurity.LMHash.comments += "Error auditing LM Hash: $($_.Exception.Message). "
+}
+
+Merge-AuditResults -Section $auditResults.OSSecurity.LMHash -AuditData $lmHashStatus
+
+########## LSASS Protection Audit ##########
+
+$auditResults.OSSecurity.LSASSProtection = @{
+    status = ""
+    automatable = $false
+    recommendations = @()
+    comments = ""
+}
+
+Add-ToLog -Message "`n[+] Audit de la protection LSASS :" -ForegroundColor Gray
+try {
+    $lsassAudit = Get-LsassProtectionStatus
+
+    if ($lsassAudit -and $lsassAudit.Value) {
+        $p = $lsassAudit.Value
+
+        Add-ToLog -Message "   LSA Path : $($p.LsaPath)" -ForegroundColor Gray
+        Add-ToLog -Message "   RunAsPPL : $($p.RunAsPPL)" -ForegroundColor Gray
+
+        $lsassOk = $false
+        switch ($p.RunAsPPL) {
+            2 {
+                Add-ToLog -Message "   [OK] LSA protection activee (RunAsPPL = 2, Secure Boot requis)." -ForegroundColor Green
+                $lsassOk = $true
+                $auditResults.OSSecurity.LSASSProtection.comments += "LSA protection is enabled (RunAsPPL = 2, Secure Boot required). "
+            }
+            1 {
+                Add-ToLog -Message "   [OK] LSA protection activee (RunAsPPL = 1)." -ForegroundColor Green
+                $lsassOk = $true
+                $auditResults.OSSecurity.LSASSProtection.comments += "LSA protection is enabled (RunAsPPL = 1). "
+            }
+            default {
+                Add-ToLog -Message "   [ALERTE] LSA protection non activee ou valeur inconnue." -ForegroundColor Red
+                $auditResults.OSSecurity.LSASSProtection.comments += "LSA protection is not enabled or unknown value. "
+            }
+        }
+
+        Add-ToLog -Message "   WDigest Path : $($p.WDigestPath)" -ForegroundColor Gray
+        Add-ToLog -Message "   UseLogonCredential : $($p.UseLogonCredential)" -ForegroundColor Gray
+
+        if ($p.UseLogonCredential -eq 1) {
+            Add-ToLog -Message "   [ALERTE] WDigest active — mots de passe potentiellement stockes en clair dans LSASS." -ForegroundColor Red
+            $auditResults.OSSecurity.LSASSProtection.comments += "WDigest is enabled - passwords may be stored in LSASS. "
+            $lsassOk = $false
+        } else {
+            Add-ToLog -Message "   [OK] WDigest desactive ou valeur explicite presente." -ForegroundColor Green
+            $auditResults.OSSecurity.LSASSProtection.comments += "WDigest is disabled. "
+        }
+
+        Add-ToLog -Message "   Recommandation : $($p.Recommendation)" -ForegroundColor Yellow
+        $auditResults.OSSecurity.LSASSProtection.recommendations += $p.Recommendation
+
+        if ($lsassAudit.Xml) {
+            Add-ToLog -Message "`n   Actions proposees :" -ForegroundColor Gray
+            foreach ($item in $lsassAudit.Xml) {
+                Add-ToLog -Message "      - $($item.Category) : $($item.Description)" -ForegroundColor Yellow
+                Add-ToLog -Message "         Commande : $($item.Command)" -ForegroundColor DarkGray
+                $auditResults.OSSecurity.LSASSProtection.automatable = $true
+                $remediationActions += $item
+            }
+        }
+        
+        $auditResults.OSSecurity.LSASSProtection.status = if ($lsassOk) { "PASS" } else { "FAIL" }
+    } else {
+        Write-Error "Impossible d'auditer LSASS (Get-LsassProtectionStatus n'a pas retourne de resultat)"
+        $auditResults.OSSecurity.LSASSProtection.status = "WARNING"
+    }
+}
+catch {
+    Write-Warning "Get-LsassProtectionStatus a echoue : $($_.Exception.Message)"
+    $auditResults.OSSecurity.LSASSProtection.status = "WARNING"
+    $auditResults.OSSecurity.LSASSProtection.comments += "Error auditing LSASS: $($_.Exception.Message). "
+}
+
+Merge-AuditResults -Section $auditResults.OSSecurity.LSASSProtection -AuditData $lsassAudit
+
+########## Credential Guard Audit ##########
+
+$auditResults.OSSecurity.CredentialGuard = @{
+    status = ""
+    automatable = $false
+    recommendations = @()
+    comments = ""
+}
+
+Add-ToLog -Message "`n[+] Audit Credential Guard :" -ForegroundColor Gray
+try {
+    $cg = Get-CredentialGuardStatus
+
+    if ($cg) {
+        Add-ToLog -Message "   LsaPath        : $($cg.LsaPath)" -ForegroundColor Gray
+        Add-ToLog -Message "   LsaCfgFlags    : $($cg.LsaCfgFlags)" -ForegroundColor Gray
+        Add-ToLog -Message "   Status         : $($cg.CredentialGuard)" -ForegroundColor Gray
+
+        $cgEnabled = $false
+        if ($cg.LsaCfgFlags -eq 1 -or $cg.LsaCfgFlags -eq 2) {
+            Add-ToLog -Message "   [OK] Credential Guard active." -ForegroundColor Green
+            $cgEnabled = $true
+            $auditResults.OSSecurity.CredentialGuard.comments += "Credential Guard is enabled (LsaCfgFlags = $($cg.LsaCfgFlags)). "
+        } else {
+            Add-ToLog -Message "   [ALERTE] Credential Guard desactive ou non configure." -ForegroundColor Red
+            $auditResults.OSSecurity.CredentialGuard.comments += "Credential Guard is disabled or not configured (LsaCfgFlags = $($cg.LsaCfgFlags)). "
+        }
+
+        Add-ToLog -Message "   TPM present    : $($cg.HasTPM)" -ForegroundColor Gray
+        Add-ToLog -Message "   SecureBoot     : $($cg.SecureBoot)" -ForegroundColor Gray
+        Add-ToLog -Message "   Virtualisation : $($cg.Virtualization)" -ForegroundColor Gray
+
+        if (-not $cg.HasTPM -or -not $cg.SecureBoot -or -not $cg.Virtualization) {
+            Add-ToLog -Message "`n   [PREREQUIS MANQUANTS]" -ForegroundColor Yellow
+            if (-not $cg.HasTPM)    { Add-ToLog -Message "      - TPM manquant ou version non supportee." -ForegroundColor Yellow; $auditResults.OSSecurity.CredentialGuard.comments += "TPM not available. " }
+            if (-not $cg.SecureBoot){ Add-ToLog -Message "      - Secure Boot non active." -ForegroundColor Yellow; $auditResults.OSSecurity.CredentialGuard.comments += "Secure Boot not enabled. " }
+            if (-not $cg.Virtualization) { Add-ToLog -Message "      - Virtualisation materielle non presente." -ForegroundColor Yellow; $auditResults.OSSecurity.CredentialGuard.comments += "Virtualization not available. " }
+            $auditResults.OSSecurity.CredentialGuard.status = "WARNING"
+        } else {
+            $auditResults.OSSecurity.CredentialGuard.status = if ($cgEnabled) { "PASS" } else { "FAIL" }
+        }
+        
+        Add-ToLog -Message "`n   Recommandations : $($cg.Recommendations)" -ForegroundColor Yellow
+        $auditResults.OSSecurity.CredentialGuard.recommendations += "$cg.Recommendations"
+    }
+    else {
+        Write-Error "Impossible d'auditer Credential Guard (Get-CredentialGuardStatus n'a pas retourne de resultat)"
+        $auditResults.OSSecurity.CredentialGuard.status = "WARNING"
+    }
+}
+catch {
+    Write-Warning "Get-CredentialGuardStatus a echoue : $($_.Exception.Message)"
+    $auditResults.OSSecurity.CredentialGuard.status = "WARNING"
+    $auditResults.OSSecurity.CredentialGuard.comments += "Error auditing Credential Guard: $($_.Exception.Message). "
+}
+
+Merge-AuditResults -Section $auditResults.OSSecurity.CredentialGuard -AuditData $cg
+
+########## Device Guard / VBS Audit ##########
+
+$auditResults.OSSecurity.DeviceGuard_VBS = @{
+    status = ""
+    automatable = $false
+    recommendations = @()
+    comments = ""
+}
+
+Add-ToLog -Message "`n[+] Audit Device Guard / VBS :" -ForegroundColor Gray
+try {
+    $dg = Get-DeviceGuardStatus
+
+    if ($dg) {
+        Add-ToLog -Message "   VBS actif         : $($dg.VBS_Active)" -ForegroundColor Gray
+        Add-ToLog -Message "   WDAC actif        : $($dg.WDAC_Active)" -ForegroundColor Gray
+        Add-ToLog -Message "   CI Enforcement    : $($dg.CodeIntegrityPolicyEnforcementStatus)" -ForegroundColor Gray
+        Add-ToLog -Message "   SecurityServicesConfigured : $($dg.SecurityServicesConfigured)" -ForegroundColor Gray
+        Add-ToLog -Message "   SecurityServicesRunning    : $($dg.SecurityServicesRunning)" -ForegroundColor Gray
+        Add-ToLog -Message "   Commentaire       : $($dg.Comment)" -ForegroundColor Gray
+
+        if ($dg.VBS_Active -or $dg.WDAC_Active) {
+            Add-ToLog -Message "   [OK] Virtualization-Based Security (VBS) et/ou WDAC detecte(s)." -ForegroundColor Green
+
+            $auditResults.OSSecurity.DeviceGuard_VBS.status = "PASS"
+            $auditResults.OSSecurity.DeviceGuard_VBS.comments += "VBS and/or WDAC is active. "
+
+            if ($dg.WDAC_Active -and $dg.CodeIntegrityPolicyEnforcementStatus -match 'Audit') {
+                Add-ToLog -Message "   [INFO] WDAC en mode Audit — examiner les journaux et prevoir passage en Enforced si stable." -ForegroundColor Yellow
+                $auditResults.OSSecurity.DeviceGuard_VBS.comments += "WDAC is in Audit mode. "
+                $auditResults.OSSecurity.DeviceGuard_VBS.status = "WARNING"
+            }
+            if ($dg.WDAC_Active -and $dg.CodeIntegrityPolicyEnforcementStatus -match 'Enforced') {
+                Add-ToLog -Message "   [OK] WDAC / Code Integrity en mode Enforced." -ForegroundColor Green
+                $auditResults.OSSecurity.DeviceGuard_VBS.comments += "WDAC is in Enforced mode. "
+            }
+        }
+        else {
+            Add-ToLog -Message "   [ALERTE] Ni VBS ni WDAC actives sur ce systeme." -ForegroundColor Red
+            $auditResults.OSSecurity.DeviceGuard_VBS.status = "FAIL"
+            $auditResults.OSSecurity.DeviceGuard_VBS.comments += "Neither VBS nor WDAC is active. "
+        }
+        
+        Add-ToLog -Message "   Recommandation : $($dg.Recommendation)" -ForegroundColor Yellow
+        $auditResults.OSSecurity.DeviceGuard_VBS.recommendations += $dg.Recommendation
+    }
+    else {
+        Write-Error "Impossible d'auditer Device Guard (Get-DeviceGuardStatus n'a pas retourne de resultat)"
+        $auditResults.OSSecurity.DeviceGuard_VBS.status = "WARNING"
+    }
+}
+catch {
+    Write-Warning "Get-DeviceGuardStatus a echoue : $($_.Exception.Message)"
+    $auditResults.OSSecurity.DeviceGuard_VBS.status = "WARNING"
+    $auditResults.OSSecurity.DeviceGuard_VBS.comments += "Error auditing Device Guard: $($_.Exception.Message). "
+}
+
+Merge-AuditResults -Section $auditResults.OSSecurity.DeviceGuard_VBS -AuditData $dg
+
+
+########## Exploit Protection / Process Mitigations Audit ##########
+
+$auditResults.OSSecurity.ExploitProtection = @{
+    status = ""
+    automatable = $false
+    recommendations = @()
+    comments = ""
+}
+
+Add-ToLog -Message "`n[+] Audit Exploit Protection (Process Mitigations) :" -ForegroundColor Gray
+try {
+    $epAudit = Get-ExploitProtectionStatus
+
+    if ($epAudit -and $epAudit.Value) {
+        $ep = $epAudit.Value
+        $issues = @()
+
+        Add-ToLog -Message "   DEP (Data Execution Prevention)            : $($ep.DEP_Enable)" -ForegroundColor Gray
+        if (-not $ep.DEP_Enable) { $issues += 'DEP' ; Add-ToLog -Message "      [ALERTE] DEP non active." -ForegroundColor Red } else { Add-ToLog -Message "      [OK] DEP active." -ForegroundColor Green }
+
+        Add-ToLog -Message "   CFG (Control Flow Guard)                   : $($ep.CFG_Enable)" -ForegroundColor Gray
+        if (-not $ep.CFG_Enable) { $issues += 'CFG' ; Add-ToLog -Message "      [ALERTE] CFG non active." -ForegroundColor Red } else { Add-ToLog -Message "      [OK] CFG active." -ForegroundColor Green }
+
+        Add-ToLog -Message "   SEHOP (SEH Overwrite Protection)          : $($ep.SEHOP_Enable)" -ForegroundColor Gray
+        if (-not $ep.SEHOP_Enable) { $issues += 'SEHOP' ; Add-ToLog -Message "      [ALERTE] SEHOP non active." -ForegroundColor Red } else { Add-ToLog -Message "      [OK] SEHOP active." -ForegroundColor Green }
+
+        Add-ToLog -Message "   ASLR Bottom-Up                              : $($ep.ASLR_BottomUP)" -ForegroundColor Gray
+        if (-not $ep.ASLR_BottomUP) { $issues += 'ASLR_BottomUP' ; Add-ToLog -Message "      [ALERTE] ASLR Bottom-Up non active." -ForegroundColor Red } else { Add-ToLog -Message "      [OK] ASLR Bottom-Up active." -ForegroundColor Green }
+
+        Add-ToLog -Message "   ASLR High-Entropy                           : $($ep.ASLR_HighEntropy)" -ForegroundColor Gray
+        if (-not $ep.ASLR_HighEntropy) { $issues += 'ASLR_HighEntropy' ; Add-ToLog -Message "      [ALERTE] ASLR High-Entropy non active." -ForegroundColor Red } else { Add-ToLog -Message "      [OK] ASLR High-Entropy active." -ForegroundColor Green }
+
+        Add-ToLog -Message "   ASLR ForceRelocateImages                    : $($ep.ASLR_ForceRelocateImages)" -ForegroundColor Gray
+        if (-not $ep.ASLR_ForceRelocateImages) { $issues += 'ASLR_ForceRelocateImages' ; Add-ToLog -Message "      [ALERTE] ForceRelocateImages non active." -ForegroundColor Red } else { Add-ToLog -Message "      [OK] ForceRelocateImages active." -ForegroundColor Green }
+
+        Add-ToLog -Message "`n   Synthese :" -ForegroundColor Gray
+        if (($issues | Measure-Object).Count -eq 0) {
+            Add-ToLog -Message "      [OK] Parametres globaux d'Exploit Protection solides." -ForegroundColor Green
+            Add-ToLog -Message "      Recommandation : $($ep.Recommendation)" -ForegroundColor Gray
+            $auditResults.OSSecurity.ExploitProtection.status = "PASS"
+            $auditResults.OSSecurity.ExploitProtection.comments += "Exploit Protection settings are strong. "
+        } else {
+            Add-ToLog -Message "      [ALERTE] Parametres manquants ou desactives : $($issues -join ', ')" -ForegroundColor Red
+            Add-ToLog -Message "      Recommandation : $($ep.Recommendation)" -ForegroundColor Yellow
+            $auditResults.OSSecurity.ExploitProtection.status = "FAIL"
+            $auditResults.OSSecurity.ExploitProtection.comments += "Missing or disabled settings: $($issues -join ', '). "
+        }
+        
+        $auditResults.OSSecurity.ExploitProtection.recommendations += $ep.Recommendation
+
+        if ($epAudit.Xml) {
+            Add-ToLog -Message "`n   Actions proposees :" -ForegroundColor Gray
+            foreach ($item in $epAudit.Xml) {
+                Add-ToLog -Message "      - $($item.Category) : $($item.Description)" -ForegroundColor Yellow
+                Add-ToLog -Message "         Commande : $($item.Command)" -ForegroundColor DarkGray
+                $auditResults.OSSecurity.ExploitProtection.automatable = $true
+                $remediationActions += $item
+            }
+        }
+    }
+    else {
+        Write-Error "Impossible d'auditer Exploit Protection (Get-ExploitProtectionStatus n'a pas retourne de resultat)"
+        $auditResults.OSSecurity.ExploitProtection.status = "WARNING"
+    }
+}
+catch {
+    Write-Warning "Get-ExploitProtectionStatus a echoue : $($_.Exception.Message)"
+    $auditResults.OSSecurity.ExploitProtection.status = "WARNING"
+    $auditResults.OSSecurity.ExploitProtection.comments += "Error auditing Exploit Protection: $($_.Exception.Message). "
+}
+
+Merge-AuditResults -Section $auditResults.OSSecurity.ExploitProtection -AuditData $epAudit
+
+########## ASR (Attack Surface Reduction) Audit ##########
+
+$auditResults.OSSecurity.ASR = @{
+    status = ""
+    automatable = $false
+    recommendations = @()
+    comments = ""
+}
+
+Add-ToLog -Message "`n[+] Audit Attack Surface Reduction (ASR) :" -ForegroundColor Gray
+try {
+    $asrAudit = Get-ASRStatus
+
+    if (-not $asrAudit) {
+        Write-Error "Impossible d'auditer ASR (Get-ASRStatus n'a pas retourne de resultat)"
+        $auditResults.OSSecurity.ASR.status = "WARNING"
+    }
+    elseif ($asrAudit -is [System.Collections.IEnumerable] -and ($asrAudit | Where-Object { $_.RuleId })) {
+        $hasBlockedRules = $false
+        foreach ($rule in $asrAudit) {
+            $status = $rule.Action
+            switch ($status) {
+                'Block'  { $color = 'Green' ; $label = '[ENFORCED]'; $hasBlockedRules = $true }
+                'Audit'  { $color = 'Yellow'; $label = '[AUDIT]' }
+                'Warn'   { $color = 'Magenta'; $label = '[WARN]' }
+                'Disabled' { $color = 'Red'; $label = '[DISABLED]' }
+                default  { $color = 'Gray'; $label = "[UNKNOWN]" }
+            }
+
+            Add-ToLog -Message "`n   RuleId : $($rule.RuleId)  $label" -ForegroundColor Cyan
+            Add-ToLog -Message "      Mode : $status" -ForegroundColor $color
+            Add-ToLog -Message "      Commentaire : $($rule.Comment)" -ForegroundColor Gray
+            if ($rule.Recommendation) { 
+                Add-ToLog -Message "      Recommandation : $($rule.Recommendation)" -ForegroundColor Yellow
+                $auditResults.OSSecurity.ASR.recommendations += $rule.Recommendation
+            }
+            $auditResults.OSSecurity.ASR.comments += "Rule $($rule.RuleId) is $status. "
+        }
+        $auditResults.OSSecurity.ASR.status = if ($hasBlockedRules) { "PASS" } else { "WARNING" }
+    }
+    else {
+        # Cas ou Get-ASRStatus renvoie un objet unique indiquant l'absence de regles
+        Add-ToLog -Message "   $($asrAudit.Comment)" -ForegroundColor Red
+        Add-ToLog -Message "   Recommandation : $($asrAudit.Recommendation)" -ForegroundColor Yellow
+        $auditResults.OSSecurity.ASR.status = "FAIL"
+        $auditResults.OSSecurity.ASR.comments += "$($asrAudit.Comment). "
+        $auditResults.OSSecurity.ASR.recommendations += $asrAudit.Recommendation
+    }
+}
+catch {
+    Write-Warning "Get-ASRStatus a echoue : $($_.Exception.Message)"
+}
+
+Merge-AuditResults -Section $auditResults.OSSecurity.ASR -AuditData $asrAudit
+
+########## Network Protection (Defender) Audit ##########
+
+$auditResults.OSSecurity.NetworkProtection = @{
+    status = ""
+    automatable = $false
+    recommendations = @()
+    comments = ""
+}
+
+Add-ToLog -Message "`n[+] Audit Network Protection (Microsoft Defender) :" -ForegroundColor Gray
+try {
+    $np = Get-NetworkProtectionStatus
+
+    if ($np) {
+        Add-ToLog -Message "   Mode detecte : $($np.Mode)" -ForegroundColor Gray
+        switch ($np.Mode) {
+            'Block' {
+                Add-ToLog -Message "   [OK] Network Protection en mode Block." -ForegroundColor Green
+                $auditResults.OSSecurity.NetworkProtection.status = "PASS"
+                $auditResults.OSSecurity.NetworkProtection.comments += "Network Protection is in Block mode. "
+            }
+            'Audit' {
+                Add-ToLog -Message "   [INFO] Network Protection en mode Audit." -ForegroundColor Yellow
+                $auditResults.OSSecurity.NetworkProtection.status = "WARNING"
+                $auditResults.OSSecurity.NetworkProtection.comments += "Network Protection is in Audit mode. "
+            }
+            'Off' {
+                Add-ToLog -Message "   [ALERTE] Network Protection desactive." -ForegroundColor Red
+                $auditResults.OSSecurity.NetworkProtection.status = "FAIL"
+                $auditResults.OSSecurity.NetworkProtection.comments += "Network Protection is disabled. "
+            }
+            'NotConfigured' {
+                Add-ToLog -Message "   [ALERTE] Network Protection non configure." -ForegroundColor Red
+                $auditResults.OSSecurity.NetworkProtection.status = "FAIL"
+                $auditResults.OSSecurity.NetworkProtection.comments += "Network Protection is not configured. "
+            }
+            default {
+                Add-ToLog -Message "   [INCONNU] Valeur brute : $($np.RawValue)" -ForegroundColor Yellow
+                $auditResults.OSSecurity.NetworkProtection.status = "WARNING"
+                $auditResults.OSSecurity.NetworkProtection.comments += "Network Protection has unknown status: $($np.RawValue). "
+            }
+        }
+
+        Add-ToLog -Message "   EnableNetworkProtection : $($np.EnableNetworkProtection)" -ForegroundColor Gray
+        Add-ToLog -Message "`n   Recommandation : $($np.Recommendation)" -ForegroundColor Yellow
+        $auditResults.OSSecurity.NetworkProtection.recommendations += $np.Recommendation
+    }
+    else {
+        Write-Error "Impossible d'auditer Network Protection (Get-NetworkProtectionStatus n'a pas retourne de resultat)"
+        $auditResults.OSSecurity.NetworkProtection.status = "WARNING"
+    }
+}
+catch {
+    Write-Warning "Get-NetworkProtectionStatus a echoue : $($_.Exception.Message)"
+    $auditResults.OSSecurity.NetworkProtection.status = "WARNING"
+    $auditResults.OSSecurity.NetworkProtection.comments += "Error auditing Network Protection: $($_.Exception.Message). "
+}
+
+Merge-AuditResults -Section $auditResults.OSSecurity.NetworkProtection -AuditData $np
+
+########## Controlled Folder Access (CFA) Audit ##########
+
+$auditResults.OSSecurity.ControlledFolderAccess = @{
+    status = ""
+    automatable = $false
+    recommendations = @()
+    comments = ""
+}
+
+Add-ToLog -Message "`n[+] Audit Controlled Folder Access (Defender) :" -ForegroundColor Gray
+try {
+    $cfa = Get-ControlledFolderAccessStatus
+
+    if ($cfa) {
+        Add-ToLog -Message "   Mode detecte : $($cfa.Mode)" -ForegroundColor Gray
+
+        switch ($cfa.Mode) {
+            'Block' {
+                Add-ToLog -Message "   [OK] Controlled Folder Access en mode Block." -ForegroundColor Green
+                $auditResults.OSSecurity.ControlledFolderAccess.status = "PASS"
+                $auditResults.OSSecurity.ControlledFolderAccess.comments += "Controlled Folder Access is in Block mode. "
+            }
+            'Audit' {
+                Add-ToLog -Message "   [INFO] Controlled Folder Access en mode Audit." -ForegroundColor Yellow
+                $auditResults.OSSecurity.ControlledFolderAccess.status = "WARNING"
+                $auditResults.OSSecurity.ControlledFolderAccess.comments += "Controlled Folder Access is in Audit mode. "
+            }
+            'Block disk modification only' {
+                Add-ToLog -Message "   [INFO] CFA en mode 'Block disk modification only'." -ForegroundColor Yellow
+                $auditResults.OSSecurity.ControlledFolderAccess.status = "WARNING"
+                $auditResults.OSSecurity.ControlledFolderAccess.comments += "Controlled Folder Access is in Block disk modification only mode. "
+            }
+            'Audit disk modification only' {
+                Add-ToLog -Message "   [INFO] CFA en mode 'Audit disk modification only'." -ForegroundColor Yellow
+                $auditResults.OSSecurity.ControlledFolderAccess.status = "WARNING"
+                $auditResults.OSSecurity.ControlledFolderAccess.comments += "Controlled Folder Access is in Audit disk modification only mode. "
+            }
+            'Off' {
+                Add-ToLog -Message "   [ALERTE] Controlled Folder Access desactive." -ForegroundColor Red
+                $auditResults.OSSecurity.ControlledFolderAccess.status = "FAIL"
+                $auditResults.OSSecurity.ControlledFolderAccess.comments += "Controlled Folder Access is disabled. "
+            }
+            'NotConfigured' {
+                Add-ToLog -Message "   [ALERTE] Controlled Folder Access non configure." -ForegroundColor Red
+                $auditResults.OSSecurity.ControlledFolderAccess.status = "FAIL"
+                $auditResults.OSSecurity.ControlledFolderAccess.comments += "Controlled Folder Access is not configured. "
+            }
+            default {
+                Add-ToLog -Message "   [INCONNU] Valeur brute : $($cfa.EnableControlledFolderAccess)" -ForegroundColor Yellow
+                $auditResults.OSSecurity.ControlledFolderAccess.status = "WARNING"
+                $auditResults.OSSecurity.ControlledFolderAccess.comments += "Controlled Folder Access has unknown status: $($cfa.EnableControlledFolderAccess). "
+            }
+        }
+
+        Add-ToLog -Message "`n   Recommandation : $($cfa.Recommendation)" -ForegroundColor Yellow
+        $auditResults.OSSecurity.ControlledFolderAccess.recommendations += $cfa.Recommendation
+    }
+    else {
+        Write-Error "Impossible d'auditer Controlled Folder Access (Get-ControlledFolderAccessStatus n'a pas retourne de resultat)"
+        $auditResults.OSSecurity.ControlledFolderAccess.status = "WARNING"
+    }
+}
+catch {
+    Write-Warning "Get-ControlledFolderAccessStatus a echoue : $($_.Exception.Message)"
+    $auditResults.OSSecurity.ControlledFolderAccess.status = "WARNING"
+    $auditResults.OSSecurity.ControlledFolderAccess.comments += "Error auditing Controlled Folder Access: $($_.Exception.Message). "
+}
+
+Merge-AuditResults -Section $auditResults.OSSecurity.ControlledFolderAccess -AuditData $cfa
+
+########## Smart App Control Audit ##########
+
+$auditResults.OSSecurity.SmartAppControl = @{
+    status = ""
+    automatable = $false
+    recommendations = @()
+    comments = ""
+}
+
+Add-ToLog -Message "`n[+] Audit Smart App Control :" -ForegroundColor Gray
+try {
+    $sac = Get-SmartAppControlStatus
+
+    if ($sac) {
+        Add-ToLog -Message "   Smart App Control : $($sac.SmartApp_State)" -ForegroundColor Gray
+
+        switch ($sac.SmartApp_State) {
+            'On' {
+                Add-ToLog -Message "   [OK] Smart App Control active." -ForegroundColor Green
+                $auditResults.OSSecurity.SmartAppControl.status = "PASS"
+                $auditResults.OSSecurity.SmartAppControl.comments += "Smart App Control is enabled. "
+            }
+            'Evaluation' {
+                Add-ToLog -Message "   [INFO] Smart App Control en mode Evaluation." -ForegroundColor Yellow
+                $auditResults.OSSecurity.SmartAppControl.status = "WARNING"
+                $auditResults.OSSecurity.SmartAppControl.comments += "Smart App Control is in Evaluation mode. "
+            }
+            'Off' {
+                Add-ToLog -Message "   [ALERTE] Smart App Control desactive." -ForegroundColor Red
+                $auditResults.OSSecurity.SmartAppControl.status = "FAIL"
+                $auditResults.OSSecurity.SmartAppControl.comments += "Smart App Control is disabled. "
+            }
+            'NotConfigured' {
+                Add-ToLog -Message "   [ALERTE] Smart App Control non configure." -ForegroundColor Red
+                $auditResults.OSSecurity.SmartAppControl.status = "FAIL"
+                $auditResults.OSSecurity.SmartAppControl.comments += "Smart App Control is not configured. "
+            }
+            default {
+                Add-ToLog -Message "   [INCONNU] Valeur detectee : $($sac.SmartApp_State)" -ForegroundColor Yellow
+                $auditResults.OSSecurity.SmartAppControl.status = "WARNING"
+                $auditResults.OSSecurity.SmartAppControl.comments += "Smart App Control has unknown state: $($sac.SmartApp_State). "
+            }
+        }
+        Add-ToLog -Message "`n   Recommandation : Tester en mode Evaluation puis activer (On) sur systemes compatibles." -ForegroundColor Yellow
+        $auditResults.OSSecurity.SmartAppControl.recommendations += "Test in Evaluation mode then enable (On) on compatible systems."
+    }
+    else {
+        Write-Error "Impossible d'auditer Smart App Control (Get-SmartAppControlStatus n'a pas retourne de resultat)"
+        $auditResults.OSSecurity.SmartAppControl.status = "WARNING"
+    }
+}
+catch {
+    Write-Warning "Get-SmartAppControlStatus a echoue : $($_.Exception.Message)"
+    $auditResults.OSSecurity.SmartAppControl.status = "WARNING"
+    $auditResults.OSSecurity.SmartAppControl.comments += "Error auditing Smart App Control: $($_.Exception.Message). "
+}
+
+Merge-AuditResults -Section $auditResults.OSSecurity.SmartAppControl -AuditData $sac
+
+########## PowerShell Language Mode Audit ##########
+
+$auditResults.OSSecurity.PowershellLanguageMode = @{
+    status = ""
+    automatable = $false
+    recommendations = @()
+    comments = ""
+}
+
+Add-ToLog -Message "`n[+] Audit du mode langage PowerShell :" -ForegroundColor Gray
+try {
+    $psMode = Get-PowerShellLanguageMode
+
+    if ($psMode) {
+        Add-ToLog -Message "   LanguageMode : $($psMode.LanguageMode)" -ForegroundColor Gray
+
+        if ($psMode.IsConstrained) {
+            Add-ToLog -Message "   [OK] PowerShell en ConstrainedLanguage." -ForegroundColor Green
+            $auditResults.OSSecurity.PowershellLanguageMode.status = "PASS"
+            $auditResults.OSSecurity.PowershellLanguageMode.comments += "PowerShell is in ConstrainedLanguage mode. "
+        }
+        else {
+            Add-ToLog -Message "   [ALERTE] PowerShell en FullLanguage (ou moins restreint)." -ForegroundColor Red
+            $auditResults.OSSecurity.PowershellLanguageMode.status = "FAIL"
+            $auditResults.OSSecurity.PowershellLanguageMode.comments += "PowerShell is in FullLanguage or less restricted mode: $($psMode.LanguageMode). "
+        }
+        Add-ToLog -Message "   Recommandation : $($psMode.Recommendation)" -ForegroundColor Yellow
+        $auditResults.OSSecurity.PowershellLanguageMode.recommendations += $psMode.Recommendation
+    }
+    else {
+        Write-Error "Impossible d'auditer le mode PowerShell (Get-PowerShellLanguageMode n'a pas retourne de resultat)"
+        $auditResults.OSSecurity.PowershellLanguageMode.status = "WARNING"
+    }
+}
+catch {
+    Write-Warning "Get-PowerShellLanguageMode a echoue : $($_.Exception.Message)"
+    $auditResults.OSSecurity.PowershellLanguageMode.status = "WARNING"
+    $auditResults.OSSecurity.PowershellLanguageMode.comments += "Error auditing PowerShell Language Mode: $($_.Exception.Message). "
+}
+
+Merge-AuditResults -Section $auditResults.OSSecurity.PowershellLanguageMode -AuditData $psMode
+
+Export-AuditResultsToJson -AuditData $auditResults -OutputPath $ScriptPath -scriptStartDate $scriptStartDate -Depth 10
+
+##########################################
+#             Device Security            #
+##########################################
+$auditResults.DeviceSecurity = @{}
+
+########## AutoRun / NoDriveTypeAutorun Audit ##########
+
+$auditResults.DeviceSecurity.AutoRun = @{
+    status = ""
+    automatable = $false
+    recommendations = @()
+    comments = ""
+}
+
+Add-ToLog -Message "`n[+] Audit AutoRun (NoDriveTypeAutorun) :" -ForegroundColor Gray
+try {
+    $ar = Get-AutorunStatus
+
+    if ($ar -and $ar.Value) {
+        $hasIssue = $false
+        $arRecs = @()
+        foreach ($entry in $ar.Value) {
+            Add-ToLog -Message "`n   Scope : $($entry.Scope)" -ForegroundColor Cyan
+            Add-ToLog -Message "      Valeur brute : $($entry.Value)" -ForegroundColor Gray
+            Add-ToLog -Message "      Commentaire  : $($entry.Comment)" -ForegroundColor Gray
+
+            if ($entry.AutoRunEnabled -eq $true) {
+                Add-ToLog -Message "      [ALERTE] Autorun potentiellement active." -ForegroundColor Red
+                Add-ToLog -Message "      Recommandation : $($entry.Recommendation)" -ForegroundColor Yellow
+                $auditResults.DeviceSecurity.AutoRun.comments += "AutoRun is potentially enabled for scope $($entry.Scope). "
+                $arRecs += $entry.Recommendation
+                $hasIssue = $true
+            }
+            else {
+                Add-ToLog -Message "      [OK] Autorun desactive pour ce scope." -ForegroundColor Green
+                Add-ToLog -Message "      Recommandation : $($entry.Recommendation)" -ForegroundColor Gray
+                $auditResults.DeviceSecurity.AutoRun.comments += "AutoRun is disabled for scope $($entry.Scope). "
+                $arRecs += $entry.Recommendation
+            }
+        }
+
+        if ($ar.Xml) {
+            Add-ToLog -Message "`n   Actions proposees :" -ForegroundColor Gray
+            Add-ToLog -Message "      - $($ar.Xml.Category) : $($ar.Xml.Description)" -ForegroundColor Yellow
+            Add-ToLog -Message "         Commande : $($ar.Xml.Command)" -ForegroundColor DarkGray
+            $auditResults.DeviceSecurity.AutoRun.automatable = $true
+            $remediationActions += $ar.Xml
+        }
+        
+        $auditResults.DeviceSecurity.AutoRun.status = if ($hasIssue) { "FAIL" } else { "PASS" }
+        $auditResults.DeviceSecurity.AutoRun.recommendations = ($arRecs | Select-Object -Unique) -join " | "
+    }
+    else {
+        Write-Error "Impossible d'auditer AutoRun (Get-AutorunStatus n'a pas retourne de resultat)"
+        $auditResults.DeviceSecurity.AutoRun.status = "WARNING"
+    }
+}
+catch {
+    Write-Warning "Get-AutorunStatus a echoue : $($_.Exception.Message)"
+    $auditResults.DeviceSecurity.AutoRun.status = "WARNING"
+    $auditResults.DeviceSecurity.AutoRun.comments += "Error auditing AutoRun: $($_.Exception.Message). "
+}
+
+Merge-AuditResults -Section $auditResults.DeviceSecurity.AutoRun -AuditData $ar
+
+########## BitLocker Audit ##########
+
+$auditResults.DeviceSecurity.BitLocker = @{
+    status = ""
+    automatable = $false
+    recommendations = @()
+    comments = ""
+}
+
+Add-ToLog -Message "`n[+] Audit BitLocker :" -ForegroundColor Gray
+try {
+
+    if ($context.HardwareType -ne 'Virtual Machine') {
+        
+        $bitlocker = Get-BitLockerAudit
+
+        if ($bitlocker) {
+            $allEncrypted = $true
+            $blRecs = @()
+            foreach ($vol in $bitlocker) {
+                Add-ToLog -Message "`n   Volume : $($vol.MountPoint) ($($vol.VolumeType))" -ForegroundColor Cyan
+                Add-ToLog -Message "      ProtectionStatus   : $($vol.ProtectionStatus)  |  Chiffrement : $($vol.EncryptionPercent)% " -ForegroundColor Gray
+                if ($vol.ProtectionStatus -eq 'On' -and $vol.EncryptionPercent -ge 100) {
+                    Add-ToLog -Message "      [OK] Volume chiffre et protege." -ForegroundColor Green
+                    $auditResults.DeviceSecurity.BitLocker.comments += "Volume $($vol.MountPoint) is encrypted and protected. "
+                }
+                elseif ($vol.ProtectionStatus -eq 'Suspended') {
+                    Add-ToLog -Message "      [INFO] Protection suspendue." -ForegroundColor Yellow
+                    $auditResults.DeviceSecurity.BitLocker.comments += "Volume $($vol.MountPoint) has suspended protection. "
+                    $allEncrypted = $false
+                }
+                else {
+                    Add-ToLog -Message "      [ALERTE] Volume non protege ou chiffrement incomplet." -ForegroundColor Red
+                    $auditResults.DeviceSecurity.BitLocker.comments += "Volume $($vol.MountPoint) is not protected or encryption is incomplete. "
+                    $allEncrypted = $false
+                }
+
+                Add-ToLog -Message "      TPM : $($vol.HasTPM)    PIN : $($vol.HasPIN)    RecoveryKey : $($vol.HasRecoveryPassword)" -ForegroundColor Gray
+                Add-ToLog -Message "      Commentaire : $($vol.Comment)" -ForegroundColor Gray
+                Add-ToLog -Message "      Recommandation : $($vol.Recommendation)" -ForegroundColor Yellow
+                $blRecs += $vol.Recommendation
+            }
+            $auditResults.DeviceSecurity.BitLocker.status = if ($allEncrypted) { "PASS" } else { "FAIL" }
+            $auditResults.DeviceSecurity.BitLocker.recommendations = ($blRecs | Select-Object -Unique) -join " | "
+        }
+        else {
+            Write-Error "Impossible d'auditer BitLocker (Get-BitLockerAudit n'a pas retourne de resultat)"
+            $auditResults.DeviceSecurity.BitLocker.status = "WARNING"
+        }
+    } else {
+        Add-ToLog -Message "   [INFO] Systeme virtuel detecte — saut de l'audit BitLocker." -ForegroundColor Yellow
+        $auditResults.DeviceSecurity.BitLocker.status = "N/A"
+        $auditResults.DeviceSecurity.BitLocker.comments += "Virtual machine detected — BitLocker audit skipped. "
+    }
+}
+catch {
+    Write-Warning "Get-BitLockerAudit a echoue : $($_.Exception.Message)"
+    $auditResults.DeviceSecurity.BitLocker.status = "WARNING"
+    $auditResults.DeviceSecurity.BitLocker.comments += "Error auditing BitLocker: $($_.Exception.Message). "
+}
+
+Merge-AuditResults -Section $auditResults.DeviceSecurity.BitLocker -AuditData $bitlocker
+
+
+########## Thirda€‘Party Full Disk Encryption Indicators ##########
+
+$auditResults.DeviceSecurity.ThirdPartyEncryptionIndicators = @{
+    status = ""
+    automatable = $false
+    recommendations = @()
+    comments = ""
+}
+
+Add-ToLog -Message "`n[+] Audit indicateurs de chiffrement tiers :" -ForegroundColor Gray
+try {
+    $tpe = Get-ThirdPartyEncryptionIndicators
+
+    if ($null -eq $tpe) {
+        Write-Error "Get-ThirdPartyEncryptionIndicators n'a pas retourne de resultat"
+    }
+    elseif ($tpe -is [System.Collections.IEnumerable]) {
+        foreach ($item in $tpe) {
+            # Attendu : proprietes possibles Name, Present, Version, Details, Recommendation
+            $name = $item.Name      -or 'ThirdPartyEncryption'
+            $present = $item.Present -or $false
+            Add-ToLog -Message "`n   Solution : $name" -ForegroundColor Cyan
+            Add-ToLog -Message "      Present : $present" -ForegroundColor Gray
+
+            if ($present) {
+                Add-ToLog -Message "      [INFO] Chiffrement tiers detecte : $name" -ForegroundColor Green
+                $auditResults.DeviceSecurity.ThirdPartyEncryptionIndicators.comments += "Third-party encryption detected: $name. "
+                if ($item.Version) { 
+                    Add-ToLog -Message "      Version : $($item.Version)" -ForegroundColor Gray
+                    $auditResults.DeviceSecurity.ThirdPartyEncryptionIndicators.comments += "Version: $($item.Version). "
+                }
+                if ($item.Details) { 
+                    Add-ToLog -Message "      Details : $($item.Details)" -ForegroundColor Gray
+                    $auditResults.DeviceSecurity.ThirdPartyEncryptionIndicators.comments += "Details: $($item.Details). "
+                }
+                if ($item.Recommendation) { 
+                    Add-ToLog -Message "      Recommandation : $($item.Recommendation)" -ForegroundColor Yellow
+                    $auditResults.DeviceSecurity.ThirdPartyEncryptionIndicators.recommendations += $item.Recommendation
+                }
+                $auditResults.DeviceSecurity.ThirdPartyEncryptionIndicators.status = "PASS"
+            } else {
+                Add-ToLog -Message "      [OK] Aucun chiffrement tiers detecte pour cet item." -ForegroundColor Green
+            }
+        }
+    }
+    else {
+        # Cas objet unique attendu avec proprietes HasThirdParty/Detected/Details/Recommendation
+        $has = $tpe.HasThirdParty  -or $tpe.Detected -or $false
+        Add-ToLog -Message "   Indicateur chiffrement tiers detecte : $has" -ForegroundColor Gray
+        if ($has) {
+            Add-ToLog -Message "   [INFO] Un chiffrement tiers semble present. Details : $($tpe.Details)" -ForegroundColor Green
+            $auditResults.DeviceSecurity.ThirdPartyEncryptionIndicators.status = "PASS"
+            $auditResults.DeviceSecurity.ThirdPartyEncryptionIndicators.comments += "Third-party encryption detected. Details: $($tpe.Details). "
+            if ($tpe.Recommendation) { 
+                Add-ToLog -Message "   Recommandation : $($tpe.Recommendation)" -ForegroundColor Yellow
+                $auditResults.DeviceSecurity.ThirdPartyEncryptionIndicators.recommendations += $tpe.Recommendation
+            }
+        } else {
+            Add-ToLog -Message "   [OK] Aucun chiffrement tiers detecte." -ForegroundColor Magenta
+            $auditResults.DeviceSecurity.ThirdPartyEncryptionIndicators.status = "PASS"
+            $auditResults.DeviceSecurity.ThirdPartyEncryptionIndicators.comments += "No third-party encryption detected. "
+        }
+    }
+    if ([string]::IsNullOrWhiteSpace($auditResults.DeviceSecurity.ThirdPartyEncryptionIndicators.status)) {
+        $auditResults.DeviceSecurity.ThirdPartyEncryptionIndicators.status = "PASS"
+    }
+}
+catch {
+    Write-Warning "Get-ThirdPartyEncryptionIndicators a echoue : $($_.Exception.Message)"
+    $auditResults.DeviceSecurity.ThirdPartyEncryptionIndicators.status = "WARNING"
+}
+
+Merge-AuditResults -Section $auditResults.DeviceSecurity.ThirdPartyEncryptionIndicators -AuditData $tpe
+
+Export-AuditResultsToJson -AuditData $auditResults -OutputPath $ScriptPath -scriptStartDate $scriptStartDate -Depth 10
+
+##########################################
+#            Update Management           #
+##########################################
+$auditResults.UpdateManagement = @{}
+
+########## Last Reboot / Uptime Audit ##########
+
+$auditResults.UpdateManagement.LastReboot_Uptime = @{
+    status = ""
+    automatable = $false
+    recommendations = @()
+    comments = ""
+}
+
+Add-ToLog -Message "`n[+] Audit du dernier redemarrage :" -ForegroundColor Gray
+try {
+    $lr = Get-LastReboot
+
+    if ($lr) {
+        Add-ToLog -Message "   Role de la machine : $($lr.ComputerRole)" -ForegroundColor Gray
+        Add-ToLog -Message "   Dernier demarrage   : $($lr.LastBootTime)" -ForegroundColor Gray
+        Add-ToLog -Message "   Uptime              : $($lr.Uptime) (jours: $($lr.UptimeDays))" -ForegroundColor Gray
+        Add-ToLog -Message "   Seuil recommande    : $($lr.ThresholdDays) jours" -ForegroundColor Gray
+
+        $auditResults.UpdateManagement.LastReboot_Uptime.comments += "Last boot time: $($lr.LastBootTime). Uptime: $($lr.UptimeDays) days. "
+
+        if ($lr.UptimeDays -gt $lr.ThresholdDays) {
+            Add-ToLog -Message "   [ALERTE] Uptime superieur au seuil ($($lr.ThresholdDays) jours)." -ForegroundColor Red
+            Add-ToLog -Message "   Recommandation : $($lr.Recommendation)" -ForegroundColor Yellow
+            $auditResults.UpdateManagement.LastReboot_Uptime.status = "FAIL"
+        }
+        else {
+            Add-ToLog -Message "   [OK] Uptime dans la plage attendue." -ForegroundColor Green
+            Add-ToLog -Message "   Recommandation : $($lr.Recommendation)" -ForegroundColor Gray
+            $auditResults.UpdateManagement.LastReboot_Uptime.status = "PASS"
+        }
+        $auditResults.UpdateManagement.LastReboot_Uptime.recommendations += $lr.Recommendation
+    }
+    else {
+        Write-Error "Impossible d'auditer le dernier redemarrage (Get-LastReboot n'a pas retourne de resultat)"
+        $auditResults.UpdateManagement.LastReboot_Uptime.status = "WARNING"
+    }
+}
+catch {
+    Write-Warning "Get-LastReboot a echoue : $($_.Exception.Message)"
+    $auditResults.UpdateManagement.LastReboot_Uptime.status = "WARNING"
+    $auditResults.UpdateManagement.LastReboot_Uptime.comments += "Error auditing last reboot: $($_.Exception.Message). "
+}
+
+Merge-AuditResults -Section $auditResults.UpdateManagement.LastReboot_Uptime -AuditData $lr
+
+Export-AuditResultsToJson -AuditData $auditResults -OutputPath $ScriptPath -scriptStartDate $scriptStartDate -Depth 10
+
+##########################################
+#                Logging                 #
+##########################################
+
+$auditResults.Logging = @{}
+########## Logging / Event Collection Audit ##########
+
+Add-ToLog -Message "`n[+] Audit des journaux et de la collecte d'evenements :" -ForegroundColor Gray
+try {
+    $auditResults.Logging.LogStatus = @{
+        status = ""
+        automatable = $false
+        recommendations = @()
+        comments = ""
+    }
+
+    # 1) Logs locaux (taille / retention)
+    $logs = Get-LogStatus
+    if ($logs) {
+        $logIssue = $false
+        $logRecs = @()
+        foreach ($l in $logs) {
+            Add-ToLog -Message "`n   Log : $($l.LogName)" -ForegroundColor Cyan
+            if (-not $l.IsEnabled) {
+                Add-ToLog -Message "      [ALERTE] Desactive ou indisponible." -ForegroundColor Red
+                Add-ToLog -Message "      Recommendation : $($l.Recommendation)" -ForegroundColor Yellow
+                $auditResults.Logging.LogStatus.comments += "Log $($l.LogName) is disabled. "
+                $logRecs += $l.Recommendation
+                $logIssue = $true
+                continue
+            }
+
+            Add-ToLog -Message "      Enregistres : $($l.RecordCount)  |  MaxSize : $($l.MaximumSizeMB) MB  |  Reco : $($l.RecoSizeMB) MB" -ForegroundColor Gray
+
+            if ($l.IsSizeOK -eq $true) {
+                Add-ToLog -Message "      [OK] Taille du journal conforme." -ForegroundColor Green
+                Add-ToLog -Message "      Recommendation : $($l.Recommendation)" -ForegroundColor Gray
+                $auditResults.Logging.LogStatus.comments += "Log $($l.LogName) size is compliant. "
+                $logRecs += $l.Recommendation
+            }
+            elseif ($l.IsSizeOK -eq $false) {
+                Add-ToLog -Message "      [ALERTE] Taille du journal insuffisante." -ForegroundColor Red
+                Add-ToLog -Message "      Recommendation : $($l.Recommendation)" -ForegroundColor Yellow
+                $auditResults.Logging.LogStatus.comments += "Log $($l.LogName) size is insufficient. "
+                $logRecs += $l.Recommendation
+                $logIssue = $true
+            }
+            else {
+                Add-ToLog -Message "      [INFO] Aucune recommandation de taille definie." -ForegroundColor Yellow
+                Add-ToLog -Message "      Recommendation : $($l.Recommendation)" -ForegroundColor Gray
+                $auditResults.Logging.LogStatus.comments += "Log $($l.LogName) has no size recommendation. "
+                $logRecs += $l.Recommendation
+            }
+        }
+        $auditResults.Logging.LogStatus.status = if ($logIssue) { "FAIL" } else { "PASS" }
+        $auditResults.Logging.LogStatus.recommendations = ($logRecs | Select-Object -Unique) -join " | "
+    } else {
+        Write-Error "Get-LogStatus n'a pas retourne de resultat."
+        $auditResults.Logging.LogStatus.status = "WARNING"
+    }
+
+    $auditResults.Logging.EventForwardingStatus = @{
+        status = ""
+        automatable = $false
+        recommendations = @()
+        comments = ""
+    }
+
+    # 2) Event Forwarding & Sysmon
+    $ef = Get-EventForwardingStatus
+    if ($ef) {
+        $efIssue = $false
+        $efRecs = @()
+        foreach ($e in $ef) {
+            Add-ToLog -Message "`n   Source : $($e.Name)" -ForegroundColor Cyan
+            Add-ToLog -Message "      Active : $($e.IsEnabled)" -ForegroundColor Gray
+            Add-ToLog -Message "      Commentaire : $($e.Comment)" -ForegroundColor Gray
+            Add-ToLog -Message "      Recommendation : $($e.Recommendation)" -ForegroundColor Yellow
+            
+            if ($e.IsEnabled) {
+                $auditResults.Logging.EventForwardingStatus.comments += "Event forwarding is enabled for $($e.Name). "
+            } else {
+                $auditResults.Logging.EventForwardingStatus.comments += "Event forwarding is disabled for $($e.Name). "
+                $efIssue = $true
+            }
+            $efRecs += $e.Recommendation
+        }
+        $auditResults.Logging.EventForwardingStatus.status = if ($efIssue) { "FAIL" } else { "PASS" }
+        $auditResults.Logging.EventForwardingStatus.recommendations = ($efRecs | Select-Object -Unique) -join " | "
+    } else {
+        Write-Warning "Get-EventForwardingStatus n'a pas retourne de resultat."
+        $auditResults.Logging.EventForwardingStatus.status = "WARNING"
+    }
+
+    $auditResults.Logging.LogAgentStatus = @{
+        status = ""
+        automatable = $false
+        recommendations = @()
+        comments = ""
+    }
+
+    # 3) Recherche d'agents de logs / SIEM
+    $agents = Get-LogAgentStatus
+    if ($agents) {
+        Add-ToLog -Message "`n   Agents de collecte detectes :" -ForegroundColor Gray
+        $agentFound = $false
+        $laRecs = @()
+        foreach ($a in $agents) {
+            if ($a.IsLogAgent) {
+                Add-ToLog -Message "      - $($a.DisplayName) (version: $($a.DisplayVersion))" -ForegroundColor Green
+                Add-ToLog -Message "         Recommendation : $($a.Recommendation)" -ForegroundColor Gray
+                $auditResults.Logging.LogAgentStatus.comments += "Log agent detected: $($a.DisplayName) (version: $($a.DisplayVersion)). "
+                $laRecs += $a.Recommendation
+                $agentFound = $true
+            } else {
+                Add-ToLog -Message "      - Aucun agent connu detecte sur l'entree (bruit possible)." -ForegroundColor Yellow
+                Add-ToLog -Message "         Commentaire : $($a.Comment)" -ForegroundColor Gray
+                $auditResults.Logging.LogAgentStatus.comments += "Unknown entry detected: $($a.Comment). "
+            }
+        }
+        $auditResults.Logging.LogAgentStatus.status = if ($agentFound) { "PASS" } else { "FAIL" }
+        if ($laRecs.Count -gt 0) {
+            $auditResults.Logging.LogAgentStatus.recommendations = ($laRecs | Select-Object -Unique) -join " | "
+        }
+    } else {
+        Add-ToLog -Message "`n   [ALERTE] Aucun agent de collecte/SIEM detecte." -ForegroundColor Red
+        Add-ToLog -Message "      Recommendation : Installer/configurer un agent pour centraliser les logs." -ForegroundColor Yellow
+        $auditResults.Logging.LogAgentStatus.status = "FAIL"
+        $auditResults.Logging.LogAgentStatus.comments += "No log collection/SIEM agent detected. "
+        $auditResults.Logging.LogAgentStatus.recommendations += "Install and configure a log collection agent to centralize logs. | "
+    }
+}
+catch {
+    Write-Warning "Audit Logging a echoue : $($_.Exception.Message)"
+    $auditResults.Logging.LogStatus.status = "WARNING"
+    $auditResults.Logging.EventForwardingStatus.status = "WARNING"
+    $auditResults.Logging.LogAgentStatus.status = "WARNING"
+}
+
+Merge-AuditResults -Section $auditResults.Logging.LogStatus -AuditData $logs
+
+Export-AuditResultsToJson -AuditData $auditResults -OutputPath $ScriptPath -scriptStartDate $scriptStartDate -Depth 10 | Out-Null
+
+# --- Export remediation actions to XML ---
+if ($remediationActions -and $remediationActions.Count -gt 0) {
+    try {
+        $xmlPath = Join-Path -Path $ScriptPath -ChildPath "xml\remediations_$scriptStartDate.xml"
+        $remediationActions | Export-Clixml -Path $xmlPath -Force
+        Add-ToLog -Message "[✓] Actions de remediation exportees : $xmlPath" -ForegroundColor Green
+    }
+    catch {
+        Write-Warning "Erreur lors de l'export des actions XML : $($_.Exception.Message)"
+    }
+}
+
+# --- Fin ---
+Add-ToLog -Message "`nAudit termine." -ForegroundColor Cyan

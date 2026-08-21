@@ -358,7 +358,7 @@
                   <div class="agent-name">
                     {{ agent.agent_name }}
                     <span class="badge" :class="`badge ${getStatusClass(agent.status)}`">
-                      {{ agent.status }}
+                      {{ agent.status === 'active' ? 'Actif' : 'Inactif' }}
                     </span>
                     <span class="badge" v-if="agent.is_inactive" style="background-color: #f8d7da; color: #721c24;">
                       INACTIF
@@ -367,7 +367,7 @@
                   <div class="agent-details">
                     <strong>{{ agent.hostname }}</strong> • {{ agent.os_version }}<br>
                     Utilisateur: {{ agent.username }} | Créé: {{ formatDate(agent.created_at) }}<br>
-                    Dernier beacon: {{ formatDate(agent.last_beacon) }} | Succès: {{ formatPercent(agent.success_rate) }}
+                    Dernier beacon: {{ formatDate(agent.last_beacon) }} | Inactif depuis: {{ getInactivityDuration(agent.last_beacon) }} | Succès: {{ formatPercent(agent.success_rate) }}
                   </div>
 
                   <div style="margin-top: 8px;">

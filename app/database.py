@@ -1,7 +1,7 @@
 import json
 import re
 from typing import List, Optional, Dict
-from datetime import datetime
+from datetime import datetime, timedelta
 import uuid
 from .models import Agent, Task, AuditResult, BeaconHistory, TaskStatus, AgentStatus, AuditTemplate, PowerShellCommandDefinition
 from .logger import get_logger
@@ -162,6 +162,13 @@ class Database:
     def get_agent(self, agent_id: str) -> Optional[Agent]:
         """Récupérer un agent par son ID"""
         return self.agents.get(agent_id)
+
+    def get_agent_by_identity(self, hostname: str, username: str) -> Optional[Agent]:
+        """Récupérer un agent existant à partir de son hostname + username."""
+        for agent in self.agents.values():
+            if agent.hostname == hostname and agent.username == username:
+                return agent
+        return None
     
     def authenticate_agent(self, agent_id: str, api_key: str) -> bool:
         """Valider les credentials de l'agent"""
@@ -177,9 +184,33 @@ class Database:
             agent.last_beacon = datetime.now()
             agent.status = AgentStatus.ACTIVE  # Marquer l'agent comme actif
     
+    def sync_agent_inactivity_status(self, agent_id: str, inactivity_threshold_minutes: int = 5) -> Optional[Agent]:
+        """Met à jour le statut de l'agent selon son dernier beacon."""
+        agent = self.get_agent(agent_id)
+        if not agent:
+            return None
+
+        if agent.last_beacon is None:
+            agent.status = AgentStatus.INACTIVE
+            return agent
+
+        if datetime.now() - agent.last_beacon > timedelta(minutes=inactivity_threshold_minutes):
+            agent.status = AgentStatus.INACTIVE
+        else:
+            agent.status = AgentStatus.ACTIVE
+
+        return agent
+
+    def sync_all_agents_inactivity_status(self, inactivity_threshold_minutes: int = 5) -> List[Agent]:
+        """Met à jour l'état d'inactivité pour tous les agents."""
+        updated = []
+        for agent in self.agents.values():
+            updated.append(self.sync_agent_inactivity_status(agent.agent_id, inactivity_threshold_minutes))
+        return [a for a in updated if a is not None]
+
     def list_agents(self) -> List[Agent]:
-        """Lister tous les agents"""
-        return list(self.agents.values())
+        """Lister tous les agents en recalculant leur état d'activité."""
+        return self.sync_all_agents_inactivity_status()
     
     def delete_agent(self, agent_id: str) -> bool:
         """Supprimer un agent et toutes ses tâches et résultats associés"""
@@ -575,7 +606,9 @@ class Database:
 
                 if command_count > 0:
                     imported_commands = {cmd.name for cmd in self.list_powershell_commands()}
+                    all_imported_commands = sorted(imported_commands)
                     default_templates = {
+                        "Audit Complet (toutes fonctions)": all_imported_commands,
                         "Audit Sécurité Réseau": [
                             "Get-FirewallAudit",
                             "Get-IPv6Status",
@@ -624,7 +657,11 @@ class Database:
                         try:
                             self.create_audit_template(
                                 name=template_name,
-                                description=f"Template de référence pour l’audit {template_name.lower()}",
+                                description=(
+                                    "Template complet avec toutes les fonctions PowerShell disponibles"
+                                    if template_name == "Audit Complet (toutes fonctions)"
+                                    else f"Template de référence pour l’audit {template_name.lower()}"
+                                ),
                                 commands=commands_to_keep,
                                 created_by='system'
                             )

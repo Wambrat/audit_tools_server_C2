@@ -175,7 +175,17 @@ const app = createApp({
       const diffMs = now - last;
       const diffSeconds = Math.floor(diffMs / 1000);
 
-      return formatters.formatDuration(diffSeconds);
+      if (diffSeconds < 60) {
+        return "il y a moins d'une minute";
+      }
+
+      const diffMinutes = Math.floor(diffSeconds / 60);
+      if (diffMinutes < 60) {
+        return `il y a ${diffMinutes} min`;
+      }
+
+      const diffHours = Math.floor(diffMinutes / 60);
+      return `il y a ${diffHours} h`;
     },
 
     /**

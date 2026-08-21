@@ -196,6 +196,7 @@ class TestDefaultModuleSeed:
         assert inserted["commands"] > 0
         assert inserted["templates"] > 0
         assert any(cmd.name == "Get-ADPolPassAudit" for cmd in db.list_powershell_commands())
+        assert any(t.name == "Audit Complet (toutes fonctions)" for t in db.list_audit_templates())
         assert any(t.name for t in db.list_audit_templates())
 
     def test_template_tasks_include_registered_command_script(self):

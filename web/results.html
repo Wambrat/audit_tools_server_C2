@@ -477,9 +477,12 @@
                 });
             }
 
-            // Trier par date décroissante
             filtered.sort((a, b) => {
                 if (!a || !b) return 0;
+                const aAudit = a.audit_id || a.result_id || '';
+                const bAudit = b.audit_id || b.result_id || '';
+                const auditCmp = String(bAudit).localeCompare(String(aAudit), undefined, { numeric: true, sensitivity: 'base' });
+                if (auditCmp !== 0) return auditCmp;
                 return new Date(b.created_at) - new Date(a.created_at);
             });
 
@@ -493,16 +496,21 @@
                     console.warn('Résultat invalide:', result);
                     return '';
                 }
+                const auditId = result.audit_id || result.result_id || 'N/A';
+                const compliance = result.compliance || {};
+                const complianceStatus = compliance.status === 'non_compliant' ? '⚠️ Non conforme' : '✅ Conforme';
                 return `
                     <div class="result-item" onclick="showResultDetail('${result.result_id}')">
                         <div class="result-item-header">
-                            <span class="result-id">${result.result_id.substring(0, 12)}...</span>
-                            <span class="status-badge ${result.status}">
-                                ${result.status === 'success' ? '✅ Succès' : '❌ Échec'}
+                            <span class="result-id">${String(auditId).substring(0, 12)}...</span>
+                            <span class="status-badge ${compliance.status === 'non_compliant' ? 'failed' : 'success'}">
+                                ${complianceStatus}
                             </span>
                         </div>
                         <div class="result-meta">
                             <strong>Agent:</strong> ${(result.agent_name || result.agent_id || 'Unknown').substring(0, 20)}<br>
+                            <strong>ID Audit:</strong> ${escapeHtml(String(auditId))}<br>
+                            <strong>Recommandation:</strong> ${escapeHtml((result.recommendation || compliance.recommendation || '—').substring(0, 80))}<br>
                             <strong>Date:</strong> ${new Date(result.created_at).toLocaleString('fr-FR')}<br>
                             <strong>Durée:</strong> ${result.execution_time_ms || 0}ms
                         </div>
@@ -545,6 +553,10 @@
                 }
 
                 const createdAt = new Date(result.created_at);
+                const compliance = result.compliance || {};
+                const recommendation = result.recommendation || compliance.recommendation || 'Aucune recommandation';
+                const auditId = result.audit_id || result.result_id || 'N/A';
+                const complianceLabel = compliance.status === 'non_compliant' ? '⚠️ Non conforme' : '✅ Conforme';
 
                 let html = `
                     <div class="detail-section">
@@ -553,6 +565,10 @@
                             <div class="detail-field">
                                 <label>ID Résultat:</label>
                                 <value>${escapeHtml(result.result_id || 'N/A')}</value>
+                            </div>
+                            <div class="detail-field">
+                                <label>ID Audit:</label>
+                                <value>${escapeHtml(String(auditId))}</value>
                             </div>
                             <div class="detail-field">
                                 <label>ID Tâche:</label>
@@ -565,8 +581,8 @@
                             <div class="detail-field">
                                 <label>Statut:</label>
                                 <value>
-                                    <span class="status-badge ${result.status}">
-                                        ${result.status === 'success' ? '✅ Succès' : '❌ Échec'}
+                                    <span class="status-badge ${compliance.status === 'non_compliant' ? 'failed' : 'success'}">
+                                        ${complianceLabel}
                                     </span>
                                 </value>
                             </div>
@@ -577,6 +593,10 @@
                             <div class="detail-field">
                                 <label>Durée d'exécution:</label>
                                 <value>${result.execution_time_ms || 0}ms</value>
+                            </div>
+                            <div class="detail-field" style="grid-column: 1 / -1;">
+                                <label>Recommandation:</label>
+                                <value>${escapeHtml(String(recommendation))}</value>
                             </div>
                         </div>
                     </div>

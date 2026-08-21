@@ -12,7 +12,6 @@ python-json-logger==2.0.7
 pymongo==4.6.0
 cryptography==41.0.7
 httpx==0.25.1
-jwt==1.4.0
 dotenv==0.9.9
 
 # Dépendances supplémentaires pour les tests

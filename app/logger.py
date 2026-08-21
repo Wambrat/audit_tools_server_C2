@@ -37,25 +37,37 @@ class SecretsFilter(logging.Filter):
         try:
             # Mask message
             if record.msg:
+                msg_text = str(record.msg)
                 for pattern, replacement in self.PATTERNS:
-                    record.msg = re.sub(pattern, replacement, str(record.msg), flags=re.IGNORECASE)
-            
+                    msg_text = re.sub(pattern, replacement, msg_text, flags=re.IGNORECASE)
+                record.msg = msg_text
+
             # Mask args if present
             if record.args:
                 if isinstance(record.args, dict):
-                    for key in record.args:
-                        for pattern, replacement in self.PATTERNS:
-                            record.args[key] = re.sub(pattern, replacement, str(record.args[key]), flags=re.IGNORECASE)
+                    sanitized_args = {}
+                    for key, value in record.args.items():
+                        sanitized_args[key] = re.sub(
+                            r'api[_-]?key["\']?\s*[:=]\s*["\']?[A-Za-z0-9_-]+["\']?',
+                            'api_key=[REDACTED]',
+                            str(value),
+                            flags=re.IGNORECASE,
+                        )
+                    record.args = sanitized_args
                 elif isinstance(record.args, tuple):
-                    record.args = tuple(
-                        re.sub(pattern, replacement, str(arg), flags=re.IGNORECASE)
-                        if isinstance(arg, str) else arg
-                        for arg in record.args
-                        for pattern, replacement in self.PATTERNS
-                    )
+                    sanitized_args = []
+                    for arg in record.args:
+                        if isinstance(arg, str):
+                            cleaned = arg
+                            for pattern, replacement in self.PATTERNS:
+                                cleaned = re.sub(pattern, replacement, cleaned, flags=re.IGNORECASE)
+                            sanitized_args.append(cleaned)
+                        else:
+                            sanitized_args.append(arg)
+                    record.args = tuple(sanitized_args)
         except Exception:
             pass  # If filtering fails, still log the message
-        
+
         return True
 
 

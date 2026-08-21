@@ -613,6 +613,65 @@
       color: #1d4ed8;
     }
 
+    .result-rule-cell {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .result-command-name {
+      font-weight: 600;
+      color: #23364d;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      max-width: 180px;
+    }
+
+    .rule-status-pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 62px;
+      padding: 5px 9px;
+      border-radius: 999px;
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      border: 1px solid transparent;
+    }
+
+    .rule-status-pill.success {
+      background: rgba(34, 197, 94, 0.12);
+      color: #1f8f4d;
+      border-color: rgba(34, 197, 94, 0.18);
+    }
+
+    .rule-status-pill.warn {
+      background: rgba(255, 170, 0, 0.12);
+      color: #a06600;
+      border-color: rgba(255, 170, 0, 0.18);
+    }
+
+    .rule-status-pill.fail {
+      background: rgba(239, 68, 68, 0.12);
+      color: #d63d3d;
+      border-color: rgba(239, 68, 68, 0.18);
+    }
+
+    .rule-status-pill.empty {
+      display: inline-block;
+      min-width: 14px;
+      width: 14px;
+      height: 14px;
+      padding: 0;
+      border-radius: 999px;
+      background: rgba(148, 163, 184, 0.1);
+      border-color: rgba(148, 163, 184, 0.18);
+    }
+
     .result-detail-panel {
       background: linear-gradient(180deg, #ffffff 0%, #f9fbff 100%);
       border: 1px solid #e6edf8;
@@ -1217,6 +1276,9 @@
                       <span :style="{ color: agent.status === 'active' ? 'var(--color-success)' : 'var(--color-muted)' }">
                         {{ agent.status === 'active' ? '● Actif' : '○ Inactif' }}
                       </span>
+                      <div v-if="agent.status !== 'active'" style="font-size:12px; color: var(--color-muted); margin-top:4px;">
+                        il y a {{ getInactivityDuration(agent.last_beacon) }}
+                      </div>
                     </td>
                     <td>{{ agent.success_rate || 0 }}%</td>
                     <td>
@@ -1491,7 +1553,6 @@
                   <h2>Résultats d'audit</h2>
                   <span class="command-toolbar-subtitle">{{ filteredResults.length }} résultats affichés sur {{ resultsList.length }}</span>
                 </div>
-                <button class="btn-secondary" @click="refreshData">🔄 Actualiser</button>
               </div>
 
               <div class="results-kpis">
@@ -1528,9 +1589,10 @@
 
                   <select v-model="resultsFilterStatus" class="results-filter">
                     <option value="">Tous les statuts</option>
-                    <option value="success">Succès</option>
-                    <option value="failed">Échec</option>
+                    <option value="compliant">Conforme</option>
                     <option value="non_compliant">Non conforme</option>
+                    <option value="success">Succès technique</option>
+                    <option value="failed">Échec technique</option>
                   </select>
                 </div>
               </div>
@@ -1541,8 +1603,10 @@
                     <thead>
                       <tr>
                         <th>Agent</th>
+                        <th>ID Audit</th>
                         <th>Tâche</th>
-                        <th>Statut</th>
+                        <th>Commande</th>
+                        <th>Conformité</th>
                         <th>Date</th>
                         <th>Durée</th>
                       </tr>
@@ -1550,10 +1614,16 @@
                     <tbody>
                       <tr v-for="result in filteredResults" :key="result.result_id" @click="selectResult(result)" :class="{ 'active-row': selectedResultId === result.result_id }">
                         <td>{{ result.agent_name || result.agent_id || 'Inconnu' }}</td>
+                        <td>{{ result.audit_id || result.result_id || '—' }}</td>
                         <td>{{ result.task_id || '—' }}</td>
                         <td>
-                          <span :class="['status-pill', (result.compliance && result.compliance.status === 'non_compliant') ? 'failed' : (result.status === 'success' ? 'success' : 'failed')]">
-                            {{ (result.compliance && result.compliance.status === 'non_compliant') ? '⚠️ Non conforme' : (result.status === 'success' ? '✅ Succès' : '❌ Échec') }}
+                          <div class="result-rule-cell">
+                            <span class="result-command-name">{{ result.command_name || '—' }}</span>
+                          </div>
+                        </td>
+                        <td>
+                          <span :class="['rule-status-pill', getComplianceStatusClass(result)]" :title="getComplianceStatusLabel(result)">
+                            {{ getComplianceStatusLabel(result) }}
                           </span>
                         </td>
                         <td>{{ formatDate(result.created_at) }}</td>
@@ -1577,8 +1647,8 @@
 
                 <div class="command-drawer-body">
                   <div class="detail-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 16px;">
-                    <span :class="['status-pill', ((selectedResultData.compliance && selectedResultData.compliance.status === 'non_compliant') || selectedResultData.status === 'failed') ? 'failed' : 'success']">
-                      {{ (selectedResultData.compliance && selectedResultData.compliance.status === 'non_compliant') ? '⚠️ Non conforme' : (selectedResultData.status === 'success' ? '✅ Succès' : '❌ Échec') }}
+                    <span :class="['status-pill', getBusinessStatusClass(selectedResultData)]">
+                      {{ getBusinessStatusLabel(selectedResultData) }}
                     </span>
                   </div>
 
@@ -1586,6 +1656,10 @@
                     <div class="detail-field">
                       <label>Agent</label>
                       <span class="detail-value">{{ selectedResultData.agent_name || selectedResultData.agent_id }}</span>
+                    </div>
+                    <div class="detail-field">
+                      <label>ID Audit</label>
+                      <span class="detail-value">{{ selectedResultData.audit_id || selectedResultData.result_id || '—' }}</span>
                     </div>
                     <div class="detail-field">
                       <label>Tâche</label>
@@ -1601,12 +1675,33 @@
                     </div>
                   </div>
 
-                  <div v-if="selectedResultData.compliance && selectedResultData.compliance.issues && selectedResultData.compliance.issues.length" class="detail-field" style="margin-bottom: 14px;">
+                  <div v-if="selectedResultData.recommendation || (selectedResultData.compliance && selectedResultData.compliance.recommendation) || (selectedResultData.compliance && selectedResultData.compliance.controls && selectedResultData.compliance.controls.length)" class="detail-field" style="margin-bottom: 14px;">
+                    <label>Recommandation</label>
+                    <div class="detail-output">
+                      {{ selectedResultData.recommendation || selectedResultData.compliance.recommendation || 'Aucune recommandation nécessaire : les contrôles sont conformes.' }}
+                    </div>
+                  </div>
+
+                  <div v-if="selectedResultData.compliance" class="detail-field" style="margin-bottom: 14px;">
                     <label>Conformité</label>
                     <div class="detail-output">
-                      <div style="font-weight:700; margin-bottom:8px;">{{ selectedResultData.compliance.summary }}</div>
-                      <ul style="margin:0; padding-left:18px;">
+                      <div style="font-weight:700; margin-bottom:8px;">{{ selectedResultData.compliance.summary || (selectedResultData.compliance.status === 'non_compliant' ? 'Non conforme' : 'Conforme') }}</div>
+                      <ul v-if="selectedResultData.compliance.issues && selectedResultData.compliance.issues.length" style="margin:0; padding-left:18px;">
                         <li v-for="issue in selectedResultData.compliance.issues" :key="issue">{{ issue }}</li>
+                      </ul>
+                      <div v-else-if="selectedResultData.compliance.status === 'compliant'" style="margin-top: 6px;">Aucune anomalie détectée sur les contrôles de l’audit.</div>
+                    </div>
+                  </div>
+
+                  <div v-if="selectedResultData.compliance && selectedResultData.compliance.controls && selectedResultData.compliance.controls.length" class="detail-field" style="margin-bottom: 14px;">
+                    <label>Contrôles détaillés</label>
+                    <div class="detail-output">
+                      <ul style="margin:0; padding-left:18px;">
+                        <li v-for="control in selectedResultData.compliance.controls" :key="`${control.section}-${control.control}`">
+                          <strong>{{ control.section }} / {{ control.control }}</strong> : {{ control.status }}
+                          <div v-if="control.comments">Commentaire : {{ control.comments }}</div>
+                          <div v-if="control.recommendations && control.recommendations.length">Recommandation : {{ control.recommendations.join(' | ') }}</div>
+                        </li>
                       </ul>
                     </div>
                   </div>
@@ -1637,7 +1732,6 @@
                   <h2>Alertes système</h2>
                   <span class="command-toolbar-subtitle">{{ filteredAlerts.length }} alertes affichées</span>
                 </div>
-                <button class="btn-secondary" @click="refreshData">🔄 Actualiser</button>
               </div>
 
               <div class="results-kpis">
@@ -1676,8 +1770,10 @@
                       <tr>
                         <th>Niveau</th>
                         <th>Agent</th>
+                        <th>ID Audit</th>
                         <th>Type</th>
                         <th>Message</th>
+                        <th>Recommandation</th>
                         <th>Date</th>
                       </tr>
                     </thead>
@@ -1689,8 +1785,10 @@
                           </span>
                         </td>
                         <td>{{ alert.agent_name || alert.agent_id || 'Système' }}</td>
+                        <td>{{ alert.audit_id || '—' }}</td>
                         <td>{{ alert.type }}</td>
                         <td>{{ alert.message }}</td>
+                        <td>{{ alert.recommendation || '—' }}</td>
                         <td>{{ formatDate(alert.timestamp) }}</td>
                       </tr>
                     </tbody>
@@ -1708,7 +1806,7 @@
     </div>
   </div>
 
-  <script src="js/api.js"></script>
-  <script src="js/admin-dashboard.js"></script>
+  <script src="js/api.js?v=20260820-3"></script>
+  <script src="js/admin-dashboard.js?v=20260820-3"></script>
 </body>
 </html>
