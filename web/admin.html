@@ -48,9 +48,11 @@
       width: 280px;
       background: var(--color-dark);
       color: white;
-      padding: 20px;
+      padding: 20px 20px 12px;
       position: fixed;
       height: 100vh;
+      display: flex;
+      flex-direction: column;
       overflow-y: auto;
       box-shadow: 2px 0 8px rgba(0, 0, 0, 0.15);
     }
@@ -72,10 +74,14 @@
 
     .sidebar-nav {
       list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      flex: 1;
     }
 
     .sidebar-nav li {
-      margin-bottom: 12px;
+      margin: 0;
     }
 
     .sidebar-nav a {
@@ -101,34 +107,42 @@
     }
 
     .sidebar-footer {
-      position: absolute;
-      bottom: 20px;
-      left: 20px;
-      right: 20px;
+      margin-top: auto;
       border-top: 1px solid rgba(255, 255, 255, 0.1);
-      padding-top: 20px;
+      padding-top: 16px;
+    }
+
+    .sidebar-user-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 12px;
     }
 
     .user-info {
       display: flex;
       align-items: center;
       gap: 12px;
-      margin-bottom: 12px;
+      min-width: 0;
+      flex: 1;
     }
 
     .user-avatar {
-      width: 36px;
-      height: 36px;
+      width: 34px;
+      height: 34px;
       border-radius: 50%;
       background: var(--color-primary);
       display: flex;
       align-items: center;
       justify-content: center;
       font-weight: 700;
-      font-size: 16px;
+      font-size: 15px;
+      flex-shrink: 0;
     }
 
     .user-details {
+      min-width: 0;
       flex: 1;
     }
 
@@ -136,12 +150,42 @@
       font-size: 13px;
       font-weight: 600;
       display: block;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .user-role {
       font-size: 11px;
       color: rgba(255, 255, 255, 0.6);
       display: block;
+    }
+
+    .logout-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      background: rgba(255, 255, 255, 0.05);
+      color: #ffffff;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      padding: 0;
+      flex-shrink: 0;
+    }
+
+    .logout-btn:hover {
+      background: rgba(255, 255, 255, 0.12);
+      border-color: rgba(255, 255, 255, 0.25);
+      transform: translateY(-1px);
+    }
+
+    .logout-icon {
+      font-size: 18px;
+      line-height: 1;
     }
 
     /* Main Content */
@@ -1147,19 +1191,31 @@
               ⚙️ Paramètres
             </a>
           </li>
+          <li>
+            <a href="build-msi.html" target="_self">
+              🔨 Build MSI
+            </a>
+          </li>
+          <li>
+            <a href="build-msi.html#config" target="_self">
+              ⚙️ Config MSI
+            </a>
+          </li>
         </ul>
 
         <div class="sidebar-footer">
-          <div class="user-info">
-            <div class="user-avatar">A</div>
-            <div class="user-details">
-              <span class="user-name">Administrateur</span>
-              <span class="user-role">Connecté</span>
+          <div class="sidebar-user-row">
+            <div class="user-info">
+              <div class="user-avatar">A</div>
+              <div class="user-details">
+                <span class="user-name">Administrateur</span>
+                <span class="user-role">Connecté</span>
+              </div>
             </div>
+            <button type="button" class="logout-btn" @click="logout" aria-label="Déconnexion" title="Déconnexion">
+              <span class="logout-icon">⏻</span>
+            </button>
           </div>
-          <a href="#" @click="logout" class="btn-secondary" style="width: 100%; text-align: center; margin-top: 12px;">
-            Déconnexion
-          </a>
         </div>
       </aside>
 

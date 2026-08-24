@@ -283,20 +283,6 @@
         <!-- Tab: Build MSI -->
         <div id="buildTab" class="tab-content">
             <form id="buildForm">
-                <div class="form-group">
-                    <label for="token">JWT Token</label>
-                    <input 
-                        type="password" 
-                        id="token" 
-                        name="token" 
-                        placeholder="Paste your JWT token here" 
-                        required
-                    >
-                    <small style="color: #999; font-size: 12px; display: block; margin-top: 5px;">
-                        Get your token from the Admin Dashboard
-                    </small>
-                </div>
-                
                 <div class="button-group">
                     <button type="submit" class="btn-build" id="buildBtn">
                         🔨 Build MSI
@@ -313,17 +299,6 @@
         <!-- Tab: Configuration -->
         <div id="configTab" class="tab-content" style="display: none;">
             <form id="configForm">
-                <div class="form-group">
-                    <label for="configToken">JWT Token</label>
-                    <input 
-                        type="password" 
-                        id="configToken" 
-                        name="configToken" 
-                        placeholder="Paste your JWT token here" 
-                        required
-                    >
-                </div>
-                
                 <div class="button-group">
                     <button type="button" class="btn-build" onclick="loadConfig()">
                         📂 Load Config
@@ -336,11 +311,25 @@
                     <h3 style="margin-top: 0;">Agent Configuration</h3>
                     
                     <div class="form-group">
-                        <label for="serverUrl">Server URL</label>
+                        <label for="serverHost">Server Host / Domain / IP</label>
+                        <input 
+                            type="text" 
+                            id="serverHost" 
+                            placeholder=""
+                        >
+                        <small style="color: #666; font-size: 12px; display: block; margin-top: 5px;">
+                            Modifiez uniquement le domaine ou l’IP du serveur. Le protocole et le chemin restent inchangés.
+                        </small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="serverUrl">Current URL</label>
                         <input 
                             type="text" 
                             id="serverUrl" 
-                            placeholder="http://localhost:8000/api"
+                            readonly
+                            style="background: #f3f4f6; cursor: not-allowed;"
+                            placeholder="https://localhost/api"
                         >
                     </div>
                     
@@ -352,15 +341,6 @@
                             min="5" 
                             max="3600"
                             placeholder="30"
-                        >
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="logFile">Log File Path</label>
-                        <input 
-                            type="text" 
-                            id="logFile" 
-                            placeholder="%PROGRAMFILES%\\C2Agent\\logs\\agent.log"
                         >
                     </div>
                     
@@ -390,6 +370,17 @@
     </div>
     
     <script>
+        function getStoredToken() {
+            return localStorage.getItem('admin_token') || '';
+        }
+
+        function preloadTokenFields() {
+            const token = getStoredToken();
+            if (!token && window.location.pathname.includes('build-msi.html')) {
+                window.location.href = 'admin-login.html';
+            }
+        }
+
         // Tab switching
         function switchTab(tab) {
             // Hide all tabs
@@ -413,10 +404,11 @@
         
         // Load configuration
         async function loadConfig() {
-            const token = document.getElementById('configToken').value.trim();
+            const token = getStoredToken();
             
             if (!token) {
-                showConfigStatus('❌ JWT token is required', 'error');
+                showConfigStatus('❌ Session admin introuvable. Veuillez vous reconnecter.', 'error');
+                window.location.href = 'admin-login.html';
                 return;
             }
             
@@ -439,11 +431,12 @@
                 
                 const data = await response.json();
                 const config = data.config;
-                
-                // Fill form fields
-                document.getElementById('serverUrl').value = config.agent.serverUrl || '';
+                const currentServerUrl = config.agent.serverUrl || 'https://localhost/api';
+                const parsedUrl = new URL(currentServerUrl);
+
+                document.getElementById('serverUrl').value = currentServerUrl;
+                document.getElementById('serverHost').value = parsedUrl.hostname || 'localhost';
                 document.getElementById('beaconInterval').value = config.agent.beaconInterval || 30;
-                document.getElementById('logFile').value = config.agent.logFile || '';
                 document.getElementById('logLevel').value = config.agent.logLevel || 'INFO';
                 
                 // Show config editor
@@ -457,26 +450,22 @@
         
         // Save configuration
         async function saveConfig() {
-            const token = document.getElementById('configToken').value.trim();
+            const token = getStoredToken();
             
             if (!token) {
-                showConfigStatus('❌ JWT token is required', 'error');
+                showConfigStatus('❌ Session admin introuvable. Veuillez vous reconnecter.', 'error');
+                window.location.href = 'admin-login.html';
                 return;
             }
             
             // Validate inputs
-            const serverUrl = document.getElementById('serverUrl').value.trim();
+            const currentUrl = new URL(document.getElementById('serverUrl').value.trim() || 'https://localhost/api');
+            const serverHost = document.getElementById('serverHost').value.trim();
             const beaconInterval = parseInt(document.getElementById('beaconInterval').value);
-            const logFile = document.getElementById('logFile').value.trim();
             const logLevel = document.getElementById('logLevel').value;
             
-            if (!serverUrl) {
-                showConfigStatus('❌ Server URL is required', 'error');
-                return;
-            }
-            
-            if (!serverUrl.match(/^https?:\/\/.+/)) {
-                showConfigStatus('❌ Server URL must start with http:// or https://', 'error');
+            if (!serverHost) {
+                showConfigStatus('❌ Server host / domain / IP is required', 'error');
                 return;
             }
             
@@ -484,11 +473,11 @@
                 showConfigStatus('❌ Beacon Interval must be between 5 and 3600 seconds', 'error');
                 return;
             }
-            
-            if (!logFile) {
-                showConfigStatus('❌ Log File path is required', 'error');
-                return;
-            }
+
+            const nextUrl = new URL(currentUrl.toString());
+            const currentPort = nextUrl.port || (nextUrl.protocol === 'https:' ? '443' : '80');
+            nextUrl.hostname = serverHost.replace(/^\[|\]$/g, '');
+            nextUrl.port = currentPort;
             
             showConfigStatus('Saving configuration...', 'loading');
             
@@ -500,9 +489,8 @@
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        serverUrl,
+                        serverUrl: nextUrl.toString(),
                         beaconInterval,
-                        logFile,
                         logLevel
                     })
                 });
@@ -544,15 +532,20 @@
             statusBox.innerHTML = `<pre style="margin: 0; white-space: pre-wrap; word-wrap: break-word; font-family: 'Courier New', monospace; font-size: 13px;">${message}</pre>`;
         }
         
+        document.addEventListener('DOMContentLoaded', () => {
+            preloadTokenFields();
+        });
+
         // Build form submission
         document.getElementById('buildForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             
-            const token = document.getElementById('token').value.trim();
+            const token = getStoredToken();
             const buildBtn = document.getElementById('buildBtn');
             
             if (!token) {
-                showStatus('❌ JWT token is required', 'error');
+                showStatus('❌ Session admin introuvable. Veuillez vous reconnecter.', 'error');
+                window.location.href = 'admin-login.html';
                 return;
             }
             

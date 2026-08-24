@@ -3,7 +3,7 @@ venv/
 env/
 ENV/
 .venv/
-cert/
+certs/
 
 # Python cache
 __pycache__/

@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>C2 Server - Accueil</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 40px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .container {
+      max-width: 900px;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      padding: 50px;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    .header-icon {
+      font-size: 60px;
+      margin-bottom: 20px;
+    }
+
+    .header h1 {
+      font-size: 36px;
+      color: #333;
+      margin-bottom: 10px;
+    }
+
+    .header p {
+      font-size: 16px;
+      color: #666;
+      margin-bottom: 30px;
+    }
+
+    .links-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+      margin-bottom: 40px;
+    }
+
+    .link-card {
+      background: linear-gradient(135deg, #f5f7fa 0%, #f8fafb 100%);
+      border: 2px solid #e0e0e0;
+      border-radius: 10px;
+      padding: 30px;
+      text-decoration: none;
+      transition: all 0.3s;
+      cursor: pointer;
+      text-align: center;
+      color: inherit;
+    }
+
+    .link-card:hover {
+      border-color: #667eea;
+      box-shadow: 0 10px 30px rgba(102, 126, 234, 0.15);
+      transform: translateY(-5px);
+    }
+
+    .link-card-icon {
+      font-size: 40px;
+      margin-bottom: 15px;
+      display: block;
+    }
+
+    .link-card-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 10px;
+    }
+
+    .link-card-desc {
+      font-size: 14px;
+      color: #666;
+      margin-bottom: 15px;
+    }
+
+    .link-card-link {
+      display: inline-block;
+      padding: 8px 16px;
+      background: #667eea;
+      color: white;
+      border-radius: 6px;
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 600;
+      transition: background 0.3s;
+    }
+
+    .link-card-link:hover {
+      background: #5568d3;
+    }
+
+    .info-section {
+      background: #f0f4ff;
+      border-left: 4px solid #667eea;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 30px;
+    }
+
+    .info-section h3 {
+      color: #333;
+      margin-bottom: 10px;
+      font-size: 16px;
+    }
+
+    .info-section p {
+      color: #666;
+      font-size: 14px;
+      line-height: 1.6;
+      margin-bottom: 8px;
+    }
+
+    .credentials {
+      background: #fff3cd;
+      border-left: 4px solid #ffc107;
+      padding: 15px;
+      border-radius: 6px;
+      margin-top: 15px;
+      font-family: 'Courier New', monospace;
+      font-size: 13px;
+    }
+
+    .credentials-label {
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: #333;
+    }
+
+    .credentials-item {
+      margin-bottom: 5px;
+      color: #666;
+    }
+
+    .footer {
+      text-align: center;
+      padding-top: 30px;
+      border-top: 1px solid #e0e0e0;
+      color: #999;
+      font-size: 13px;
+    }
+
+    .status-badge {
+      display: inline-block;
+      background: #4caf50;
+      color: white;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="header-icon">🛡️</div>
+      <h1>C2 Server</h1>
+      <p>Plateforme de conformité et d'audit du parc informatique</p>
+      <div class="status-badge">✅ Services actifs</div>
+    </div>
+
+    <div class="info-section">
+      <h3>🔐 Accès Sécurisé</h3>
+      <p>Tous les accès sont protégés par chiffrement <strong>HTTPS/TLS</strong>. Les données sensibles sont chiffrées.</p>
+    </div>
+
+    <div class="links-grid">
+      <div class="link-card">
+        <span class="link-card-icon">📊</span>
+        <div class="link-card-title">Dashboard Public</div>
+        <div class="link-card-desc">Vue d'ensemble du système et agents actifs</div>
+        <a href="index.html" class="link-card-link">Accéder</a>
+      </div>
+
+      <div class="link-card">
+        <span class="link-card-icon">🔑</span>
+        <div class="link-card-title">Connexion Admin</div>
+        <div class="link-card-desc">Interface d'administration et gestion complète</div>
+        <a href="admin-login.html" class="link-card-link">Se connecter</a>
+      </div>
+
+      <div class="link-card">
+        <span class="link-card-icon">📋</span>
+        <div class="link-card-title">Résultats</div>
+        <div class="link-card-desc">Historique des audits et résultats détaillés</div>
+        <a href="results.html" class="link-card-link">Consulter</a>
+      </div>
+
+      <div class="link-card">
+        <span class="link-card-icon">🔨</span>
+        <div class="link-card-title">Build MSI</div>
+        <div class="link-card-desc">Construction et déploiement des agents C2</div>
+        <a href="build-msi.html" class="link-card-link">Accéder</a>
+      </div>
+
+      <div class="link-card">
+        <span class="link-card-icon">⚙️</span>
+        <div class="link-card-title">Configuration</div>
+        <div class="link-card-desc">Configuration du MSI et paramètres de déploiement</div>
+        <a href="build-msi.html#config" class="link-card-link">Configurer</a>
+      </div>
+
+      <div class="link-card">
+        <span class="link-card-icon">📚</span>
+        <div class="link-card-title">Documentation API</div>
+        <div class="link-card-desc">API REST complète avec Swagger/OpenAPI</div>
+        <a href="/api/docs" class="link-card-link">Explorer</a>
+      </div>
+    </div>
+
+    <div class="info-section">
+      <h3>🚀 Démarrage Rapide</h3>
+      <p><strong>1. Se connecter :</strong> Cliquez sur "Connexion Admin" et utilisez vos identifiants</p>
+      <p><strong>2. Configurer MSI :</strong> Allez dans "Admin Panel" → "Config MSI" pour éditer les paramètres</p>
+      <p><strong>3. Compiler MSI :</strong> Utilisez "Build MSI" pour générer l'installeur agent</p>
+      <p><strong>4. Surveiller :</strong> Consultez le dashboard pour voir les agents connectés et les résultats des audits</p>
+
+      <div class="credentials">
+        <div class="credentials-label">Identifiants par défaut :</div>
+        <div class="credentials-item">👤 Identifiant : <strong>admin</strong></div>
+        <div class="credentials-item">🔑 Mot de passe : <strong>À définir dans .env</strong></div>
+      </div>
+    </div>
+
+    <div class="info-section" style="background: #e8f5e9; border-left-color: #4caf50;">
+      <h3>✅ État du Système</h3>
+      <p>✓ Frontend HTTPS actif</p>
+      <p>✓ Backend API accessible</p>
+      <p>✓ Base de données MongoDB connectée</p>
+      <p>✓ Certificats TLS/SSL configurés</p>
+    </div>
+
+    <div class="footer">
+      <p>🔒 C2 Server - Plateforme sécurisée pour audit et conformité</p>
+      <p>© 2024 - Tous droits réservés</p>
+    </div>
+  </div>
+</body>
+</html>

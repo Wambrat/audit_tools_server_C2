@@ -24,6 +24,7 @@ from .monitoring import (
     get_tasks_dashboard, get_results_dashboard, get_alerts
 )
 import os
+import urllib.parse
 from typing import Optional
 import subprocess
 import json as json_module
@@ -1432,7 +1433,32 @@ async def update_msi_config(
         
         # Mettre à jour uniquement les champs fournis
         update_data = config_update.dict(exclude_unset=True)
-        
+
+        # On autorise uniquement la modification du host / domaine / IP, pas le protocole ni le chemin
+        if 'serverUrl' in update_data:
+            incoming_url = update_data['serverUrl']
+            current_url = config.get('agent', {}).get('serverUrl')
+            if current_url:
+                try:
+                    current = urllib.parse.urlparse(current_url)
+                    incoming = urllib.parse.urlparse(incoming_url)
+                    if current.scheme == incoming.scheme and current.path == incoming.path:
+                        updated = current._replace(
+                            netloc=f"{incoming.hostname or current.hostname}:{current.port or (443 if current.scheme == 'https' else 80)}",
+                            hostname=incoming.hostname or current.hostname,
+                            port=current.port or (443 if current.scheme == 'https' else 80),
+                            username=current.username,
+                            password=current.password,
+                        )
+                        config['agent']['serverUrl'] = updated.geturl()
+                        update_data.pop('serverUrl')
+                    else:
+                        logger.warning(f"Rejected serverUrl change with non matching scheme/path by {admin_user.get('username', 'unknown')}")
+                        update_data.pop('serverUrl')
+                except Exception:
+                    logger.warning(f"Rejected invalid serverUrl update by {admin_user.get('username', 'unknown')}")
+                    update_data.pop('serverUrl')
+
         if update_data:
             logger.info(f"Updating config with: {update_data} by {admin_user.get('username', 'unknown')}")
             
