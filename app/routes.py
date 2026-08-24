@@ -25,6 +25,7 @@ from .monitoring import (
     get_tasks_dashboard, get_results_dashboard, get_alerts
 )
 import os
+import shutil
 import urllib.parse
 from typing import Optional
 import subprocess
@@ -1576,14 +1577,26 @@ async def build_msi_package(authorization: Optional[str] = Header(None)):
         logger.info(f"Executing build script: {build_script}")
         
         # Commande PowerShell pour exécuter build-msi.ps1
+        # NOTE: Set-ExecutionPolicy n'existe que sous Windows ; sous Linux (pwsh) on l'ignore.
         ps_command = f"""
-        Set-ExecutionPolicy -Scope Process -ExecutionPolicy RemoteSigned -Force;
+        if (-not (Test-Path variable:IsWindows) -or $IsWindows) {{ Set-ExecutionPolicy -Scope Process -ExecutionPolicy RemoteSigned -Force }}
         & '{build_script}'
         """
-        
+
+        # Détecter l'interpréteur PowerShell disponible :
+        # - `pwsh` : PowerShell Core (Linux/conteneur Docker, Windows moderne)
+        # - `powershell.exe` : Windows PowerShell 5.1 (fallback poste Windows)
+        powershell_exe = (
+            shutil.which("pwsh")
+            or shutil.which("powershell.exe")
+            or shutil.which("powershell")
+            or "pwsh"
+        )
+        logger.info(f"Using PowerShell interpreter: {powershell_exe}")
+
         # Exécuter via subprocess
         result = subprocess.run(
-            ["powershell.exe", "-NoProfile", "-Command", ps_command],
+            [powershell_exe, "-NoProfile", "-Command", ps_command],
             cwd=installer_dir,
             capture_output=True,
             text=True,
@@ -1625,23 +1638,30 @@ async def build_msi_package(authorization: Optional[str] = Header(None)):
                     detail="Build succeeded but MSI file not found"
                 )
         else:
+            # build-msi.ps1 écrit ses logs (et l'erreur wixl) sur stdout via Write-Host,
+            # pas sur stderr : on combine les deux pour ne rien perdre.
+            combined_output = "\n".join(
+                part for part in (result.stdout, result.stderr) if part
+            ).strip()
+
             logger.error(f"Build failed with exit code {result.returncode}")
-            logger.error(f"STDERR: {result.stderr}")
-            
+            logger.error(f"STDOUT:\n{result.stdout}")
+            logger.error(f"STDERR:\n{result.stderr}")
+
             audit_logger.log_action(
                 action_type=ActionType.MSI_BUILD,
                 resource_type=ResourceType.DEPLOYMENT,
                 resource_id="C2Agent",
-                details=f"Build failed: {result.stderr[:200]}",
+                details=f"Build failed: {combined_output[:200]}",
                 status="FAILED"
             )
-            
+
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail={
                     "status": "failed",
                     "message": "MSI build failed",
-                    "error": result.stderr[-500:] if result.stderr else "Unknown error",
+                    "error": combined_output[-1500:] if combined_output else "Unknown error",
                     "exit_code": result.returncode
                 }
             )
@@ -1677,6 +1697,7 @@ async def build_msi_package(authorization: Optional[str] = Header(None)):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Build process error: {str(e)}"
         )
+
 
 
 @router.get("/admin/build-msi/download", tags=["Admin", "Deployment"])

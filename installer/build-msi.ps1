@@ -1,5 +1,4 @@
 #Requires -Version 5.0
-#Requires -RunAsAdministrator
 
 <#
 .SYNOPSIS
@@ -54,30 +53,18 @@ Write-Host "        WiX MSI Builder - C2 Agent" -ForegroundColor Cyan
 Write-Host "========================================================" -ForegroundColor Cyan
 Write-Host ""
 
-# Auto-détecter le chemin WiX s'il n'est pas spécifié
-if (-not $WixPath) {
-    Write-Log "Recherche de WiX Toolset..." "INFO"
-    
-    $possiblePaths = @(
-        "C:\Program Files (x86)\WiX Toolset v3.14\bin",
-        "C:\Program Files (x86)\WiX Toolset v3.11\bin",
-        "C:\Program Files\WiX Toolset v3.14\bin",
-        "${env:ProgramFiles(x86)}\WiX Toolset v3.14\bin"
-    )
-    
-    foreach ($path in $possiblePaths) {
-        if (Test-Path -Path $path) {
-            $WixPath = $path
-            Write-Log "WiX Toolset trouvé: $WixPath" "SUCCESS"
-            break
-        }
-    }
-    
-    if (-not $WixPath) {
-        Write-Log "WiX Toolset non trouvé. Veuillez l'installer depuis: https://github.com/wixtoolset/wix3/releases" "ERROR"
-        exit 1
-    }
+# Détecter le compilateur MSI wixl (paquet wixl / msitools) — compile sur Linux.
+# La tâche planifiée n'est PAS créée par une custom action (wixl ne les exécute
+# pas) : le MSI pose une entrée HKLM\...\Run qui lance bootstrap.ps1 au 1er login.
+Write-Log "Recherche du compilateur MSI (wixl)..." "INFO"
+
+$wixlCmd = Get-Command "wixl" -ErrorAction SilentlyContinue
+if (-not $wixlCmd) {
+    Write-Log "wixl introuvable. Installez le paquet 'wixl' (Debian 13) ou 'msitools' (Debian 12) : apt-get install -y wixl" "ERROR"
+    exit 1
 }
+$wixlPath = $wixlCmd.Source
+Write-Log "wixl trouvé: $wixlPath" "SUCCESS"
 
 # Vérifier que les fichiers source existent
 $wxsFile = Join-Path -Path $PSScriptRoot -ChildPath "C2Agent.wxs"
@@ -109,21 +96,7 @@ if (-not (Test-Path -Path $agentFile)) {
 
 Write-Log "Fichiers source vérifiés avec succès" "SUCCESS"
 
-# Chemins des outils WiX
-$candlePath = Join-Path -Path $WixPath -ChildPath "candle.exe"
-$lightPath = Join-Path -Path $WixPath -ChildPath "light.exe"
-
-if (-not (Test-Path -Path $candlePath)) {
-    Write-Log "candle.exe non trouvé: $candlePath" "ERROR"
-    exit 1
-}
-
-if (-not (Test-Path -Path $lightPath)) {
-    Write-Log "light.exe non trouvé: $lightPath" "ERROR"
-    exit 1
-}
-
-Write-Log "Outils WiX trouvés" "SUCCESS"
+# wixl est un binaire unique : pas de candle/light séparés à valider.
 
 # ===== INJECTION DE CONFIGURATION =====
 
@@ -190,6 +163,10 @@ $wxsModified = $wxsModified `
 $wxsModified = $wxsModified `
     -replace '<ComponentRef Id="ConfigFile" />', '<!-- ConfigFile reference removed -->'
 
+# NB : la CustomAction (type exe) et l'InstallExecuteSequence sont conservees.
+# wixl ne supportait pas l'ancienne CustomAction VBScript ; elle a ete remplacee
+# dans C2Agent.wxs par une CustomAction exe qui lance register-task.ps1.
+
 Set-Content -Path $wxsFile -Value $wxsModified
 
 Write-Log "✅ C2Agent.wxs modifié temporairement" "SUCCESS"
@@ -198,53 +175,30 @@ Write-Log "✅ C2Agent.wxs modifié temporairement" "SUCCESS"
 $wixobjFile = Join-Path -Path $OutputDir -ChildPath "C2Agent.wixobj"
 $msiFile = Join-Path -Path $OutputDir -ChildPath "C2Agent.msi"
 
-# Étape 1: Compilation avec Candle
+# Compilation MSI avec wixl (une seule étape : compilation + liaison)
 Write-Log "" "INFO"
-Write-Log "Étape 1: Compilation avec candle.exe..." "INFO"
+Write-Log "Compilation du MSI avec wixl..." "INFO"
 Write-Log "Source: $wxsFile" "INFO"
-Write-Log "Output: $wixobjFile" "INFO"
-
-try {
-    & $candlePath `
-        -out $wixobjFile `
-        $wxsFile
-    
-    if ($LASTEXITCODE -ne 0) {
-        Write-Log "Erreur de compilation" "ERROR"
-        exit 1
-    }
-    
-    Write-Log "Compilation réussie" "SUCCESS"
-}
-catch {
-    Write-Log "Erreur lors de la compilation: $_" "ERROR"
-    exit 1
-}
-
-# Étape 2: Liaison avec Light
-Write-Log "" "INFO"
-Write-Log "Étape 2: Liaison avec light.exe..." "INFO"
-Write-Log "Input: $wixobjFile" "INFO"
 Write-Log "Output: $msiFile" "INFO"
 
 try {
-    & $lightPath `
-        -out $msiFile `
-        -spdb `
-        -sice:ICE09 `
-        -sice:ICE32 `
-        -sice:ICE61 `
-        $wixobjFile
-    
+    # 2>&1 : rediriger stderr de wixl vers le flux de sortie pour capturer ses messages d'erreur
+    & $wixlPath -v -o $msiFile $wxsFile 2>&1 | ForEach-Object { Write-Host $_ }
+
     if ($LASTEXITCODE -ne 0) {
-        Write-Log "Erreur de liaison" "ERROR"
+        Write-Log "Erreur de compilation wixl (exit code $LASTEXITCODE)" "ERROR"
+        # Restaurer le .wxs et nettoyer avant de quitter
+        if (Test-Path -Path $injectedLauncherPath) { Remove-Item -Path $injectedLauncherPath -Force }
+        Set-Content -Path $wxsFile -Value $wxsBackup
         exit 1
     }
-    
-    Write-Log "Liaison réussie" "SUCCESS"
+
+    Write-Log "Compilation MSI réussie" "SUCCESS"
 }
 catch {
-    Write-Log "Erreur lors de la liaison: $_" "ERROR"
+    Write-Log "Erreur lors de la compilation wixl: $_" "ERROR"
+    if (Test-Path -Path $injectedLauncherPath) { Remove-Item -Path $injectedLauncherPath -Force }
+    Set-Content -Path $wxsFile -Value $wxsBackup
     exit 1
 }
 

