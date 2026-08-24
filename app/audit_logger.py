@@ -39,6 +39,7 @@ class ResourceType(str, Enum):
     RESULT = "result"
     ADMIN = "admin"
     SYSTEM = "system"
+    DEPLOYMENT = "deployment"
 
 
 class ActionType(str, Enum):
@@ -49,6 +50,7 @@ class ActionType(str, Enum):
     DELETE = "delete"
     AUTHENTICATE = "authenticate"
     AUTHORIZE = "authorize"
+    MSI_BUILD = "msi_build"
 
 
 class AuditLogger:
@@ -112,6 +114,40 @@ class AuditLogger:
         
         # Log at INFO level for successful operations, WARNING for failures
         log_level = logging.WARNING if status == "failure" else logging.INFO
+        self.logger.log(log_level, json.dumps(audit_record))
+    
+    def log_action(
+        self,
+        action_type: ActionType,
+        resource_type: ResourceType,
+        resource_id: str,
+        details: str,
+        status: str,
+        user: str = "system"
+    ) -> None:
+        """
+        Generic action logging for API operations.
+        
+        Args:
+            action_type: Type of action (MSI_BUILD, etc.)
+            resource_type: Type of resource (DEPLOYMENT, etc.)
+            resource_id: ID of the resource
+            details: Detailed description of the action
+            status: "STARTED", "SUCCESS", "FAILED", "TIMEOUT", "ERROR"
+            user: User performing the action (default: "system")
+        """
+        audit_record = {
+            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "action_type": action_type.value,
+            "resource_type": resource_type.value,
+            "resource_id": resource_id,
+            "user": user,
+            "status": status,
+            "details": details
+        }
+        
+        # Log level based on status
+        log_level = logging.INFO if status == "SUCCESS" else logging.WARNING
         self.logger.log(log_level, json.dumps(audit_record))
     
     def log_admin_login(

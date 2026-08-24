@@ -169,6 +169,17 @@ app.add_middleware(
 app.include_router(router)
 logger.info("Routes registered successfully")
 
+# ===== Static Files =====
+try:
+    web_dir = os.path.join(os.path.dirname(__file__), "web")
+    if os.path.isdir(web_dir):
+        app.mount("/build", StaticFiles(directory=web_dir), name="build")
+        logger.info(f"Static files mounted at /build from {web_dir}")
+    else:
+        logger.warning(f"Web directory not found: {web_dir}")
+except Exception as e:
+    logger.warning(f"Failed to mount static files: {e}")
+
 
 
 @app.get("/")

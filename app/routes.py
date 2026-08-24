@@ -25,10 +25,47 @@ from .monitoring import (
 )
 import os
 from typing import Optional
+import subprocess
+import json as json_module
+from pydantic import BaseModel
 
 logger = get_logger(__name__)
 audit_logger = get_audit_logger()
 router = APIRouter(prefix="/api")
+
+
+# ===== Pydantic Models for Config =====
+class AgentConfigModel(BaseModel):
+    serverUrl: str
+    beaconInterval: int
+    logFile: str
+    logLevel: str = "INFO"
+
+
+class ScheduledTaskConfigModel(BaseModel):
+    taskName: str = "C2AgentBeacon"
+    triggerInterval: int = 30
+    runWithHighestPrivileges: bool = True
+    runUser: str = "SYSTEM"
+
+
+class InstallationConfigModel(BaseModel):
+    version: str = "1.0.0"
+    installDate: str
+    autoStart: bool = True
+
+
+class ConfigJsonModel(BaseModel):
+    agent: AgentConfigModel
+    scheduled_task: ScheduledTaskConfigModel
+    installation: InstallationConfigModel
+
+
+class ConfigUpdateModel(BaseModel):
+    serverUrl: Optional[str] = None
+    beaconInterval: Optional[int] = None
+    logFile: Optional[str] = None
+    logLevel: Optional[str] = None
 
 
 def verify_jwt_admin(authorization: Optional[str] = Header(None)) -> dict:
@@ -1325,3 +1362,291 @@ async def admin_reset():
         "status": "reset",
         "message": "Database has been reset. All agents, tasks, and results have been cleared."
     }
+
+
+
+# ===== Endpoints de Configuration MSI =====
+
+@router.get("/admin/config", tags=["Admin", "Configuration"])
+async def get_msi_config(admin_user = Depends(verify_jwt_admin)):
+    """
+    Récupérer la configuration actuelle pour la compilation du MSI.
+    
+    Endpoint sécurisé - Nécessite un JWT token valide
+    """
+    
+    # Charger config.json
+    config_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "installer", "config.json")
+    
+    if not os.path.exists(config_path):
+        logger.error(f"Config file not found: {config_path}")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Configuration file not found"
+        )
+    
+    try:
+        with open(config_path, 'r', encoding='utf-8') as f:
+            config = json_module.load(f)
+        
+        logger.info(f"Configuration loaded by {admin_user.get('username', 'unknown')}")
+        return {
+            "status": "success",
+            "config": config
+        }
+    except Exception as e:
+        logger.error(f"Failed to load config: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to load configuration: {str(e)}"
+        )
+
+
+@router.post("/admin/config", tags=["Admin", "Configuration"])
+async def update_msi_config(
+    config_update: ConfigUpdateModel,
+    admin_user = Depends(verify_jwt_admin)
+):
+    """
+    Mettre à jour la configuration pour la compilation du MSI.
+    
+    Seuls les champs fournis sont mis à jour.
+    
+    Endpoint sécurisé - Nécessite un JWT token valide
+    """
+    
+    # Charger config.json
+    config_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "installer", "config.json")
+    
+    if not os.path.exists(config_path):
+        logger.error(f"Config file not found: {config_path}")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Configuration file not found"
+        )
+    
+    try:
+        # Charger la config existante
+        with open(config_path, 'r', encoding='utf-8') as f:
+            config = json_module.load(f)
+        
+        # Mettre à jour uniquement les champs fournis
+        update_data = config_update.dict(exclude_unset=True)
+        
+        if update_data:
+            logger.info(f"Updating config with: {update_data} by {admin_user.get('username', 'unknown')}")
+            
+            # Mettre à jour les paramètres agent
+            for key, value in update_data.items():
+                if key in config.get("agent", {}):
+                    config["agent"][key] = value
+        
+        # Sauvegarder la config mise à jour
+        with open(config_path, 'w', encoding='utf-8') as f:
+            json_module.dump(config, f, indent=2, ensure_ascii=False)
+        
+        logger.info("Configuration updated successfully")
+        
+        # Audit log
+        audit_logger.log_action(
+            action_type=ActionType.UPDATE,
+            resource_type=ResourceType.DEPLOYMENT,
+            resource_id="C2Agent",
+            details=f"Configuration updated: {update_data}",
+            status="SUCCESS"
+        )
+        
+        return {
+            "status": "success",
+            "message": "Configuration updated successfully",
+            "config": config
+        }
+    
+    except Exception as e:
+        logger.error(f"Failed to update config: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to update configuration: {str(e)}"
+        )
+
+
+# ===== Endpoints de génération du MSI =====
+
+@router.post("/admin/build-msi", tags=["Admin", "Deployment"])
+async def build_msi_package(authorization: Optional[str] = Header(None)):
+    """
+    Compiler le package MSI avec la configuration actuelle.
+    
+    Cet endpoint :
+    1. Vérifie les permissions admin
+    2. Exécute le script build-msi.ps1
+    3. Retourne le statut de compilation et le chemin du MSI
+    
+    Endpoint sécurisé - Nécessite un JWT token valide
+    """
+    
+    # Vérifier l'authentification
+    if not authorization:
+        logger.warning("MSI build endpoint accessed without Authorization header")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Missing Authorization header",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    token = extract_token_from_header(authorization)
+    if not token:
+        logger.warning("MSI build endpoint accessed with invalid Authorization header format")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid Authorization header format",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    try:
+        verify_jwt_token(token)
+    except (TokenExpiredError, TokenInvalidError) as e:
+        logger.warning(f"MSI build endpoint accessed with invalid token: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=str(e),
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    # Audit log
+    audit_logger.log_action(
+        action_type=ActionType.MSI_BUILD,
+        resource_type=ResourceType.DEPLOYMENT,
+        resource_id="C2Agent",
+        details="MSI compilation requested via API",
+        status="STARTED"
+    )
+    
+    logger.info("Starting MSI build process...")
+    
+    # Chemins
+    installer_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "installer")
+    build_script = os.path.join(installer_dir, "build-msi.ps1")
+    config_file = os.path.join(installer_dir, "config.json")
+    
+    # Vérifier que les fichiers existent
+    if not os.path.exists(build_script):
+        logger.error(f"Build script not found: {build_script}")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Build script not found"
+        )
+    
+    if not os.path.exists(config_file):
+        logger.error(f"Config file not found: {config_file}")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Configuration file not found"
+        )
+    
+    try:
+        # Exécuter le script PowerShell
+        logger.info(f"Executing build script: {build_script}")
+        
+        # Commande PowerShell pour exécuter build-msi.ps1
+        ps_command = f"""
+        Set-ExecutionPolicy -Scope Process -ExecutionPolicy RemoteSigned -Force;
+        & '{build_script}'
+        """
+        
+        # Exécuter via subprocess
+        result = subprocess.run(
+            ["powershell.exe", "-NoProfile", "-Command", ps_command],
+            cwd=installer_dir,
+            capture_output=True,
+            text=True,
+            timeout=300  # 5 minutes max
+        )
+        
+        logger.info(f"Build process completed with exit code: {result.returncode}")
+        
+        # Vérifier le statut
+        if result.returncode == 0:
+            # Chercher le fichier MSI généré
+            msi_path = os.path.join(installer_dir, "C2Agent.msi")
+            
+            if os.path.exists(msi_path):
+                msi_size = os.path.getsize(msi_path) / (1024 * 1024)  # MB
+                
+                logger.info(f"✅ MSI successfully built: {msi_path} ({msi_size:.2f} MB)")
+                
+                audit_logger.log_action(
+                    action_type=ActionType.MSI_BUILD,
+                    resource_type=ResourceType.DEPLOYMENT,
+                    resource_id="C2Agent",
+                    details=f"MSI compiled successfully - Size: {msi_size:.2f} MB",
+                    status="SUCCESS"
+                )
+                
+                return {
+                    "status": "success",
+                    "message": "MSI package compiled successfully",
+                    "msi_path": msi_path,
+                    "msi_size_mb": round(msi_size, 2),
+                    "timestamp": datetime.utcnow().isoformat(),
+                    "stdout": result.stdout[-500:] if result.stdout else "",  # Last 500 chars
+                }
+            else:
+                logger.error("Build succeeded but MSI file not found")
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail="Build succeeded but MSI file not found"
+                )
+        else:
+            logger.error(f"Build failed with exit code {result.returncode}")
+            logger.error(f"STDERR: {result.stderr}")
+            
+            audit_logger.log_action(
+                action_type=ActionType.MSI_BUILD,
+                resource_type=ResourceType.DEPLOYMENT,
+                resource_id="C2Agent",
+                details=f"Build failed: {result.stderr[:200]}",
+                status="FAILED"
+            )
+            
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail={
+                    "status": "failed",
+                    "message": "MSI build failed",
+                    "error": result.stderr[-500:] if result.stderr else "Unknown error",
+                    "exit_code": result.returncode
+                }
+            )
+    
+    except subprocess.TimeoutExpired:
+        logger.error("Build process timeout (exceeded 300 seconds)")
+        
+        audit_logger.log_action(
+            action_type=ActionType.MSI_BUILD,
+            resource_type=ResourceType.DEPLOYMENT,
+            resource_id="C2Agent",
+            details="Build timeout after 300 seconds",
+            status="TIMEOUT"
+        )
+        
+        raise HTTPException(
+            status_code=status.HTTP_504_GATEWAY_TIMEOUT,
+            detail="Build process timeout (exceeded 5 minutes)"
+        )
+    
+    except Exception as e:
+        logger.error(f"Build process error: {str(e)}")
+        
+        audit_logger.log_action(
+            action_type=ActionType.MSI_BUILD,
+            resource_type=ResourceType.DEPLOYMENT,
+            resource_id="C2Agent",
+            details=f"Build error: {str(e)}",
+            status="ERROR"
+        )
+        
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Build process error: {str(e)}"
+        )

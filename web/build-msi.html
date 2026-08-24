@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>C2 Agent - MSI Builder</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 600px;
+            width: 100%;
+            padding: 40px;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            color: #333;
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            color: #333;
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+        
+        input[type="text"],
+        input[type="password"],
+        textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            font-family: 'Courier New', monospace;
+            transition: border-color 0.3s;
+        }
+        
+        input[type="text"]:focus,
+        input[type="password"]:focus,
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 30px;
+        }
+        
+        button {
+            flex: 1;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .btn-build {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .btn-build:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+        
+        .btn-build:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        
+        .btn-clear {
+            background: #f0f0f0;
+            color: #333;
+        }
+        
+        .btn-clear:hover {
+            background: #e0e0e0;
+        }
+        
+        .status-box {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            display: none;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+        
+        .status-box.hidden {
+            display: none;
+        }
+        
+        .status-box.loading {
+            display: block;
+            background: #e3f2fd;
+            border: 1px solid #2196f3;
+            color: #1976d2;
+        }
+        
+        .status-box.success {
+            display: block;
+            background: #e8f5e9;
+            border: 1px solid #4caf50;
+            color: #2e7d32;
+        }
+        
+        .status-box.error {
+            display: block;
+            background: #ffebee;
+            border: 1px solid #f44336;
+            color: #c62828;
+        }
+        
+        .spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid #2196f3;
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+            margin-right: 10px;
+            vertical-align: middle;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .output-box {
+            background: #f5f5f5;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 12px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            color: #333;
+            max-height: 300px;
+            overflow-y: auto;
+            margin-top: 10px;
+        }
+        
+        .info-box {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            color: #856404;
+            padding: 12px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+        
+        .success-details {
+            background: #f0f7ff;
+            padding: 10px;
+            border-left: 4px solid #4caf50;
+            margin-top: 10px;
+            font-size: 12px;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .download-link {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+        }
+        
+        .download-link:hover {
+            text-decoration: underline;
+        }
+        
+        .tab-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            background: #f0f0f0;
+            color: #333;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+            font-size: 14px;
+        }
+        
+        .tab-btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .tab-btn:hover:not(.active) {
+            background: #e0e0e0;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .config-editor {
+            display: none;
+        }
+        
+        .config-editor.active {
+            display: block;
+        }
+        
+        select {
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+        
+        select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔨 MSI Builder</h1>
+            <p>Compile C2 Agent installer package</p>
+        </div>
+        
+        <div class="info-box">
+            ℹ️ This tool compiles the C2 Agent MSI package with the current configuration from <code>config.json</code>.
+            The build process takes 30-60 seconds. Make sure you have Admin access.
+        </div>
+        
+        <div id="tabButtons" style="display: flex; gap: 10px; margin-bottom: 20px;">
+            <button type="button" class="tab-btn active" onclick="switchTab('build')">🔨 Build MSI</button>
+            <button type="button" class="tab-btn" onclick="switchTab('config')">⚙️ Configuration</button>
+        </div>
+        
+        <!-- Tab: Build MSI -->
+        <div id="buildTab" class="tab-content">
+            <form id="buildForm">
+                <div class="form-group">
+                    <label for="token">JWT Token</label>
+                    <input 
+                        type="password" 
+                        id="token" 
+                        name="token" 
+                        placeholder="Paste your JWT token here" 
+                        required
+                    >
+                    <small style="color: #999; font-size: 12px; display: block; margin-top: 5px;">
+                        Get your token from the Admin Dashboard
+                    </small>
+                </div>
+                
+                <div class="button-group">
+                    <button type="submit" class="btn-build" id="buildBtn">
+                        🔨 Build MSI
+                    </button>
+                    <button type="button" class="btn-clear" onclick="clearForm()">
+                        Clear
+                    </button>
+                </div>
+            </form>
+            
+            <div class="status-box" id="statusBox"></div>
+        </div>
+        
+        <!-- Tab: Configuration -->
+        <div id="configTab" class="tab-content" style="display: none;">
+            <form id="configForm">
+                <div class="form-group">
+                    <label for="configToken">JWT Token</label>
+                    <input 
+                        type="password" 
+                        id="configToken" 
+                        name="configToken" 
+                        placeholder="Paste your JWT token here" 
+                        required
+                    >
+                </div>
+                
+                <div class="button-group">
+                    <button type="button" class="btn-build" onclick="loadConfig()">
+                        📂 Load Config
+                    </button>
+                </div>
+            </form>
+            
+            <div class="config-editor" id="configEditor" style="display: none; margin-top: 20px;">
+                <div style="background: #f5f5f5; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
+                    <h3 style="margin-top: 0;">Agent Configuration</h3>
+                    
+                    <div class="form-group">
+                        <label for="serverUrl">Server URL</label>
+                        <input 
+                            type="text" 
+                            id="serverUrl" 
+                            placeholder="http://localhost:8000/api"
+                        >
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="beaconInterval">Beacon Interval (seconds)</label>
+                        <input 
+                            type="number" 
+                            id="beaconInterval" 
+                            min="5" 
+                            max="3600"
+                            placeholder="30"
+                        >
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="logFile">Log File Path</label>
+                        <input 
+                            type="text" 
+                            id="logFile" 
+                            placeholder="%PROGRAMFILES%\\C2Agent\\logs\\agent.log"
+                        >
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="logLevel">Log Level</label>
+                        <select id="logLevel" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 5px; font-family: 'Courier New', monospace;">
+                            <option value="DEBUG">DEBUG</option>
+                            <option value="INFO">INFO</option>
+                            <option value="WARNING">WARNING</option>
+                            <option value="ERROR">ERROR</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="button-group">
+                    <button type="button" class="btn-build" onclick="saveConfig()">
+                        💾 Save Configuration
+                    </button>
+                    <button type="button" class="btn-clear" onclick="closeConfigEditor()">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+            
+            <div class="status-box" id="configStatusBox"></div>
+        </div>
+    </div>
+    
+    <script>
+        // Tab switching
+        function switchTab(tab) {
+            // Hide all tabs
+            document.getElementById('buildTab').style.display = 'none';
+            document.getElementById('configTab').style.display = 'none';
+            
+            // Remove active class from all buttons
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Show selected tab
+            if (tab === 'build') {
+                document.getElementById('buildTab').style.display = 'block';
+                document.querySelectorAll('.tab-btn')[0].classList.add('active');
+            } else if (tab === 'config') {
+                document.getElementById('configTab').style.display = 'block';
+                document.querySelectorAll('.tab-btn')[1].classList.add('active');
+            }
+        }
+        
+        // Load configuration
+        async function loadConfig() {
+            const token = document.getElementById('configToken').value.trim();
+            
+            if (!token) {
+                showConfigStatus('❌ JWT token is required', 'error');
+                return;
+            }
+            
+            showConfigStatus('Loading configuration...', 'loading');
+            
+            try {
+                const response = await fetch('/api/admin/config', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (!response.ok) {
+                    const error = await response.json();
+                    showConfigStatus(`❌ Failed to load config: ${error.detail}`, 'error');
+                    return;
+                }
+                
+                const data = await response.json();
+                const config = data.config;
+                
+                // Fill form fields
+                document.getElementById('serverUrl').value = config.agent.serverUrl || '';
+                document.getElementById('beaconInterval').value = config.agent.beaconInterval || 30;
+                document.getElementById('logFile').value = config.agent.logFile || '';
+                document.getElementById('logLevel').value = config.agent.logLevel || 'INFO';
+                
+                // Show config editor
+                document.getElementById('configEditor').style.display = 'block';
+                showConfigStatus('✅ Configuration loaded successfully', 'success');
+            } catch (error) {
+                console.error('Error:', error);
+                showConfigStatus(`❌ Error: ${error.message}`, 'error');
+            }
+        }
+        
+        // Save configuration
+        async function saveConfig() {
+            const token = document.getElementById('configToken').value.trim();
+            
+            if (!token) {
+                showConfigStatus('❌ JWT token is required', 'error');
+                return;
+            }
+            
+            // Validate inputs
+            const serverUrl = document.getElementById('serverUrl').value.trim();
+            const beaconInterval = parseInt(document.getElementById('beaconInterval').value);
+            const logFile = document.getElementById('logFile').value.trim();
+            const logLevel = document.getElementById('logLevel').value;
+            
+            if (!serverUrl) {
+                showConfigStatus('❌ Server URL is required', 'error');
+                return;
+            }
+            
+            if (!serverUrl.match(/^https?:\/\/.+/)) {
+                showConfigStatus('❌ Server URL must start with http:// or https://', 'error');
+                return;
+            }
+            
+            if (isNaN(beaconInterval) || beaconInterval < 5 || beaconInterval > 3600) {
+                showConfigStatus('❌ Beacon Interval must be between 5 and 3600 seconds', 'error');
+                return;
+            }
+            
+            if (!logFile) {
+                showConfigStatus('❌ Log File path is required', 'error');
+                return;
+            }
+            
+            showConfigStatus('Saving configuration...', 'loading');
+            
+            try {
+                const response = await fetch('/api/admin/config', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        serverUrl,
+                        beaconInterval,
+                        logFile,
+                        logLevel
+                    })
+                });
+                
+                if (!response.ok) {
+                    const error = await response.json();
+                    showConfigStatus(`❌ Failed to save config: ${error.detail}`, 'error');
+                    return;
+                }
+                
+                const data = await response.json();
+                showConfigStatus('✅ Configuration saved successfully! You can now build the MSI.', 'success');
+            } catch (error) {
+                console.error('Error:', error);
+                showConfigStatus(`❌ Error: ${error.message}`, 'error');
+            }
+        }
+        
+        // Close config editor
+        function closeConfigEditor() {
+            document.getElementById('configEditor').style.display = 'none';
+            document.getElementById('configStatusBox').innerHTML = '';
+        }
+        
+        // Show config status message
+        function showConfigStatus(message, type) {
+            const statusBox = document.getElementById('configStatusBox');
+            let style = '';
+            
+            if (type === 'loading') {
+                style = 'background: #e3f2fd; border-left: 4px solid #2196F3; color: #1565c0;';
+            } else if (type === 'success') {
+                style = 'background: #e8f5e9; border-left: 4px solid #4caf50; color: #2e7d32;';
+            } else if (type === 'error') {
+                style = 'background: #ffebee; border-left: 4px solid #f44336; color: #c62828;';
+            }
+            
+            statusBox.style.cssText = `${style} padding: 12px; margin-top: 20px; border-radius: 5px; display: block;`;
+            statusBox.innerHTML = `<pre style="margin: 0; white-space: pre-wrap; word-wrap: break-word; font-family: 'Courier New', monospace; font-size: 13px;">${message}</pre>`;
+        }
+        
+        // Build form submission
+        document.getElementById('buildForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const token = document.getElementById('token').value.trim();
+            const buildBtn = document.getElementById('buildBtn');
+            
+            if (!token) {
+                showStatus('❌ JWT token is required', 'error');
+                return;
+            }
+            
+            buildBtn.disabled = true;
+            buildBtn.style.opacity = '0.6';
+            showStatus('Building MSI package...', 'loading');
+            
+            try {
+                const response = await fetch('/api/admin/build-msi', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({})
+                });
+                
+                if (!response.ok) {
+                    const error = await response.json();
+                    showStatus(`❌ Build failed: ${error.detail}`, 'error');
+                    buildBtn.disabled = false;
+                    buildBtn.style.opacity = '1';
+                    return;
+                }
+                
+                const data = await response.json();
+                if (data.status === 'success') {
+                    const msiPath = data.msi_path || 'C2Agent.msi';
+                    const size = data.msi_size_mb || 'N/A';
+                    const timestamp = data.timestamp || new Date().toISOString();
+                    
+                    let successMessage = `✅ Build successful!\n\n📦 MSI Package: ${msiPath}\n📊 Size: ${size} MB\n⏰ Built: ${timestamp}`;
+                    
+                    // If path is provided and looks like a file path, add download link
+                    if (msiPath && (msiPath.includes('\\\\') || msiPath.includes('C:'))) {
+                        successMessage += '\n\n📥 Download: Check the build output directory';
+                    }
+                    
+                    showStatus(successMessage, 'success');
+                } else {
+                    showStatus(`❌ Build failed: ${data.message || 'Unknown error'}`, 'error');
+                }
+                
+                buildBtn.disabled = false;
+                buildBtn.style.opacity = '1';
+            } catch (error) {
+                console.error('Error:', error);
+                showStatus(`❌ Error: ${error.message}`, 'error');
+                buildBtn.disabled = false;
+                buildBtn.style.opacity = '1';
+            }
+        });
+        
+        // Show status message
+        function showStatus(message, type) {
+            const statusBox = document.getElementById('statusBox');
+            let style = '';
+            
+            if (type === 'loading') {
+                style = 'background: #e3f2fd; border-left: 4px solid #2196F3; color: #1565c0;';
+            } else if (type === 'success') {
+                style = 'background: #e8f5e9; border-left: 4px solid #4caf50; color: #2e7d32;';
+            } else if (type === 'error') {
+                style = 'background: #ffebee; border-left: 4px solid #f44336; color: #c62828;';
+            }
+            
+            statusBox.style.cssText = `${style} padding: 12px; margin-top: 20px; border-radius: 5px; display: block;`;
+            statusBox.innerHTML = `<pre style="margin: 0; white-space: pre-wrap; word-wrap: break-word; font-family: 'Courier New', monospace; font-size: 13px;">${message}</pre>`;
+        }
+        
+        // Clear form
+        function clearForm() {
+            document.getElementById('buildForm').reset();
+            document.getElementById('statusBox').innerHTML = '';
+        }
+    </script>
+</body>
+</html>
