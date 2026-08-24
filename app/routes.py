@@ -1500,6 +1500,30 @@ async def update_msi_config(
 
 # ===== Endpoints de génération du MSI =====
 
+def resolve_powershell_executable() -> str:
+    """Retourne l'exécutable PowerShell disponible sur la machine hôte ou dans le conteneur."""
+    env_path = os.environ.get("POWERSHELL_PATH")
+    if env_path and os.path.exists(env_path):
+        return env_path
+
+    candidates = [
+        env_path,
+        shutil.which("pwsh"),
+        shutil.which("powershell"),
+        shutil.which("powershell.exe"),
+        "/usr/bin/pwsh",
+        "/opt/microsoft/powershell/7/pwsh",
+    ]
+
+    for candidate in candidates:
+        if candidate and os.path.exists(candidate):
+            return candidate
+
+    raise FileNotFoundError(
+        "Aucun binaire PowerShell n'a été trouvé. Installez pwsh dans le backend ou configurez POWERSHELL_PATH."
+    )
+
+
 @router.post("/admin/build-msi", tags=["Admin", "Deployment"])
 async def build_msi_package(authorization: Optional[str] = Header(None)):
     """
@@ -1583,15 +1607,9 @@ async def build_msi_package(authorization: Optional[str] = Header(None)):
         & '{build_script}'
         """
 
-        # Détecter l'interpréteur PowerShell disponible :
-        # - `pwsh` : PowerShell Core (Linux/conteneur Docker, Windows moderne)
-        # - `powershell.exe` : Windows PowerShell 5.1 (fallback poste Windows)
-        powershell_exe = (
-            shutil.which("pwsh")
-            or shutil.which("powershell.exe")
-            or shutil.which("powershell")
-            or "pwsh"
-        )
+        # Détecter l'interpréteur PowerShell disponible de façon fiable
+        # (Docker/Linux, Windows, ou variable d'environnement configurée).
+        powershell_exe = resolve_powershell_executable()
         logger.info(f"Using PowerShell interpreter: {powershell_exe}")
 
         # Exécuter via subprocess
