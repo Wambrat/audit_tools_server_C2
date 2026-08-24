@@ -1,0 +1,62 @@
+# Configuration Traefik pour reverse proxy HTTPS
+# Traefik va exposer l'API backend et frontend en HTTPS
+
+[global]
+  checkNewVersion = false
+  sendAnonymousUsage = false
+
+# Entrypoints (listeners HTTP/HTTPS)
+[entryPoints]
+  [entryPoints.web]
+    address = ":80"
+    # Rediriger HTTP vers HTTPS
+    [entryPoints.web.http]
+      redirections = [
+        {entryPoint = "websecure"}
+      ]
+  
+  [entryPoints.websecure]
+    address = ":443"
+    [entryPoints.websecure.http.tls]
+      # Certificats de développement auto-signés
+      certFile = "/etc/traefik/certs/api.pem"
+      keyFile = "/etc/traefik/certs/api-key.pem"
+
+# Backend API
+[backends]
+  [backends.api]
+    [backends.api.servers.backend-server]
+      url = "http://backend:8000"
+
+# Frontend
+[backends]
+  [backends.frontend]
+    [backends.frontend.servers.frontend-server]
+      url = "http://frontend:80"
+
+# Frontend routes
+[frontends]
+  # Frontend
+  [frontends.frontend]
+    backend = "frontend"
+    passHostHeader = true
+    [frontends.frontend.routes.main]
+      rule = "Host:localhost,frontend"
+  
+  # API
+  [frontends.api]
+    backend = "api"
+    passHostHeader = true
+    [frontends.api.routes.main]
+      rule = "Host:localhost; PathPrefix:/api"
+      
+# Logs
+[api]
+  insecure = false
+  dashboard = false
+
+[log]
+  level = "INFO"
+
+[accessLog]
+  filePath = "/var/log/traefik/access.log"

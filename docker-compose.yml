@@ -1,8 +1,32 @@
 services:
-  # Base de données MongoDB
+  # Traefik Reverse Proxy (interne)
+  traefik:
+    image: traefik:v3.0
+    container_name: c2-traefik
+    command:
+      - "--configFile=/etc/traefik/traefik.yml"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./traefik.yml:/etc/traefik/traefik.yml:ro
+    networks:
+      - c2-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:80"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  # Base de données MongoDB (avec TLS)
   mongodb:
     image: mongo:7.0
     container_name: c2-mongodb
+    command:
+      - mongod
+      - --auth
+      - --tlsMode=preferTLS
+      - --tlsCertificateKeyFile=/etc/mongodb/mongodb-combined.pem
+      - --tlsCAFile=/etc/mongodb/ca.pem
     environment:
       MONGO_INITDB_ROOT_USERNAME: root
       MONGO_INITDB_ROOT_PASSWORD: mongodb_password_change_me
@@ -12,10 +36,12 @@ services:
     volumes:
       - mongodb_data:/data/db
       - mongodb_config:/data/configdb
+      - ./certs/mongodb-combined.pem:/etc/mongodb/mongodb-combined.pem:ro
+      - ./certs/ca.pem:/etc/mongodb/ca.pem:ro
     networks:
       - c2-network
     healthcheck:
-      test: echo 'db.runCommand("ping").ok' | mongosh localhost/c2_server_db --quiet
+      test: ["CMD", "mongosh", "--eval", "db.runCommand('ping').ok"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -29,15 +55,17 @@ services:
       dockerfile: Dockerfile.backend
     container_name: c2-backend
     environment:
-      # Configuration de la base de données
+      # Configuration de la base de données (TLS)
       DATABASE_MODE: mongodb
-      MONGODB_URI: mongodb://root:mongodb_password_change_me@mongodb:27017/c2_server_db?authSource=admin
+      MONGODB_URI: mongodb://root:mongodb_password_change_me@mongodb:27017/c2_server_db?authSource=admin&tls=true&tlsCAFile=/etc/mongodb/ca.pem
+      MONGODB_TLS_ENABLED: "true"
+      MONGODB_TLS_CA_FILE: /etc/mongodb/ca.pem
       
       # Configuration de l'API
       LOG_LEVEL: INFO
       
-      # Configuration CORS (adapter selon vos besoins)
-      CORS_ORIGINS: '["http://localhost", "http://frontend", "http://localhost:3000", "http://localhost:80"]'
+      # Configuration CORS (utiliser HTTPS maintenant)
+      ALLOWED_ORIGINS: "https://localhost,https://127.0.0.1"
       
       # Autres configurations
       SECRET_KEY: your_secret_key_change_me
@@ -48,10 +76,19 @@ services:
       mongodb:
         condition: service_healthy
     volumes:
-      # Volume optionnel pour les logs
       - ./logs:/app/logs
+      - ./certs/ca.pem:/etc/mongodb/ca.pem:ro
     networks:
       - c2-network
+    labels:
+      # Configuration Traefik pour le backend
+      - "traefik.enable=true"
+      - "traefik.http.routers.backend.rule=Host(`localhost`) && PathPrefix(`/api`)"
+      - "traefik.http.routers.backend.entrypoints=websecure"
+      - "traefik.http.routers.backend.tls=true"
+      - "traefik.http.services.backend.loadbalancer.server.port=8000"
+      - "traefik.http.middlewares.stripprefix.stripprefix.prefixes=/api"
+      - "traefik.http.routers.backend.middlewares=stripprefix"
     healthcheck:
       test: ["CMD", "python", "-c", "import httpx; httpx.get('http://localhost:8000/health')"]
       interval: 30s
@@ -60,22 +97,32 @@ services:
       start_period: 40s
     restart: unless-stopped
 
-  # Frontend Nginx
+  # Frontend Nginx (HTTPS)
   frontend:
     build:
       context: .
       dockerfile: Dockerfile.frontend
     container_name: c2-frontend
-    ports:
-      - "80:80"
     depends_on:
       - backend
+      - traefik
+    ports:
+      - "80:80"
+      - "443:443"
     volumes:
       - ./web:/usr/share/nginx/html:ro
+      - ./certs/api.pem:/etc/nginx/certs/api.pem:ro
+      - ./certs/api-key.pem:/etc/nginx/certs/api-key.pem:ro
     networks:
       - c2-network
+    labels:
+      # Configuration Traefik pour le frontend
+      - "traefik.enable=true"
+      - "traefik.http.routers.frontend.rule=Host(`localhost`)"
+      - "traefik.http.routers.frontend.entrypoints=web"
+      - "traefik.http.services.frontend.loadbalancer.server.port=80"
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health"]
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "https://localhost/health"]
       interval: 30s
       timeout: 10s
       retries: 3

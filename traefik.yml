@@ -1,0 +1,17 @@
+api:
+  insecure: false
+  dashboard: false
+
+entryPoints:
+  web:
+    address: ":80"
+
+providers:
+  docker:
+    endpoint: "unix:///var/run/docker.sock"
+    exposedByDefault: false
+    network: c2-network
+
+log:
+  level: INFO
+

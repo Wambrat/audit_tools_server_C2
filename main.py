@@ -141,20 +141,35 @@ app.add_middleware(SecurityHeadersMiddleware)
 
 # ===== Middleware CORS =====
 # Autoriser explicitement les frontends locaux utilisés par le projet
+# Traefik expose en HTTPS maintenant, donc les origins doivent être en HTTPS
 configured_origins = [origin.strip() for origin in os.getenv(
     "ALLOWED_ORIGINS",
-    "http://localhost:3000,http://localhost:5500,http://localhost:8080,http://127.0.0.1:5500,http://127.0.0.1:8000,http://127.0.0.1:8080"
+    "https://localhost,https://127.0.0.1"
 ).split(",") if origin.strip()]
-origins = list(dict.fromkeys(configured_origins + [
+
+# Garder aussi HTTP pour dev local sans Traefik
+fallback_origins = [
+    "http://localhost",
     "http://localhost:3000",
     "http://localhost:5500",
     "http://localhost:8080",
+    "http://127.0.0.1",
     "http://127.0.0.1:3000",
     "http://127.0.0.1:5500",
     "http://127.0.0.1:8080",
     "http://127.0.0.1:8000",
+]
+
+# Combiner et dédupliquer
+origins = list(dict.fromkeys(configured_origins + fallback_origins + [
+    "https://localhost",
+    "https://localhost:443",
+    "https://127.0.0.1",
+    "https://127.0.0.1:443",
 ]))
-logger.info(f"Setting up CORS with {len(origins)} allowed origins: {origins}")
+
+logger.info(f"CORS Configuration: {len(origins)} allowed origins configured")
+logger.debug(f"Allowed origins: {origins}")
 
 app.add_middleware(
     CORSMiddleware,

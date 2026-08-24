@@ -15,26 +15,48 @@ import uuid
 logger = get_logger(__name__)
 
 # Configuration MongoDB
-MONGODB_URL = os.getenv("MONGODB_URL", "mongodb://localhost:27017")
+MONGODB_URI = os.getenv("MONGODB_URI", "mongodb://localhost:27017")
 MONGODB_DB = os.getenv("MONGODB_DB", "c2_server")
 MONGODB_TIMEOUT = int(os.getenv("MONGODB_TIMEOUT", 5000))  # ms
 
+# Configuration TLS (optionnel)
+MONGODB_TLS_ENABLED = os.getenv("MONGODB_TLS_ENABLED", "false").lower() == "true"
+MONGODB_TLS_CA_FILE = os.getenv("MONGODB_TLS_CA_FILE", "/etc/mongodb/ca.pem")
+
+logger.info(f"MongoDB TLS Configuration - Enabled: {MONGODB_TLS_ENABLED}, CA File: {MONGODB_TLS_CA_FILE}")
+
 try:
+    # Configuration client MongoDB
+    client_kwargs = {
+        "serverSelectionTimeoutMS": MONGODB_TIMEOUT,
+        "connectTimeoutMS": MONGODB_TIMEOUT,
+    }
+    
+    # Ajouter TLS si activé
+    if MONGODB_TLS_ENABLED:
+        if os.path.exists(MONGODB_TLS_CA_FILE):
+            client_kwargs["tlsCAFile"] = MONGODB_TLS_CA_FILE
+            client_kwargs["tlsAllowInvalidCertificates"] = False
+            client_kwargs["tlsAllowInvalidHostnames"] = True  # Pour certificats auto-signés
+            logger.info(f"🔐 MongoDB TLS enabled with CA: {MONGODB_TLS_CA_FILE}")
+        else:
+            logger.warning(f"⚠️ TLS CA file not found: {MONGODB_TLS_CA_FILE}")
+    
     # Connexion à MongoDB
-    client = MongoClient(
-        MONGODB_URL,
-        serverSelectionTimeoutMS=MONGODB_TIMEOUT,
-        connectTimeoutMS=MONGODB_TIMEOUT,
-    )
+    client = MongoClient(MONGODB_URI, **client_kwargs)
     
     # Vérifier la connexion
     client.admin.command("ping")
-    logger.info(f"✓ Connecté à MongoDB: {MONGODB_URL}")
+    logger.info(f"✓ Connecté à MongoDB: {MONGODB_URI.split('://')[1].split('@')[0]}@{MONGODB_URI.split('@')[1] if '@' in MONGODB_URI else 'local'}")
     
     db = client[MONGODB_DB]
     
 except (ConnectionFailure, ServerSelectionTimeoutError) as e:
     logger.error(f"✗ Connexion MongoDB échouée: {e}")
+    logger.warning("Utilisant le mode fallback (mémoire)")
+    db = None
+except Exception as e:
+    logger.error(f"✗ Erreur MongoDB: {e}")
     logger.warning("Utilisant le mode fallback (mémoire)")
     db = None
 
