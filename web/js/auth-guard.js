@@ -73,30 +73,8 @@ function redirectToLogin() {
     localStorage.setItem('redirect_after_login', currentPage);
   }
   
-  // Show loading message if body exists
-  if (document.body) {
-    document.body.innerHTML = `
-      <div style="
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        height: 100vh;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        font-family: system-ui, -apple-system, sans-serif;
-      ">
-        <div style="text-align: center; color: white;">
-          <div style="
-            font-size: 24px;
-            margin-bottom: 20px;
-          ">🔐</div>
-          <p style="font-size: 18px; margin-bottom: 10px;">Redirection vers la connexion...</p>
-          <p style="font-size: 14px; opacity: 0.8;">Veuillez attendre</p>
-        </div>
-      </div>
-    `;
-  }
-  
-  window.location.href = 'admin-login.html';
+  // Redirect immediately instead of replacing the page content with a custom screen.
+  window.location.replace('admin-login.html');
 }
 
 function getToken() {

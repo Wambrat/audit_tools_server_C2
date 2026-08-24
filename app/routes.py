@@ -1,6 +1,7 @@
 import json
 from datetime import datetime
 from fastapi import APIRouter, HTTPException, status, Header, Depends, Request
+from fastapi.responses import FileResponse
 from .models import (
     EnrollRequest, EnrollResponse,
     BeaconRequest, BeaconResponse, TaskModel, TaskCreateRequest,
@@ -1676,3 +1677,46 @@ async def build_msi_package(authorization: Optional[str] = Header(None)):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Build process error: {str(e)}"
         )
+
+
+@router.get("/admin/build-msi/download", tags=["Admin", "Deployment"])
+async def download_msi_package(authorization: Optional[str] = Header(None)):
+    """Télécharge le dernier MSI produit s’il existe."""
+    if not authorization:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Missing Authorization header",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    token = extract_token_from_header(authorization)
+    if not token:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid Authorization header format",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    try:
+        verify_jwt_token(token)
+    except (TokenExpiredError, TokenInvalidError) as e:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=str(e),
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    installer_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "installer")
+    msi_path = os.path.join(installer_dir, "C2Agent.msi")
+
+    if not os.path.exists(msi_path):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No MSI artifact available yet. Build it first."
+        )
+
+    return FileResponse(
+        path=msi_path,
+        media_type="application/octet-stream",
+        filename="C2Agent.msi"
+    )

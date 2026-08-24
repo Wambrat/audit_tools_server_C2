@@ -1,626 +1,696 @@
-<!DOCTYPE html>
-<html lang="en">
+﻿<!DOCTYPE html>
+<html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>C2 Agent - MSI Builder</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-        }
-        
-        .container {
-            background: white;
-            border-radius: 10px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            max-width: 600px;
-            width: 100%;
-            padding: 40px;
-        }
-        
-        .header {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-        
-        .header h1 {
-            color: #333;
-            font-size: 28px;
-            margin-bottom: 10px;
-        }
-        
-        .header p {
-            color: #666;
-            font-size: 14px;
-        }
-        
-        .form-group {
-            margin-bottom: 20px;
-        }
-        
-        label {
-            display: block;
-            color: #333;
-            font-weight: 600;
-            margin-bottom: 8px;
-            font-size: 14px;
-        }
-        
-        input[type="text"],
-        input[type="password"],
-        textarea {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            font-size: 14px;
-            font-family: 'Courier New', monospace;
-            transition: border-color 0.3s;
-        }
-        
-        input[type="text"]:focus,
-        input[type="password"]:focus,
-        textarea:focus {
-            outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-        }
-        
-        .button-group {
-            display: flex;
-            gap: 10px;
-            margin-top: 30px;
-        }
-        
-        button {
-            flex: 1;
-            padding: 12px 24px;
-            border: none;
-            border-radius: 5px;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-        
-        .btn-build {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-        }
-        
-        .btn-build:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
-        }
-        
-        .btn-build:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
-        
-        .btn-clear {
-            background: #f0f0f0;
-            color: #333;
-        }
-        
-        .btn-clear:hover {
-            background: #e0e0e0;
-        }
-        
-        .status-box {
-            margin-top: 20px;
-            padding: 15px;
-            border-radius: 5px;
-            display: none;
-            font-size: 13px;
-            line-height: 1.6;
-        }
-        
-        .status-box.hidden {
-            display: none;
-        }
-        
-        .status-box.loading {
-            display: block;
-            background: #e3f2fd;
-            border: 1px solid #2196f3;
-            color: #1976d2;
-        }
-        
-        .status-box.success {
-            display: block;
-            background: #e8f5e9;
-            border: 1px solid #4caf50;
-            color: #2e7d32;
-        }
-        
-        .status-box.error {
-            display: block;
-            background: #ffebee;
-            border: 1px solid #f44336;
-            color: #c62828;
-        }
-        
-        .spinner {
-            display: inline-block;
-            width: 16px;
-            height: 16px;
-            border: 2px solid #2196f3;
-            border-top-color: transparent;
-            border-radius: 50%;
-            animation: spin 0.6s linear infinite;
-            margin-right: 10px;
-            vertical-align: middle;
-        }
-        
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-        
-        .output-box {
-            background: #f5f5f5;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            padding: 12px;
-            font-family: 'Courier New', monospace;
-            font-size: 12px;
-            color: #333;
-            max-height: 300px;
-            overflow-y: auto;
-            margin-top: 10px;
-        }
-        
-        .info-box {
-            background: #fff3cd;
-            border: 1px solid #ffc107;
-            color: #856404;
-            padding: 12px;
-            border-radius: 5px;
-            margin-bottom: 20px;
-            font-size: 13px;
-            line-height: 1.5;
-        }
-        
-        .success-details {
-            background: #f0f7ff;
-            padding: 10px;
-            border-left: 4px solid #4caf50;
-            margin-top: 10px;
-            font-size: 12px;
-            font-family: 'Courier New', monospace;
-        }
-        
-        .download-link {
-            color: #667eea;
-            text-decoration: none;
-            font-weight: 600;
-        }
-        
-        .download-link:hover {
-            text-decoration: underline;
-        }
-        
-        .tab-btn {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 5px;
-            background: #f0f0f0;
-            color: #333;
-            cursor: pointer;
-            font-weight: 600;
-            transition: all 0.3s;
-            font-size: 14px;
-        }
-        
-        .tab-btn.active {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-        }
-        
-        .tab-btn:hover:not(.active) {
-            background: #e0e0e0;
-        }
-        
-        .tab-content {
-            display: none;
-        }
-        
-        .tab-content.active {
-            display: block;
-        }
-        
-        .config-editor {
-            display: none;
-        }
-        
-        .config-editor.active {
-            display: block;
-        }
-        
-        select {
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            font-size: 14px;
-            transition: border-color 0.3s;
-        }
-        
-        select:focus {
-            outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>C2 Agent - Build MSI</title>
+  <style>
+    :root {
+      --bg: #f5f5f5;
+      --panel: #ffffff;
+      --panel-alt: #f8f8f8;
+      --primary: #0066cc;
+      --primary-dark: #0052a3;
+      --sidebar: #1a1a1a;
+      --sidebar-muted: #c9c9c9;
+      --sidebar-active: rgba(0, 102, 204, 0.18);
+      --text: #1a1a1a;
+      --muted: #666666;
+      --border: #e0e0e0;
+      --success-bg: #edf9f1;
+      --success-text: #1f7a3c;
+      --success-border: #7ad18c;
+      --info-bg: #edf5ff;
+      --info-text: #0b4f96;
+      --info-border: #d6e5ff;
+      --danger-bg: #fff1f1;
+      --danger-text: #a11c1c;
+      --danger-border: #f5b3b3;
+    }
+
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+    a { text-decoration: none; }
+    button, input, select { font: inherit; }
+
+    .admin-container {
+      display: flex;
+      min-height: 100vh;
+    }
+
+    .sidebar {
+      width: 280px;
+      background: var(--sidebar);
+      color: white;
+      display: flex;
+      flex-direction: column;
+      padding: 20px 20px 12px;
+      position: fixed;
+      height: 100vh;
+      overflow-y: auto;
+      box-shadow: 2px 0 8px rgba(0, 0, 0, 0.15);
+    }
+    .sidebar-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 1.05rem;
+      font-weight: 700;
+      padding: 10px 12px 18px;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      margin-bottom: 14px;
+    }
+    .sidebar-logo {
+      width: 32px;
+      height: 32px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 10px;
+      background: rgba(255,255,255,0.08);
+      font-size: 1.1rem;
+    }
+
+    .sidebar-nav {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .sidebar-nav a {
+      display: flex;
+      align-items: center;
+      color: rgba(255,255,255,0.9);
+      border-radius: 10px;
+      padding: 11px 12px;
+      font-size: 0.96rem;
+      transition: background 0.2s ease, transform 0.2s ease;
+    }
+    .sidebar-nav a:hover,
+    .sidebar-nav a.active {
+      background: var(--primary);
+      color: white;
+      transform: translateX(2px);
+    }
+
+    .sidebar-footer {
+      margin-top: auto;
+      padding-top: 16px;
+      border-top: 1px solid rgba(255,255,255,0.08);
+    }
+    .sidebar-user-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 8px 6px 4px;
+    }
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .user-avatar {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #60a5fa, #a78bfa);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      color: white;
+    }
+    .user-details {
+      display: flex;
+      flex-direction: column;
+    }
+    .user-name {
+      font-size: 0.85rem;
+      color: white;
+    }
+    .user-role {
+      font-size: 0.68rem;
+      color: var(--sidebar-muted);
+    }
+    .logout-btn {
+      width: 38px;
+      height: 38px;
+      border: none;
+      border-radius: 10px;
+      background: rgba(255,255,255,0.06);
+      color: white;
+      cursor: pointer;
+      font-size: 1.2rem;
+    }
+    .logout-btn:hover {
+      background: rgba(239,68,68,0.22);
+    }
+
+    .main-content {
+      margin-left: 280px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 24px;
+      background: white;
+      padding: 20px 30px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+    }
+    .breadcrumb {
+      color: var(--muted);
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin: 0 0 8px;
+    }
+    .header h1 {
+      margin: 0;
+      font-size: clamp(1.8rem, 2vw, 2.6rem);
+    }
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .page-card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      box-shadow: 0 10px 30px rgba(15, 23, 42, 0.04);
+      padding: 24px;
+      margin: 0 30px 30px;
+    }
+    .info-box {
+      padding: 14px 16px;
+      border-radius: 12px;
+      background: var(--info-bg);
+      border: 1px solid var(--info-border);
+      color: var(--info-text);
+      font-size: 0.9rem;
+      margin-bottom: 20px;
+      line-height: 1.55;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 18px;
+      flex-wrap: wrap;
+    }
+    .tab-btn {
+      border: 1px solid var(--border);
+      background: #f3f4f6;
+      color: var(--text);
+      border-radius: 10px;
+      padding: 10px 16px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    .tab-btn.active {
+      background: linear-gradient(135deg, var(--primary), #7c3aed);
+      border-color: transparent;
+      color: white;
+      box-shadow: 0 10px 20px rgba(49, 94, 251, 0.22);
+    }
+
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    .btn {
+      border: none;
+      border-radius: 10px;
+      padding: 11px 18px;
+      cursor: pointer;
+      font-weight: 700;
+      transition: transform 0.15s ease;
+    }
+    .btn:hover { transform: translateY(-1px); }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--primary), #7c3aed);
+      color: white;
+      box-shadow: 0 10px 20px rgba(49, 94, 251, 0.18);
+    }
+    .btn-secondary {
+      background: #eef2ff;
+      color: var(--primary-dark);
+      border: 1px solid rgba(49, 94, 251, 0.12);
+    }
+    .btn-muted {
+      background: #f3f4f6;
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    .button-group {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 20px;
+    }
+
+    .build-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .status-box {
+      margin-top: 16px;
+      padding: 14px 16px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: var(--panel-alt);
+      color: var(--text);
+      display: none;
+      line-height: 1.6;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-size: 0.92rem;
+    }
+    .status-box.success {
+      display: block;
+      background: var(--success-bg);
+      color: var(--success-text);
+      border-color: var(--success-border);
+    }
+    .status-box.error {
+      display: block;
+      background: var(--danger-bg);
+      color: var(--danger-text);
+      border-color: var(--danger-border);
+    }
+    .status-box.loading {
+      display: block;
+      background: var(--info-bg);
+      color: var(--info-text);
+      border-color: var(--info-border);
+    }
+
+    .config-editor {
+      display: none;
+      margin-top: 12px;
+      background: var(--panel-alt);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 18px;
+    }
+    .config-editor.visible { display: block; }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 18px;
+    }
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    label {
+      color: var(--text);
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+    input[type="text"], input[type="number"], select {
+      width: 100%;
+      border: 1px solid var(--border);
+      background: white;
+      border-radius: 10px;
+      padding: 11px 12px;
+      color: var(--text);
+      font-size: 0.95rem;
+    }
+    input[readonly] {
+      background: #f3f4f6;
+      color: var(--muted);
+      cursor: not-allowed;
+    }
+    .muted-text {
+      font-size: 0.78rem;
+      color: var(--muted);
+      margin-top: -2px;
+    }
+
+    @media (max-width: 900px) {
+      .admin-container { flex-direction: column; }
+      .sidebar { width: 100%; }
+      .main-content { padding: 20px 16px 32px; }
+      .header { flex-direction: column; align-items: flex-start; }
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>🔨 MSI Builder</h1>
-            <p>Compile C2 Agent installer package</p>
+  <div id="app">
+    <div class="admin-container">
+      <aside class="sidebar">
+        <div class="sidebar-header">
+          <span class="sidebar-logo">🛡️</span>
+          <span>Admin Panel</span>
         </div>
-        
-        <div class="info-box">
-            ℹ️ This tool compiles the C2 Agent MSI package with the current configuration from <code>config.json</code>.
-            The build process takes 30-60 seconds. Make sure you have Admin access.
-        </div>
-        
-        <div id="tabButtons" style="display: flex; gap: 10px; margin-bottom: 20px;">
-            <button type="button" class="tab-btn active" onclick="switchTab('build')">🔨 Build MSI</button>
-            <button type="button" class="tab-btn" onclick="switchTab('config')">⚙️ Configuration</button>
-        </div>
-        
-        <!-- Tab: Build MSI -->
-        <div id="buildTab" class="tab-content">
-            <form id="buildForm">
-                <div class="button-group">
-                    <button type="submit" class="btn-build" id="buildBtn">
-                        🔨 Build MSI
-                    </button>
-                    <button type="button" class="btn-clear" onclick="clearForm()">
-                        Clear
-                    </button>
-                </div>
-            </form>
-            
-            <div class="status-box" id="statusBox"></div>
-        </div>
-        
-        <!-- Tab: Configuration -->
-        <div id="configTab" class="tab-content" style="display: none;">
-            <form id="configForm">
-                <div class="button-group">
-                    <button type="button" class="btn-build" onclick="loadConfig()">
-                        📂 Load Config
-                    </button>
-                </div>
-            </form>
-            
-            <div class="config-editor" id="configEditor" style="display: none; margin-top: 20px;">
-                <div style="background: #f5f5f5; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
-                    <h3 style="margin-top: 0;">Agent Configuration</h3>
-                    
-                    <div class="form-group">
-                        <label for="serverHost">Server Host / Domain / IP</label>
-                        <input 
-                            type="text" 
-                            id="serverHost" 
-                            placeholder=""
-                        >
-                        <small style="color: #666; font-size: 12px; display: block; margin-top: 5px;">
-                            Modifiez uniquement le domaine ou l’IP du serveur. Le protocole et le chemin restent inchangés.
-                        </small>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="serverUrl">Current URL</label>
-                        <input 
-                            type="text" 
-                            id="serverUrl" 
-                            readonly
-                            style="background: #f3f4f6; cursor: not-allowed;"
-                            placeholder="https://localhost/api"
-                        >
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="beaconInterval">Beacon Interval (seconds)</label>
-                        <input 
-                            type="number" 
-                            id="beaconInterval" 
-                            min="5" 
-                            max="3600"
-                            placeholder="30"
-                        >
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="logLevel">Log Level</label>
-                        <select id="logLevel" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 5px; font-family: 'Courier New', monospace;">
-                            <option value="DEBUG">DEBUG</option>
-                            <option value="INFO">INFO</option>
-                            <option value="WARNING">WARNING</option>
-                            <option value="ERROR">ERROR</option>
-                        </select>
-                    </div>
-                </div>
-                
-                <div class="button-group">
-                    <button type="button" class="btn-build" onclick="saveConfig()">
-                        💾 Save Configuration
-                    </button>
-                    <button type="button" class="btn-clear" onclick="closeConfigEditor()">
-                        Cancel
-                    </button>
-                </div>
+
+        <ul class="sidebar-nav">
+          <li><a href="admin.html">📊 Vue d'ensemble</a></li>
+          <li><a href="admin.html">👥 Agents</a></li>
+          <li><a href="admin.html">✓ Gestion des commandes</a></li>
+          <li><a href="admin.html">🧩 Templates</a></li>
+          <li><a href="admin.html">📋 Résultats</a></li>
+          <li><a href="admin.html">🚨 Alertes</a></li>
+          <li><a href="admin.html">⚙️ Paramètres</a></li>
+          <li><a href="build-msi.html" class="active">🔨 Build MSI</a></li>
+        </ul>
+
+        <div class="sidebar-footer">
+          <div class="sidebar-user-row">
+            <div class="user-info">
+              <div class="user-avatar">A</div>
+              <div class="user-details">
+                <span class="user-name">Administrateur</span>
+                <span class="user-role">Connecté</span>
+              </div>
             </div>
-            
-            <div class="status-box" id="configStatusBox"></div>
+            <button type="button" class="logout-btn" aria-label="Déconnexion" title="Déconnexion" onclick="logout()">⏻</button>
+          </div>
         </div>
+      </aside>
+
+      <main class="main-content">
+        <header class="header">
+          <div>
+            <p class="breadcrumb">Admin / Déploiement</p>
+            <h1>Build MSI</h1>
+          </div>
+          <div class="header-actions">
+            <button id="downloadMsiBtn" class="btn btn-primary" type="button" style="display:none;" onclick="downloadMsi()">Télécharger MSI</button>
+          </div>
+        </header>
+
+        <div class="page-card">
+          <div class="info-box">
+            ℹ️ Cette page compile le package MSI de l’agent C2 à partir de la configuration actuelle. Le build prend généralement 30 à 60 secondes et nécessite une session admin valide.
+          </div>
+
+          <div id="buildTab" class="tab-content active">
+            <div class="build-panel">
+              <div class="config-editor visible" id="configEditor" style="margin-top: 24px;">
+                <div class="form-grid">
+                  <div class="form-group">
+                    <label for="serverHost">Serveur Host / Domaine / IP</label>
+                    <input type="text" id="serverHost" placeholder="" />
+                    <div class="muted-text">Modifiez uniquement le domaine ou l’IP du serveur. Le protocole et le chemin restent inchangés.</div>
+                  </div>
+
+                  <div class="form-group">
+                    <label for="serverUrl">URL actuelle</label>
+                    <input type="text" id="serverUrl" readonly placeholder="https://localhost/api" />
+                  </div>
+
+                  <div class="form-group">
+                    <label for="beaconInterval">Beacon Interval (secondes)</label>
+                    <input type="number" id="beaconInterval" min="5" max="3600" placeholder="30" />
+                  </div>
+
+                  <div class="form-group">
+                    <label for="logLevel">Niveau de log</label>
+                    <select id="logLevel">
+                      <option value="DEBUG">DEBUG</option>
+                      <option value="INFO">INFO</option>
+                      <option value="WARNING">WARNING</option>
+                      <option value="ERROR">ERROR</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="button-group" style="margin-top: 18px;">
+                  <button class="btn btn-primary" type="button" onclick="saveConfig()">💾 Enregistrer</button>
+                </div>
+              </div>
+
+              <form id="buildForm" style="margin-top: 18px;">
+                <div class="button-group">
+                  <button class="btn btn-primary" id="buildBtn" type="submit">🔨 Compiler le MSI</button>
+                </div>
+              </form>
+
+              <div id="configStatusBox" class="status-box"></div>
+              <div id="statusBox" class="status-box"></div>
+            </div>
+          </div>
+        </div>
+      </main>
     </div>
-    
-    <script>
-        function getStoredToken() {
-            return localStorage.getItem('admin_token') || '';
-        }
+  </div>
 
-        function preloadTokenFields() {
-            const token = getStoredToken();
-            if (!token && window.location.pathname.includes('build-msi.html')) {
-                window.location.href = 'admin-login.html';
-            }
-        }
+  <script>
+    function getStoredToken() {
+      return localStorage.getItem('admin_token') || '';
+    }
 
-        // Tab switching
-        function switchTab(tab) {
-            // Hide all tabs
-            document.getElementById('buildTab').style.display = 'none';
-            document.getElementById('configTab').style.display = 'none';
-            
-            // Remove active class from all buttons
-            document.querySelectorAll('.tab-btn').forEach(btn => {
-                btn.classList.remove('active');
-            });
-            
-            // Show selected tab
-            if (tab === 'build') {
-                document.getElementById('buildTab').style.display = 'block';
-                document.querySelectorAll('.tab-btn')[0].classList.add('active');
-            } else if (tab === 'config') {
-                document.getElementById('configTab').style.display = 'block';
-                document.querySelectorAll('.tab-btn')[1].classList.add('active');
-            }
-        }
-        
-        // Load configuration
-        async function loadConfig() {
-            const token = getStoredToken();
-            
-            if (!token) {
-                showConfigStatus('❌ Session admin introuvable. Veuillez vous reconnecter.', 'error');
-                window.location.href = 'admin-login.html';
-                return;
-            }
-            
-            showConfigStatus('Loading configuration...', 'loading');
-            
-            try {
-                const response = await fetch('/api/admin/config', {
-                    method: 'GET',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    }
-                });
-                
-                if (!response.ok) {
-                    const error = await response.json();
-                    showConfigStatus(`❌ Failed to load config: ${error.detail}`, 'error');
-                    return;
-                }
-                
-                const data = await response.json();
-                const config = data.config;
-                const currentServerUrl = config.agent.serverUrl || 'https://localhost/api';
-                const parsedUrl = new URL(currentServerUrl);
+    function logout() {
+      localStorage.removeItem('admin_token');
+      localStorage.removeItem('admin_token_exp');
+      window.location.href = 'admin-login.html';
+    }
 
-                document.getElementById('serverUrl').value = currentServerUrl;
-                document.getElementById('serverHost').value = parsedUrl.hostname || 'localhost';
-                document.getElementById('beaconInterval').value = config.agent.beaconInterval || 30;
-                document.getElementById('logLevel').value = config.agent.logLevel || 'INFO';
-                
-                // Show config editor
-                document.getElementById('configEditor').style.display = 'block';
-                showConfigStatus('✅ Configuration loaded successfully', 'success');
-            } catch (error) {
-                console.error('Error:', error);
-                showConfigStatus(`❌ Error: ${error.message}`, 'error');
-            }
-        }
-        
-        // Save configuration
-        async function saveConfig() {
-            const token = getStoredToken();
-            
-            if (!token) {
-                showConfigStatus('❌ Session admin introuvable. Veuillez vous reconnecter.', 'error');
-                window.location.href = 'admin-login.html';
-                return;
-            }
-            
-            // Validate inputs
-            const currentUrl = new URL(document.getElementById('serverUrl').value.trim() || 'https://localhost/api');
-            const serverHost = document.getElementById('serverHost').value.trim();
-            const beaconInterval = parseInt(document.getElementById('beaconInterval').value);
-            const logLevel = document.getElementById('logLevel').value;
-            
-            if (!serverHost) {
-                showConfigStatus('❌ Server host / domain / IP is required', 'error');
-                return;
-            }
-            
-            if (isNaN(beaconInterval) || beaconInterval < 5 || beaconInterval > 3600) {
-                showConfigStatus('❌ Beacon Interval must be between 5 and 3600 seconds', 'error');
-                return;
-            }
+    function ensureAuthenticated() {
+      const token = getStoredToken();
+      if (!token) {
+        window.location.href = 'admin-login.html';
+        return false;
+      }
+      return true;
+    }
 
-            const nextUrl = new URL(currentUrl.toString());
-            const currentPort = nextUrl.port || (nextUrl.protocol === 'https:' ? '443' : '80');
-            nextUrl.hostname = serverHost.replace(/^\[|\]$/g, '');
-            nextUrl.port = currentPort;
-            
-            showConfigStatus('Saving configuration...', 'loading');
-            
-            try {
-                const response = await fetch('/api/admin/config', {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        serverUrl: nextUrl.toString(),
-                        beaconInterval,
-                        logLevel
-                    })
-                });
-                
-                if (!response.ok) {
-                    const error = await response.json();
-                    showConfigStatus(`❌ Failed to save config: ${error.detail}`, 'error');
-                    return;
-                }
-                
-                const data = await response.json();
-                showConfigStatus('✅ Configuration saved successfully! You can now build the MSI.', 'success');
-            } catch (error) {
-                console.error('Error:', error);
-                showConfigStatus(`❌ Error: ${error.message}`, 'error');
-            }
-        }
-        
-        // Close config editor
-        function closeConfigEditor() {
-            document.getElementById('configEditor').style.display = 'none';
-            document.getElementById('configStatusBox').innerHTML = '';
-        }
-        
-        // Show config status message
-        function showConfigStatus(message, type) {
-            const statusBox = document.getElementById('configStatusBox');
-            let style = '';
-            
-            if (type === 'loading') {
-                style = 'background: #e3f2fd; border-left: 4px solid #2196F3; color: #1565c0;';
-            } else if (type === 'success') {
-                style = 'background: #e8f5e9; border-left: 4px solid #4caf50; color: #2e7d32;';
-            } else if (type === 'error') {
-                style = 'background: #ffebee; border-left: 4px solid #f44336; color: #c62828;';
-            }
-            
-            statusBox.style.cssText = `${style} padding: 12px; margin-top: 20px; border-radius: 5px; display: block;`;
-            statusBox.innerHTML = `<pre style="margin: 0; white-space: pre-wrap; word-wrap: break-word; font-family: 'Courier New', monospace; font-size: 13px;">${message}</pre>`;
-        }
-        
-        document.addEventListener('DOMContentLoaded', () => {
-            preloadTokenFields();
+    function switchTab(tab) {
+      document.getElementById('buildTab').classList.remove('active');
+      document.getElementById('configTab').classList.remove('active');
+      document.querySelectorAll('.tab-btn').forEach((btn) => btn.classList.remove('active'));
+
+      if (tab === 'build') {
+        document.getElementById('buildTab').classList.add('active');
+        document.querySelectorAll('.tab-btn')[0].classList.add('active');
+      } else {
+        document.getElementById('configTab').classList.add('active');
+        document.querySelectorAll('.tab-btn')[1].classList.add('active');
+      }
+
+      if (tab === 'config') {
+        loadConfig();
+      }
+    }
+
+    function showStatus(message, type) {
+      const box = document.getElementById('statusBox');
+      box.className = 'status-box ' + type;
+      box.textContent = message;
+    }
+
+    function showConfigStatus(message, type) {
+      const box = document.getElementById('configStatusBox');
+      box.className = 'status-box ' + type;
+      box.textContent = message;
+    }
+
+    function clearForm() {
+      document.getElementById('buildForm').reset();
+      document.getElementById('statusBox').className = 'status-box';
+      document.getElementById('statusBox').textContent = '';
+      document.getElementById('downloadMsiBtn').style.display = 'none';
+    }
+
+    function closeConfigEditor() {
+      document.getElementById('configEditor').classList.remove('visible');
+      document.getElementById('configStatusBox').className = 'status-box';
+      document.getElementById('configStatusBox').textContent = '';
+    }
+
+    async function loadConfig() {
+      if (!ensureAuthenticated()) return;
+
+      const token = getStoredToken();
+      showConfigStatus('Chargement de la configuration...', 'loading');
+
+      try {
+        const response = await fetch('/api/admin/config', {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
         });
 
-        // Build form submission
-        document.getElementById('buildForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const token = getStoredToken();
-            const buildBtn = document.getElementById('buildBtn');
-            
-            if (!token) {
-                showStatus('❌ Session admin introuvable. Veuillez vous reconnecter.', 'error');
-                window.location.href = 'admin-login.html';
-                return;
-            }
-            
-            buildBtn.disabled = true;
-            buildBtn.style.opacity = '0.6';
-            showStatus('Building MSI package...', 'loading');
-            
-            try {
-                const response = await fetch('/api/admin/build-msi', {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({})
-                });
-                
-                if (!response.ok) {
-                    const error = await response.json();
-                    showStatus(`❌ Build failed: ${error.detail}`, 'error');
-                    buildBtn.disabled = false;
-                    buildBtn.style.opacity = '1';
-                    return;
-                }
-                
-                const data = await response.json();
-                if (data.status === 'success') {
-                    const msiPath = data.msi_path || 'C2Agent.msi';
-                    const size = data.msi_size_mb || 'N/A';
-                    const timestamp = data.timestamp || new Date().toISOString();
-                    
-                    let successMessage = `✅ Build successful!\n\n📦 MSI Package: ${msiPath}\n📊 Size: ${size} MB\n⏰ Built: ${timestamp}`;
-                    
-                    // If path is provided and looks like a file path, add download link
-                    if (msiPath && (msiPath.includes('\\\\') || msiPath.includes('C:'))) {
-                        successMessage += '\n\n📥 Download: Check the build output directory';
-                    }
-                    
-                    showStatus(successMessage, 'success');
-                } else {
-                    showStatus(`❌ Build failed: ${data.message || 'Unknown error'}`, 'error');
-                }
-                
-                buildBtn.disabled = false;
-                buildBtn.style.opacity = '1';
-            } catch (error) {
-                console.error('Error:', error);
-                showStatus(`❌ Error: ${error.message}`, 'error');
-                buildBtn.disabled = false;
-                buildBtn.style.opacity = '1';
-            }
+        if (!response.ok) {
+          const error = await response.json();
+          showConfigStatus(`❌ Échec du chargement: ${error.detail}`, 'error');
+          return;
+        }
+
+        const data = await response.json();
+        const config = data.config;
+        const currentServerUrl = config.agent.serverUrl || 'https://localhost/api';
+        const parsedUrl = new URL(currentServerUrl);
+
+        document.getElementById('serverUrl').value = currentServerUrl;
+        document.getElementById('serverHost').value = parsedUrl.hostname || 'localhost';
+        document.getElementById('beaconInterval').value = config.agent.beaconInterval || 30;
+        document.getElementById('logLevel').value = config.agent.logLevel || 'INFO';
+
+        document.getElementById('configEditor').classList.add('visible');
+        showConfigStatus('✅ Configuration chargée avec succès.', 'success');
+      } catch (error) {
+        showConfigStatus(`❌ Erreur: ${error.message}`, 'error');
+      }
+    }
+
+    async function saveConfig() {
+      if (!ensureAuthenticated()) return;
+
+      const token = getStoredToken();
+      const currentUrl = new URL(document.getElementById('serverUrl').value.trim() || 'https://localhost/api');
+      const serverHost = document.getElementById('serverHost').value.trim();
+      const beaconInterval = parseInt(document.getElementById('beaconInterval').value, 10);
+      const logLevel = document.getElementById('logLevel').value;
+
+      if (!serverHost) {
+        showConfigStatus('❌ Le host / domaine / IP du serveur est requis.', 'error');
+        return;
+      }
+
+      if (Number.isNaN(beaconInterval) || beaconInterval < 5 || beaconInterval > 3600) {
+        showConfigStatus('❌ L’intervalle doit être compris entre 5 et 3600 secondes.', 'error');
+        return;
+      }
+
+      const nextUrl = new URL(currentUrl.toString());
+      const currentPort = nextUrl.port || (nextUrl.protocol === 'https:' ? '443' : '80');
+      nextUrl.hostname = serverHost.replace(/^\[|\]$/g, '');
+      nextUrl.port = currentPort;
+
+      showConfigStatus('Enregistrement de la configuration...', 'loading');
+
+      try {
+        const response = await fetch('/api/admin/config', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            serverUrl: nextUrl.toString(),
+            beaconInterval,
+            logLevel
+          })
         });
-        
-        // Show status message
-        function showStatus(message, type) {
-            const statusBox = document.getElementById('statusBox');
-            let style = '';
-            
-            if (type === 'loading') {
-                style = 'background: #e3f2fd; border-left: 4px solid #2196F3; color: #1565c0;';
-            } else if (type === 'success') {
-                style = 'background: #e8f5e9; border-left: 4px solid #4caf50; color: #2e7d32;';
-            } else if (type === 'error') {
-                style = 'background: #ffebee; border-left: 4px solid #f44336; color: #c62828;';
-            }
-            
-            statusBox.style.cssText = `${style} padding: 12px; margin-top: 20px; border-radius: 5px; display: block;`;
-            statusBox.innerHTML = `<pre style="margin: 0; white-space: pre-wrap; word-wrap: break-word; font-family: 'Courier New', monospace; font-size: 13px;">${message}</pre>`;
+
+        if (!response.ok) {
+          const error = await response.json();
+          showConfigStatus(`❌ Échec: ${error.detail}`, 'error');
+          return;
         }
-        
-        // Clear form
-        function clearForm() {
-            document.getElementById('buildForm').reset();
-            document.getElementById('statusBox').innerHTML = '';
+
+        showConfigStatus('✅ Configuration enregistrée avec succès. Vous pouvez maintenant générer le MSI.', 'success');
+      } catch (error) {
+        showConfigStatus(`❌ Erreur: ${error.message}`, 'error');
+      }
+    }
+
+    async function downloadMsi() {
+      if (!ensureAuthenticated()) return;
+
+      const token = getStoredToken();
+      showStatus('Téléchargement du MSI...', 'loading');
+
+      try {
+        const response = await fetch('/api/admin/build-msi/download', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          showStatus(`❌ Téléchargement impossible: ${error.detail || 'Erreur inconnue'}`, 'error');
+          return;
         }
-    </script>
+
+        const blob = await response.blob();
+        const link = document.createElement('a');
+        const url = window.URL.createObjectURL(blob);
+        link.href = url;
+        link.download = 'C2Agent.msi';
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        window.URL.revokeObjectURL(url);
+        showStatus('✅ Le téléchargement du MSI a démarré.', 'success');
+      } catch (error) {
+        showStatus(`❌ Erreur de téléchargement: ${error.message}`, 'error');
+      }
+    }
+
+    document.getElementById('buildForm').addEventListener('submit', async function (event) {
+      event.preventDefault();
+      if (!ensureAuthenticated()) return;
+
+      const token = getStoredToken();
+      const buildBtn = document.getElementById('buildBtn');
+      buildBtn.disabled = true;
+      buildBtn.textContent = '⏳ Compilation...';
+      showStatus('Compilation du package MSI en cours...', 'loading');
+
+      try {
+        const response = await fetch('/api/admin/build-msi', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({})
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          showStatus(`❌ Échec de la compilation: ${error.detail || 'Erreur inconnue'}`, 'error');
+          return;
+        }
+
+        const data = await response.json();
+        if (data.status === 'success') {
+          const size = data.msi_size_mb || 'N/A';
+          const timestamp = data.timestamp || new Date().toISOString();
+          showStatus(`✅ Compilation réussie!\n\n📦 Fichier MSI généré\n📊 Taille: ${size} MB\n⏰ Date: ${timestamp}`, 'success');
+          document.getElementById('downloadMsiBtn').style.display = 'inline-flex';
+        } else {
+          showStatus(`❌ Compilation impossible: ${data.message || 'Erreur inconnue'}`, 'error');
+        }
+      } catch (error) {
+        showStatus(`❌ Erreur: ${error.message}`, 'error');
+      } finally {
+        buildBtn.disabled = false;
+        buildBtn.textContent = '🔨 Compiler le MSI';
+      }
+    });
+
+    document.addEventListener('DOMContentLoaded', function () {
+      if (!ensureAuthenticated()) return;
+      loadConfig();
+    });
+  </script>
 </body>
 </html>
