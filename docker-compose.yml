@@ -1,0 +1,93 @@
+services:
+  # Base de données MongoDB
+  mongodb:
+    image: mongo:7.0
+    container_name: c2-mongodb
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: mongodb_password_change_me
+      MONGO_INITDB_DATABASE: c2_server_db
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+      - mongodb_config:/data/configdb
+    networks:
+      - c2-network
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost/c2_server_db --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+    restart: unless-stopped
+
+  # Backend API FastAPI
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: c2-backend
+    environment:
+      # Configuration de la base de données
+      DATABASE_MODE: mongodb
+      MONGODB_URI: mongodb://root:mongodb_password_change_me@mongodb:27017/c2_server_db?authSource=admin
+      
+      # Configuration de l'API
+      LOG_LEVEL: INFO
+      
+      # Configuration CORS (adapter selon vos besoins)
+      CORS_ORIGINS: '["http://localhost", "http://frontend", "http://localhost:3000", "http://localhost:80"]'
+      
+      # Autres configurations
+      SECRET_KEY: your_secret_key_change_me
+      DEBUG: "false"
+    ports:
+      - "8000:8000"
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    volumes:
+      # Volume optionnel pour les logs
+      - ./logs:/app/logs
+    networks:
+      - c2-network
+    healthcheck:
+      test: ["CMD", "python", "-c", "import httpx; httpx.get('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+
+  # Frontend Nginx
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    container_name: c2-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    volumes:
+      - ./web:/usr/share/nginx/html:ro
+    networks:
+      - c2-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
+    restart: unless-stopped
+
+networks:
+  c2-network:
+    driver: bridge
+
+volumes:
+  mongodb_data:
+    driver: local
+  mongodb_config:
+    driver: local

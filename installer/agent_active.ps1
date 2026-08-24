@@ -67,6 +67,51 @@ function Invoke-Enrollment {
     }
 }
 
+function Invoke-EnrollmentWithRetry {
+    param([string]$ServerUrl)
+    
+    $retryIntervalSeconds = 30
+    $maxRetryDurationMinutes = 5
+    $longRetryIntervalMinutes = 30
+    
+    while ($true) {
+        $cycleStartTime = Get-Date
+        $cycleEndTime = $cycleStartTime.AddMinutes($maxRetryDurationMinutes)
+        $attemptCount = 0
+        
+        Write-Log "Starting enrollment retry cycle (will try for $maxRetryDurationMinutes minutes)..." "INFO"
+        
+        while ((Get-Date) -lt $cycleEndTime) {
+            $attemptCount++
+            Write-Log "Enrollment attempt #$attemptCount..." "INFO"
+            
+            $result = Invoke-Enrollment -ServerUrl $ServerUrl
+            
+            if ($result) {
+                Write-Log "✅ Enrollment successful after $attemptCount attempt(s)" "SUCCESS"
+                return $result
+            }
+            
+            $timeRemaining = New-TimeSpan -Start (Get-Date) -End $cycleEndTime
+            
+            if ((Get-Date) -lt $cycleEndTime) {
+                Write-Log "Retrying in $retryIntervalSeconds seconds (time remaining in cycle: $([int]$timeRemaining.TotalSeconds)s)..." "WARNING"
+                Start-Sleep -Seconds $retryIntervalSeconds
+            }
+        }
+        
+        Write-Log "Enrollment cycle failed after $maxRetryDurationMinutes minutes ($attemptCount attempts)" "WARNING"
+        Write-Log "Waiting $longRetryIntervalMinutes minutes before next retry cycle..." "WARNING"
+        
+        # Afficher une barre de progression pour les 30 minutes
+        for ($i = 0; $i -lt $longRetryIntervalMinutes; $i++) {
+            $minutesRemaining = $longRetryIntervalMinutes - $i
+            Write-Log "Next retry in $minutesRemaining minute(s)..." "DEBUG"
+            Start-Sleep -Seconds 60
+        }
+    }
+}
+
 function ConvertTo-Hashtable {
     param([object]$InputObject)
 
@@ -293,7 +338,7 @@ function Main {
     Write-Log "Log File: $LogFile" "INFO"
     Write-Log "" "INFO"
     
-    $agentInfo = Invoke-Enrollment $ServerUrl
+    $agentInfo = Invoke-EnrollmentWithRetry $ServerUrl
     if (-not $agentInfo) {
         Write-Log "Enrollment failed. Exiting." "ERROR"
         exit 1

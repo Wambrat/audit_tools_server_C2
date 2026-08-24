@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+    <Product Id="*" 
+             Name="C2 Autonomous Agent" 
+             Language="1033" 
+             Version="1.0.0.0" 
+             Manufacturer="Security Team"
+             UpgradeCode="12345678-1234-1234-1234-123456789012">
+        
+        <Package InstallerVersion="200" 
+                 Compressed="yes" 
+                 InstallScope="perMachine" />
+
+        <Media Id="1" Cabinet="C2Agent.cab" EmbedCab="yes" />
+
+        <!-- Feature principale -->
+        <Feature Id="ProductFeature" Title="C2 Autonomous Agent" Level="1">
+            <ComponentRef Id="AgentExecutable" />
+            <ComponentRef Id="ConfigFile" />
+            <ComponentRef Id="LauncherScript" />
+            <ComponentRef Id="InstallFolder" />
+            <ComponentRef Id="ApplicationShortcuts" />
+        </Feature>
+
+        <!-- Répertoire d'installation -->
+        <Directory Id="TARGETDIR" Name="SourceDir">
+            <Directory Id="ProgramFilesFolder">
+                <Directory Id="INSTALLFOLDER" Name="C2Agent" />
+            </Directory>
+            <Directory Id="ProgramMenuFolder" />
+        </Directory>
+
+        <!-- Composants à installer -->
+        <DirectoryRef Id="INSTALLFOLDER">
+            <!-- Dossier principal -->
+            <Component Id="InstallFolder" Guid="*">
+                <CreateFolder />
+                <RegistryValue Root="HKLM" Key="Software\C2Agent" Name="InstallPath" Value="[INSTALLFOLDER]" Type="string" KeyPath="yes" />
+            </Component>
+
+            <!-- Script PowerShell agent -->
+            <Component Id="AgentExecutable" Guid="11111111-1111-1111-1111-111111111111">
+                <File Id="AgentPS1" 
+                      Name="agent_active.ps1" 
+                      Source="agent_active.ps1" 
+                      KeyPath="yes" />
+            </Component>
+
+            <!-- Fichier de configuration -->
+            <Component Id="ConfigFile" Guid="22222222-2222-2222-2222-222222222222">
+                <File Id="ConfigJSON" 
+                      Name="config.json" 
+                      Source="config.json" 
+                      KeyPath="yes" />
+            </Component>
+
+            <!-- Script wrapper pour lancer l'agent -->
+            <Component Id="LauncherScript" Guid="33333333-3333-3333-3333-333333333333">
+                <File Id="LauncherPS1" 
+                      Name="launcher.ps1" 
+                      Source="launcher.ps1" 
+                      KeyPath="yes" />
+            </Component>
+        </DirectoryRef>
+
+        <!-- Raccourci de désinstallation -->
+        <DirectoryRef Id="ProgramMenuFolder">
+            <Component Id="ApplicationShortcuts" Guid="55555555-5555-5555-5555-555555555555">
+                <Shortcut Id="UninstallProduct"
+                         Name="Uninstall C2 Agent"
+                         Target="[SystemFolder]msiexec.exe"
+                         Arguments="/x [ProductCode]" />
+                <RemoveFolder Id="ProgramMenuFolder" On="uninstall" />
+                <RegistryValue Root="HKCU" 
+                              Key="Software\C2Agent" 
+                              Name="Installed" 
+                              Value="1" 
+                              Type="integer" 
+                              KeyPath="yes" />
+            </Component>
+        </DirectoryRef>
+    </Product>
+</Wix>
