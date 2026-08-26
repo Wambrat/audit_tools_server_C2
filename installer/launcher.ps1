@@ -21,11 +21,12 @@
 $ErrorActionPreference = "Stop"
 
 # ===== PARAMÈTRES INJECTÉS LORS DU BUILD =====
-# Les valeurs suivantes sont remplacées par build-msi.ps1
-# lors de la compilation du MSI
-$serverUrl = "http://localhost:8000/api"
-$beaconInterval = 30
-$logFilePath = "C:\Program Files\C2Agent\logs\agent.log"
+# Les placeholders ci-dessous sont remplacés par build-msi.ps1 (.Replace)
+# à partir de config.json lors de la compilation du MSI.
+# %VAR% dans le chemin de log est développé au runtime, côté Windows.
+$serverUrl      = '__SERVER_URL__'
+$beaconInterval = [int]'__BEACON_INTERVAL__'
+$logFilePath    = [System.Environment]::ExpandEnvironmentVariables('__LOG_FILE__')
 # ============================================
 
 # Fonctions utilitaires

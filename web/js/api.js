@@ -2,7 +2,7 @@
  * Client API pour communiquer avec le serveur C2 FastAPI
  */
 
-const API_BASE_URL = 'http://localhost:8000/api';
+const API_BASE_URL = '/api';
 
 class C2ApiClient {
   /**
