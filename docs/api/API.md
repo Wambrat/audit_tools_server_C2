@@ -1,6 +1,6 @@
 ﻿# ðŸ“¡ API Documentation
 
-Documentation complÃ¨te des endpoints de l'API jadus Server.
+Documentation complète des endpoints de l'API Jadus Audit.
 
 ---
 

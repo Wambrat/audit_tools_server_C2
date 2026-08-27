@@ -1,6 +1,6 @@
 ﻿# ðŸ§ª Testing Guide - StratÃ©gie & ExÃ©cution
 
-Documentation complÃ¨te du testing du systÃ¨me jadus.
+Documentation complète du testing du système Jadus Audit.
 
 ---
 

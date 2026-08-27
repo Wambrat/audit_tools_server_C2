@@ -69,6 +69,10 @@
       LOG_LEVEL: INFO
       ALLOWED_ORIGINS: "https://localhost,https://127.0.0.1"
       SECRET_KEY: your_secret_key_change_me
+      # Clé de chiffrement des résultats d'audit (AES-256-GCM), lue depuis .env.
+      # ⚠️ passphrase >= 32 caractères, À DÉFINIR dans .env, et À NE PLUS MODIFIER
+      # ensuite (sinon les résultats déjà chiffrés deviennent illisibles).
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY:?ENCRYPTION_KEY doit etre defini dans .env (min 32 caracteres)}
       DEBUG: "false"
     ports:
       - "8001:8001"

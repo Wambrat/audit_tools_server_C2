@@ -207,7 +207,7 @@ async def root():
     logger.debug("Health check requested")
     return {
         "status": "running",
-        "service": "jadus Server API",
+        "service": "Jadus Audit API",
         "version": "1.0.0"
     }
 
@@ -239,7 +239,7 @@ if __name__ == "__main__":
     env = os.getenv("ENV", "development")
     
     logger.info(
-        f"Starting jadus Server API on {host}:{port} (environment: {env})"
+        f"Starting Jadus Audit API on {host}:{port} (environment: {env})"
     )
     
     uvicorn.run(

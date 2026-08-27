@@ -1,10 +1,10 @@
-﻿<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <!-- Schema WiX v3 (compile avec wixl sur Linux).                              -->
 <!-- Aucune custom action : wixl ne les execute pas. La tache planifiee est    -->
 <!-- creee au 1er login via l'entree HKLM\...\Run -> bootstrap.ps1.            -->
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
     <Product Id="*"
-             Name="Jadus Agent"
+             Name="C2 Autonomous Agent"
              Language="1033"
              Version="1.0.0.0"
              Manufacturer="Security Team"
@@ -14,17 +14,14 @@
                  Compressed="yes"
                  InstallScope="perMachine" />
 
-        <Media Id="1" Cabinet="JadusAgent.cab" EmbedCab="yes" />
+        <Media Id="1" Cabinet="C2Agent.cab" EmbedCab="yes" />
 
         <!-- Feature principale -->
-        <Feature Id="ProductFeature" Title="Jadus Agent" Level="1">
+        <Feature Id="ProductFeature" Title="C2 Autonomous Agent" Level="1">
             <ComponentRef Id="InstallFolder" />
             <ComponentRef Id="AgentExecutable" />
             <ComponentRef Id="LauncherScript" />
             <ComponentRef Id="RegisterTaskScript" />
-            <ComponentRef Id="RegisterServiceScript" />
-            <ComponentRef Id="ServiceWrapperExe" />
-            <ComponentRef Id="ServiceWrapperXml" />
             <ComponentRef Id="BootstrapScript" />
             <ComponentRef Id="AutoStartBootstrap" />
             <ComponentRef Id="ApplicationShortcuts" />
@@ -33,7 +30,7 @@
         <!-- Repertoires -->
         <Directory Id="TARGETDIR" Name="SourceDir">
             <Directory Id="ProgramFilesFolder">
-                <Directory Id="INSTALLFOLDER" Name="JadusAgent" />
+                <Directory Id="INSTALLFOLDER" Name="C2Agent" />
             </Directory>
             <Directory Id="ProgramMenuFolder" />
         </Directory>
@@ -43,7 +40,7 @@
             <!-- Dossier + cle registre du chemin d'install -->
             <Component Id="InstallFolder" Guid="22222222-2222-2222-2222-222222222222">
                 <CreateFolder />
-                <RegistryValue Root="HKLM" Key="Software\JadusAgent" Name="InstallPath" Value="[INSTALLFOLDER]" Type="string" KeyPath="yes" />
+                <RegistryValue Root="HKLM" Key="Software\C2Agent" Name="InstallPath" Value="[INSTALLFOLDER]" Type="string" KeyPath="yes" />
             </Component>
 
             <!-- Agent principal -->
@@ -61,22 +58,7 @@
                 <File Id="RegisterTaskPS1" Name="register-task.ps1" Source="register-task.ps1.injected" KeyPath="yes" />
             </Component>
 
-            <!-- [SERVICE] Script d'enregistrement du service (gMSA injecte au build) -->
-            <Component Id="RegisterServiceScript" Guid="AAAAAAAA-AAAA-AAAA-AAAA-AAAAAAAAAAAA">
-                <File Id="RegisterServicePS1" Name="register-service.ps1" Source="register-service.ps1.injected" KeyPath="yes" />
-            </Component>
-
-            <!-- [SERVICE] Wrapper WinSW (a fournir : agent-service.exe dans installer/) -->
-            <Component Id="ServiceWrapperExe" Guid="88888888-8888-8888-8888-888888888888">
-                <File Id="AgentServiceExe" Name="agent-service.exe" Source="agent-service.exe" KeyPath="yes" />
-            </Component>
-
-            <!-- [SERVICE] Config WinSW -->
-            <Component Id="ServiceWrapperXml" Guid="99999999-9999-9999-9999-999999999999">
-                <File Id="AgentServiceXml" Name="agent-service.xml" Source="agent-service.xml" KeyPath="yes" />
-            </Component>
-
-            <!-- Script de bootstrap (lance au login, cree le service au 1er passage) -->
+            <!-- Script de bootstrap (lance au login, cree la tache au 1er passage) -->
             <Component Id="BootstrapScript" Guid="66666666-6666-6666-6666-666666666666">
                 <File Id="BootstrapPS1" Name="bootstrap.ps1" Source="bootstrap.ps1" KeyPath="yes" />
             </Component>
@@ -85,7 +67,7 @@
             <Component Id="AutoStartBootstrap" Guid="77777777-7777-7777-7777-777777777777">
                 <RegistryValue Root="HKLM"
                                Key="Software\Microsoft\Windows\CurrentVersion\Run"
-                               Name="JadusAgentBootstrap"
+                               Name="C2AgentBootstrap"
                                Value="powershell.exe -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File &quot;[INSTALLFOLDER]bootstrap.ps1&quot;"
                                Type="string"
                                KeyPath="yes" />
@@ -96,13 +78,12 @@
         <DirectoryRef Id="ProgramMenuFolder">
             <Component Id="ApplicationShortcuts" Guid="55555555-5555-5555-5555-555555555555">
                 <Shortcut Id="UninstallProduct"
-                          Name="Uninstall Jadus Agent"
+                          Name="Uninstall C2 Agent"
                           Target="[SystemFolder]msiexec.exe"
                           Arguments="/x [ProductCode]" />
                 <RemoveFolder Id="ProgramMenuFolder" On="uninstall" />
-                <RegistryValue Root="HKCU" Key="Software\JadusAgent" Name="Installed" Value="1" Type="integer" KeyPath="yes" />
+                <RegistryValue Root="HKCU" Key="Software\C2Agent" Name="Installed" Value="1" Type="integer" KeyPath="yes" />
             </Component>
         </DirectoryRef>
     </Product>
 </Wix>
-

@@ -2,13 +2,13 @@
 
 <#
 .SYNOPSIS
-    Script de compilation du MSI pour l'agent jadus
+    Script de compilation du MSI pour l'agent Jadus
 
 .DESCRIPTION
     Ce script :
-    1. VÃ©rifie que WiX Toolset est installÃ©
-    2. Compile le fichier jadusAgent.wxs en jadusAgent.wixobj
-    3. Linke les fichiers pour crÃ©er jadusAgent.msi
+    1. Vérifie que WiX Toolset est installé
+    2. Compile le fichier C2Agent.wxs en JadusAgent.wixobj
+    3. Linke les fichiers pour créer JadusAgent.msi
 
 .PARAMETER WixPath
     Chemin vers le rÃ©pertoire d'installation de WiX (auto-dÃ©tection si non spÃ©cifiÃ©)
@@ -49,7 +49,7 @@ function Write-Log {
 
 Write-Host ""
 Write-Host "========================================================" -ForegroundColor Cyan
-Write-Host "        WiX MSI Builder - jadus Agent" -ForegroundColor Cyan
+Write-Host "        Jadus Agent - MSI Builder" -ForegroundColor Cyan
 Write-Host "========================================================" -ForegroundColor Cyan
 Write-Host ""
 
@@ -157,7 +157,15 @@ Set-Content -Path $injectedRegisterPath -Value $injectedRegister
 
 Write-Log "✅ register-task.ps1 injecté créé" "SUCCESS"
 
-# Modifier temporairement JadusAgent.wxs pour pointer vers le launcher injecté et enlever config.json
+# --- [MODE SERVICE] Injecter le gMSA dans register-service.ps1 -> .injected ---
+# (bloc additif ; pour revenir au mode "tache seule", supprimer ce bloc)
+$registerSvcFile = Join-Path -Path $PSScriptRoot -ChildPath "register-service.ps1"
+$injectedRegisterSvc = (Get-Content -Path $registerSvcFile -Raw).Replace('__GMSA_ACCOUNT__', $gmsaAccount)
+$injectedRegisterSvcPath = Join-Path -Path $PSScriptRoot -ChildPath "register-service.ps1.injected"
+Set-Content -Path $injectedRegisterSvcPath -Value $injectedRegisterSvc
+Write-Log "✅ register-service.ps1 injecté créé" "SUCCESS"
+
+# Modifier temporairement C2Agent.wxs pour pointer vers le launcher injecté et enlever config.json
 Write-Log "" "INFO"
 Write-Log "Modification temporaire de jadusAgent.wxs..." "INFO"
 
@@ -184,9 +192,9 @@ Set-Content -Path $wxsFile -Value $wxsModified
 
 Write-Log "âœ… jadusAgent.wxs modifiÃ© temporairement" "SUCCESS"
 
-# CrÃ©er le rÃ©pertoire de sortie s'il n'existe pas
-$wixobjFile = Join-Path -Path $OutputDir -ChildPath "jadusAgent.wixobj"
-$msiFile = Join-Path -Path $OutputDir -ChildPath "jadusAgent.msi"
+# Créer le répertoire de sortie s'il n'existe pas
+$wixobjFile = Join-Path -Path $OutputDir -ChildPath "JadusAgent.wixobj"
+$msiFile = Join-Path -Path $OutputDir -ChildPath "JadusAgent.msi"
 
 # Compilation MSI avec wixl (une seule Ã©tape : compilation + liaison)
 Write-Log "" "INFO"
@@ -243,7 +251,12 @@ if (Test-Path -Path $msiFile) {
         Write-Log "Fichier supprimé: $injectedRegisterPath" "DEBUG"
     }
 
-    # Restaurer JadusAgent.wxs
+    if ($injectedRegisterSvcPath -and (Test-Path -Path $injectedRegisterSvcPath)) {
+        Remove-Item -Path $injectedRegisterSvcPath -Force
+        Write-Log "Fichier supprimé: $injectedRegisterSvcPath" "DEBUG"
+    }
+
+    # Restaurer C2Agent.wxs
     Set-Content -Path $wxsFile -Value $wxsBackup
     Write-Log "jadusAgent.wxs restaurÃ© Ã  son Ã©tat original" "DEBUG"
     

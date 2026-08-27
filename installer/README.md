@@ -1,10 +1,10 @@
-﻿# ðŸ› ï¸ jadus Agent MSI - Guide Rapide
+# 🛠️ Jadus Agent MSI - Guide Rapide
 
 ## ðŸ“‚ Contenu du dossier
 
 | Fichier | Description |
 |---------|-------------|
-| `jadusAgent.wxs` | Configuration WiX pour le MSI |
+| `JadusAgent.wxs` | Configuration WiX pour le MSI |
 | `config.json` | Fichier de configuration (ServerUrl, BeaconInterval) |
 | `launcher.ps1` | Script qui charge la config et lance l'agent |
 | `build-msi.ps1` | Script de compilation MSI |
@@ -35,7 +35,7 @@ Copy-Item "..\agent_active.ps1" ".\"
 
 ### 4. Installer
 ```powershell
-msiexec /i jadusAgent.msi /quiet /norestart
+msiexec /i JadusAgent.msi /quiet /norestart
 ```
 
 ### 5. CrÃ©er la tÃ¢che planifiÃ©e
@@ -48,14 +48,14 @@ msiexec /i jadusAgent.msi /quiet /norestart
 ## âœ… VÃ©rifier
 
 ```powershell
-# VÃ©rifier la tÃ¢che
-Get-ScheduledTask -TaskName "jadusAgentBeacon"
+# Vérifier la tâche
+Get-ScheduledTask -TaskName "JadusAgentBeacon"
 
 # Voir les logs
-Get-Content "C:\Program Files\jadusAgent\logs\agent.log" -Tail 50
+Get-Content "C:\Program Files\JadusAgent\logs\agent.log" -Tail 50
 
 # Tester
-Start-ScheduledTask -TaskName "jadusAgentBeacon"
+Start-ScheduledTask -TaskName "JadusAgentBeacon"
 ```
 
 ---
@@ -71,13 +71,13 @@ Voir `INSTALLATION_GUIDE.md` pour tous les dÃ©tails.
 ```json
 {
   "agent": {
-    "serverUrl": "http://localhost:8000/api",     // URL du serveur jadus
-    "beaconInterval": 30,                         // FrÃ©quence en secondes
-    "logFile": "%PROGRAMFILES%\\jadusAgent\\logs\\agent.log",
+    "serverUrl": "http://localhost:8000/api",     // URL du serveur Jadus Audit
+    "beaconInterval": 30,                         // Fréquence en secondes
+    "logFile": "%PROGRAMFILES%\\JadusAgent\\logs\\agent.log",
     "logLevel": "INFO"
   },
   "scheduled_task": {
-    "taskName": "jadusAgentBeacon",                  // Nom de la tÃ¢che
+    "taskName": "JadusAgentBeacon",                  // Nom de la tâche
     "triggerInterval": 30,                        // Intervalle en secondes
     "runWithHighestPrivileges": true,
     "runUser": "SYSTEM"                           // Utilisateur d'exÃ©cution
@@ -93,11 +93,11 @@ Voir `INSTALLATION_GUIDE.md` pour tous les dÃ©tails.
 1. Ã‰diter config.json avec vos paramÃ¨tres
    â†“
 2. Copier agent_active.ps1
-   â†“
-3. ./build-msi.ps1  (crÃ©e jadusAgent.msi)
-   â†“
-4. msiexec /i jadusAgent.msi /quiet
-   â†“
+   ↓
+3. ./build-msi.ps1  (crée JadusAgent.msi)
+   ↓
+4. msiexec /i JadusAgent.msi /quiet
+   ↓
 5. ./install-scheduled-task.ps1
    â†“
 6. âœ… Agent actif et s'exÃ©cute toutes les 30 secondes
@@ -107,12 +107,12 @@ Voir `INSTALLATION_GUIDE.md` pour tous les dÃ©tails.
 
 ## ðŸŽ¯ CaractÃ©ristiques
 
-âœ… **Installation silencieuse** - Pas d'interface, discret  
-âœ… **Configuration flexible** - Modifiable via JSON  
-âœ… **TÃ¢che planifiÃ©e** - S'exÃ©cute toutes les 30s (configurable)  
-âœ… **Logs structurÃ©s** - `C:\Program Files\jadusAgent\logs\agent.log`  
-âœ… **PrivilÃ¨ges SYSTEM** - ExÃ©cution en tant qu'administrateur  
-âœ… **Auto-dÃ©marrage** - S'exÃ©cute mÃªme aprÃ¨s reboot  
+✅ **Installation silencieuse** - Pas d'interface, discret  
+✅ **Configuration flexible** - Modifiable via JSON  
+✅ **Tâche planifiée** - S'exécute toutes les 30s (configurable)  
+✅ **Logs structurés** - `C:\Program Files\JadusAgent\logs\agent.log`  
+✅ **Privilèges SYSTEM** - Exécution en tant qu'administrateur  
+✅ **Auto-démarrage** - S'exécute même après reboot  
 
 ---
 
@@ -122,3 +122,6 @@ Voir `INSTALLATION_GUIDE.md` pour tous les dÃ©tails.
 - Voir `INSTALLATION_GUIDE.md` pour le dÃ©ploiement en masse (GPO/SCCM)
 - Les logs se trouvent dans `C:\Program Files\jadusAgent\logs\`
 
+- Éditer `config.json` si l'URL du serveur change
+- Voir `INSTALLATION_GUIDE.md` pour le déploiement en masse (GPO/SCCM)
+- Les logs se trouvent dans `C:\Program Files\JadusAgent\logs\`

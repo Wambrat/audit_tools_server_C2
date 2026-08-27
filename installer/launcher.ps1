@@ -3,8 +3,8 @@
 
 <#
 .SYNOPSIS
-    Launcher script pour l'agent jadus
-    ExÃ©cute agent_active.ps1 avec les paramÃ¨tres injectÃ©s lors du build
+    Launcher script pour l'agent Jadus
+    Exécute agent_active.ps1 avec les paramètres injectés lors du build
 
 .DESCRIPTION
     Ce script :
@@ -69,7 +69,7 @@ function Ensure-ScheduledTask {
     # - Le script est exÃ©cutÃ© manuellement ou via d'autres moyens
     # - La tÃ¢che aurait Ã©tÃ© supprimÃ©e
     
-    $taskName = "jadusAgentBeacon"
+    $taskName = "JadusAgentBeacon"
     
     Write-Log "Checking scheduled task: $taskName" "INFO" $LogFilePath
     
@@ -108,7 +108,7 @@ function Ensure-ScheduledTask {
             -Settings $settings `
             -RunLevel Highest `
             -User "SYSTEM" `
-            -Description "jadus Autonomous Agent - Beacon execution" `
+            -Description "Jadus Agent - Beacon execution" `
             -ErrorAction Stop
         
         Write-Log "âœ… Scheduled task created successfully" "SUCCESS" $LogFilePath
@@ -129,7 +129,7 @@ function Ensure-ScheduledTask {
 
 Write-Host ""
 Write-Host "========================================================" -ForegroundColor Cyan
-Write-Host "        jadus AGENT - Launcher" -ForegroundColor Cyan
+Write-Host "        JADUS AGENT - Launcher" -ForegroundColor Cyan
 Write-Host "========================================================" -ForegroundColor Cyan
 Write-Host ""
 
@@ -162,12 +162,11 @@ if (-not (Test-Path -Path $agentScriptPath)) {
 
 Write-Log "Starting agent..." "INFO" $logFilePath
 
-# VÃ©rifier et crÃ©er la tÃ¢che planifiÃ©e si nÃ©cessaire (fallback)
-$taskReady = Ensure-ScheduledTask -LauncherPath $PSCommandPath -LogFilePath $logFilePath
-
-if (-not $taskReady) {
-    Write-Log "Warning: Scheduled task could not be created or verified" "WARNING" $logFilePath
-}
+# NB : le cycle de vie (démarrage/redémarrage) est géré par le SERVICE Windows
+# (wrapper WinSW) ou la tâche planifiée. launcher.ps1 ne doit donc PAS créer/
+# démarrer de tâche lui-même, sous peine de lancer une 2e instance de l'agent
+# en parallèle (double enrôlement). L'ancien fallback Ensure-ScheduledTask est
+# volontairement désactivé.
 
 # ExÃ©cuter l'agent avec les paramÃ¨tres injectÃ©s
 try {

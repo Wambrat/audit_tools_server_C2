@@ -1,4 +1,4 @@
-﻿# jadus
+# Jadus Audit API - Python FastAPI
 
 Plateforme d’audit et de supervision de parc informatique, avec une API FastAPI, un tableau de bord web et une base MongoDB.
 

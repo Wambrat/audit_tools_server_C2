@@ -1,6 +1,6 @@
 ﻿# ðŸ” SÃ©curitÃ© - Phase 5 Tier 3 Hardening
 
-Documentation complÃ¨te des mesures de sÃ©curitÃ© du systÃ¨me jadus.
+Documentation complète des mesures de sécurité du système Jadus Audit.
 
 **Statut:** âœ… **376/376 tests passants** - Toutes les mesures validÃ©es
 

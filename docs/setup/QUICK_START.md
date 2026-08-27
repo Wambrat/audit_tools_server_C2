@@ -1,6 +1,6 @@
 ﻿# ðŸš€ Guide Rapide de DÃ©marrage
 
-Bienvenue dans votre interface de gestion du parc informatique jadus!
+Bienvenue dans votre interface de gestion du parc informatique Jadus Audit!
 
 ## â±ï¸ DÃ©marrage en 5 minutes
 

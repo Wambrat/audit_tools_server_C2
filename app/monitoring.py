@@ -1,5 +1,5 @@
 ﻿"""
-Système de monitoring pour tracker l'état global du système jadus.
+Système de monitoring pour tracker l'état global du système Jadus Audit.
 Fournit des stats agrégées sur les agents, tâches et résultats.
 
 Cette implémentation est une reconstruction complète du script Start-Audit.ps1,

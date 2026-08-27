@@ -1,6 +1,6 @@
-﻿"""
-Couche de base de donnÃ©es MongoDB pour le serveur jadus.
-Remplace l'implÃ©mentation en mÃ©moire par une vraie base de donnÃ©es persistante.
+"""
+Couche de base de données MongoDB pour le serveur Jadus Audit.
+Remplace l'implémentation en mémoire par une vraie base de données persistante.
 """
 
 from pymongo import MongoClient, ASCENDING, DESCENDING
@@ -62,7 +62,7 @@ except Exception as e:
 
 
 class MongoDatabase:
-    """Interface MongoDB pour l'API jadus"""
+    """Interface MongoDB pour l'API Jadus Audit"""
     
     def __init__(self):
         """Initialiser les collections et les index"""

@@ -96,7 +96,7 @@ Lance le serveur API FastAPI avec configuration complÃ¨te.
 ### RÃ©sultat Attendu
 
 ```
-[INFO] Initializing jadus Server API
+[INFO] Initializing Jadus Audit API
 [INFO] Database mode: In-Memory (development)
 [INFO] âœ… In-Memory database initialized
 [INFO] Setting up CORS with 3 allowed origins
@@ -252,7 +252,7 @@ Lance un agent PowerShell qui s'enregistre auprÃ¨s du serveur.
 ### RÃ©sultat Attendu
 
 ```
-[Agent] Registering with jadus Server...
+[Agent] Registering with Jadus Audit...
 [Agent] Successfully registered!
 [Agent] Agent ID: a1b2c3d4-...
 [Agent] API Key: sk_xxxxx...

@@ -1,6 +1,6 @@
-﻿# ðŸš€ Installation Guide - jadus Server with TLS/HTTPS
+# 🚀 Installation Guide - Jadus Audit with TLS/HTTPS
 
-Ce guide vous accompagne Ã  travers l'installation du jadus Server avec **chiffrement TLS/HTTPS complet**, mÃªme en dÃ©veloppement.
+Ce guide vous accompagne à travers l'installation du Jadus Audit avec **chiffrement TLS/HTTPS complet**, même en développement.
 
 ## ðŸ“‹ PrÃ©requis
 
@@ -284,7 +284,7 @@ docker-compose up -d --build
 # VÃ©rifier les logs Traefik
 docker-compose logs traefik
 
-# VÃ©rifier que les certificats sont montÃ©s
+# Vérifier que les certificats sont montés
 docker exec jadus-traefik ls -la /etc/traefik/certs/
 
 # RedÃ©marrer

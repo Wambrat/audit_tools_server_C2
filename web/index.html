@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>jadus Dashboard - Conformité Parc Informatique</title>
+  <title>Jadus Audit - Conformité Parc Informatique</title>
   
   <!-- Vue 3 -->
   <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
@@ -165,7 +165,7 @@
     .error-message {
       padding: 12px 16px;
       background-color: #f8d7da;
-      color: #721jadus4;
+      color: #721C24;
       border-radius: 4px;
       margin-bottom: 16px;
     }
@@ -181,7 +181,7 @@
   <div id="app">
     <!-- Header -->
     <div class="app-header">
-      <h1>️ Dashboard Conformité jadus</h1>
+      <h1>🛡️ Dashboard Conformité Jadus Audit</h1>
       <p>Surveillance en temps réel du parc informatique et des audits de sécurité</p>
       <div style="position: absolute; top: 20px; right: 20px; display: flex; gap: 10px;">
         <a href="admin-login.html" style="
@@ -360,7 +360,7 @@
                     <span class="badge" :class="`badge ${getStatusClass(agent.status)}`">
                       {{ agent.status === 'active' ? 'Actif' : 'Inactif' }}
                     </span>
-                    <span class="badge" v-if="agent.is_inactive" style="background-color: #f8d7da; color: #721jadus4;">
+                    <span class="badge" v-if="agent.is_inactive" style="background-color: #f8d7da; color: #721C24;">
                       INACTIF
                     </span>
                   </div>
@@ -497,7 +497,7 @@
 
     <!-- Footer -->
     <div class="app-footer">
-      <p>jadus Dashboard v1.0  <a href="#" style="color: inherit; text-decoration: underline;">Documentation</a>  Données mises à jour en temps réel</p>
+      <p>Jadus Audit v1.0 • <a href="#" style="color: inherit; text-decoration: underline;">Documentation</a> • Données mises à jour en temps réel</p>
     </div>
 
     <!-- Modal Lancer Audit -->

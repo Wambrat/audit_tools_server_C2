@@ -19,7 +19,7 @@ providers:
   docker:
     endpoint: "unix:///var/run/docker.sock"
     exposedByDefault: false
-    network: "jadus_jadus-network"
+    network: "jadus-network"
 
 tls:
   certificates:

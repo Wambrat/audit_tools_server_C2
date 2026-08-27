@@ -2,11 +2,11 @@
   "agent": {
     "serverUrl": "http://localhost:8000/api",
     "beaconInterval": 30,
-    "logFile": "%PROGRAMFILES%\\jadusAgent\\logs\\agent.log",
+    "logFile": "%PROGRAMFILES%\\JadusAgent\\logs\\agent.log",
     "logLevel": "INFO"
   },
   "scheduled_task": {
-    "taskName": "jadusAgentBeacon",
+    "taskName": "JadusAgentBeacon",
     "triggerInterval": 30,
     "runWithHighestPrivileges": true,
     "runUser": "SYSTEM",

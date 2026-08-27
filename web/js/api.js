@@ -1,10 +1,10 @@
 /**
- * Client API pour communiquer avec le serveur jadus FastAPI
+ * Client API pour communiquer avec le serveur Jadus Audit (FastAPI)
  */
 
 const API_BASE_URL = '/api';
 
-class jadusApiClient {
+class JadusApiClient {
   /**
    * Récupérer l'aperçu du système
    */

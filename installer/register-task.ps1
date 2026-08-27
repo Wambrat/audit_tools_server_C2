@@ -1,4 +1,4 @@
-# Enregistre la tache planifiee jadusAgentBeacon.
+# Enregistre la tache planifiee JadusAgentBeacon.
 # Principal auto-adaptatif :
 #   - Machine JOINTE au domaine + gMSA configure -> tentative sous gMSA, avec
 #     repli SYSTEM si l'enregistrement gMSA echoue.
@@ -23,7 +23,7 @@ function Write-Log([string]$m) {
 }
 
 # --- Serialisation : un seul enregistrement a la fois ---
-$mutex = New-Object System.Threading.Mutex($false, 'Global\jadusAgentRegisterTask')
+$mutex = New-Object System.Threading.Mutex($false, 'Global\JadusAgentRegisterTask')
 $owned = $false
 try { $owned = $mutex.WaitOne([TimeSpan]::FromSeconds(90)) }
 catch [System.Threading.AbandonedMutexException] { $owned = $true }
@@ -34,7 +34,7 @@ try {
     Write-Log ("whoami       = {0}" -f (whoami))
     Write-Log ("gMSA config  = '{0}'" -f $GmsaAccount)
 
-    $taskName     = 'jadusAgentBeacon'
+    $taskName     = 'JadusAgentBeacon'
     $launcherPath = Join-Path $PSScriptRoot 'launcher.ps1'
     Write-Log ("launcherPath = {0} (exists={1})" -f $launcherPath, (Test-Path $launcherPath))
 
@@ -91,7 +91,7 @@ try {
                 $principal = New-ScheduledTaskPrincipal -UserId $GmsaAccount -LogonType Password -RunLevel Highest
                 Register-ScheduledTask -TaskName $taskName -TaskPath '\' `
                     -Action $action -Trigger $trigger -Settings $settings -Principal $principal `
-                    -Description 'jadus Autonomous Agent - Beacon execution' -Force -ErrorAction Stop | Out-Null
+                    -Description 'Jadus Agent - Beacon execution' -Force -ErrorAction Stop | Out-Null
                 Write-Log ("Principal = gMSA {0} (OK)" -f $GmsaAccount)
                 $registered = $true
             }
@@ -106,7 +106,7 @@ try {
                 $principal = New-ScheduledTaskPrincipal -UserId 'SYSTEM' -LogonType ServiceAccount -RunLevel Highest
                 Register-ScheduledTask -TaskName $taskName -TaskPath '\' `
                     -Action $action -Trigger $trigger -Settings $settings -Principal $principal `
-                    -Description 'jadus Autonomous Agent - Beacon execution' -Force -ErrorAction Stop | Out-Null
+                    -Description 'Jadus Agent - Beacon execution' -Force -ErrorAction Stop | Out-Null
                 Write-Log "Principal = SYSTEM (OK)"
                 $registered = $true
             }

@@ -1,6 +1,6 @@
-﻿# Guide Docker pour l'Application jadus Server
+# Guide Docker pour l'Application Jadus Audit
 
-Ce guide explique comment utiliser les images Docker pour dÃ©ployer l'application jadus Server complÃ¨te avec le backend, MongoDB et le frontend.
+Ce guide explique comment utiliser les images Docker pour déployer l'application Jadus Audit complète avec le backend, MongoDB et le frontend.
 
 ## ðŸ“‹ PrÃ©requis
 
@@ -232,9 +232,9 @@ docker-compose up -d <service>
 
 - Les fichiers `.env` ne doivent jamais Ãªtre commitÃ©s dans Git
 - Utilisez `.env.example` comme template
-- Les secrets sensibles doivent Ãªtre gÃ©rÃ©s avec Docker Secrets en production
-- MongoDB est accessible uniquement sur le rÃ©seau interne (`jadus-network`)
-- Le frontend fait un proxy des requÃªtes API, donc pas besoin de configurer CORS sur le frontend
+- Les secrets sensibles doivent être gérés avec Docker Secrets en production
+- MongoDB est accessible uniquement sur le réseau interne (`jadus-network`)
+- Le frontend fait un proxy des requêtes API, donc pas besoin de configurer CORS sur le frontend
 
 ## ðŸ¤ Support
 

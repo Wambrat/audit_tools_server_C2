@@ -1,5 +1,5 @@
-﻿/**
- * Feuille de styles pour le dashboard jadus
+/**
+ * Feuille de styles pour le dashboard Jadus Audit
  */
 
 :root {
@@ -310,12 +310,12 @@ body {
 
 .status-inactive {
   background-color: #f8d7da;
-  color: #721jadus4;
+  color: #721C24;
 }
 
 .status-compromised {
   background-color: #f5c6cb;
-  color: #721jadus4;
+  color: #721C24;
   font-weight: 700;
 }
 
@@ -336,7 +336,7 @@ body {
 
 .alert-critical {
   background-color: #f8d7da;
-  color: #721jadus4;
+  color: #721C24;
 }
 
 .alert-unknown {
@@ -372,8 +372,8 @@ body {
 
 .alert-danger {
   background-color: #f8d7da;
-  color: #721jadus4;
-  border-color: #721jadus4;
+  color: #721C24;
+  border-color: #721C24;
 }
 
 /* Forms */

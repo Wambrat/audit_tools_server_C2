@@ -1,6 +1,6 @@
-﻿# ðŸ“š Documentation jadus Server
+# 📚 Documentation Jadus Audit
 
-Bienvenue dans la documentation du systÃ¨me de gestion jadus!
+Bienvenue dans la documentation du système de gestion Jadus Audit!
 
 ## ðŸš€ Pour Commencer
 
@@ -85,7 +85,7 @@ Bienvenue dans la documentation du systÃ¨me de gestion jadus!
 
 ### ðŸ‘¨â€ðŸ’¼ **Administrateur**
 
-Vous gÃ©rez le systÃ¨me jadus:
+Vous gérez le système Jadus Audit:
 1. Lire: [Quick Start](setup/QUICK_START.md)
 2. Lire: [API Documentation](api/API.md) - Section "Admin Operations"
 3. Consulter: [Architecture](architecture/ARCHITECTURE.md) - Dashboard & Monitoring
@@ -229,3 +229,4 @@ python -m pytest test/ --cov=app --cov-report=html
 
 **Bienvenue dans le jadus Server!** ðŸš€
 
+**Bienvenue dans le Jadus Audit!** 🚀
