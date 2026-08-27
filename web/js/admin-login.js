@@ -20,7 +20,7 @@ createApp({
       },
       successMessage: '',
       isLoading: false,
-      apiBaseUrl: 'http://localhost:8000/api'
+      apiBaseUrl: '/api'
     }
   },
 

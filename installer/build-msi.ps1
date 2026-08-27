@@ -108,11 +108,18 @@ try {
     $serverUrl = $config.agent.serverUrl
     $beaconInterval = $config.agent.beaconInterval
     $logFile = $config.agent.logFile
-    
-    Write-Log "âœ… Configuration chargÃ©e:" "SUCCESS"
+
+    # Compte gMSA optionnel (scheduled_task.gmsaAccount). Vide => SYSTEM.
+    $gmsaAccount = ""
+    if ($config.scheduled_task -and $config.scheduled_task.gmsaAccount) {
+        $gmsaAccount = [string]$config.scheduled_task.gmsaAccount
+    }
+
+    Write-Log "✅ Configuration chargée:" "SUCCESS"
     Write-Log "   Server URL: $serverUrl" "INFO"
     Write-Log "   Beacon Interval: $beaconInterval secondes" "INFO"
     Write-Log "   Log File: $logFile" "INFO"
+    Write-Log "   gMSA Account: $(if ($gmsaAccount) { $gmsaAccount } else { '(aucun -> SYSTEM)' })" "INFO"
 }
 catch {
     Write-Log "Erreur lors de la lecture de config.json: $_" "ERROR"
@@ -125,18 +132,13 @@ Write-Log "Injection des paramÃ¨tres dans launcher.ps1..." "INFO"
 
 $launcherContent = Get-Content -Path $launcherFile -Raw
 
-# Remplacer les valeurs par dÃ©faut
-$injectedLauncher = $launcherContent `
-    -replace 'ConfigPath = "\$PSScriptRoot\\config\.json"', "ConfigPath = `"INJECTED`"" `
-    -replace 'Expand-EnvironmentVariables \$config\.agent\.serverUrl', "`"$serverUrl`"" `
-    -replace 'Expand-EnvironmentVariables \$config\.agent\.beaconInterval', "$beaconInterval" `
-    -replace 'Expand-EnvironmentVariables \$config\.agent\.logFile', "`"$logFile`""
-
-# Ã‰galement remplacer directement les variables utilisÃ©es
-$injectedLauncher = $injectedLauncher `
-    -replace '\$serverUrl = \$config\.agent\.serverUrl', "`$serverUrl = `"$serverUrl`"" `
-    -replace '\$beaconInterval = \$config\.agent\.beaconInterval', "`$beaconInterval = $beaconInterval" `
-    -replace '\$logFilePath = Expand-EnvironmentVariables \$config\.agent\.logFile', "`$logFilePath = `"$([System.Environment]::ExpandEnvironmentVariables($logFile))`""
+# Injection par placeholders (.Replace littéral -> robuste, insensible aux
+# caractères spéciaux de l'URL). Le chemin de log est injecté BRUT (%VAR% non
+# développé) : c'est launcher.ps1 qui le développe au runtime côté Windows.
+$injectedLauncher = $launcherContent.
+    Replace('__SERVER_URL__',      [string]$serverUrl).
+    Replace('__BEACON_INTERVAL__', [string]$beaconInterval).
+    Replace('__LOG_FILE__',        [string]$logFile)
 
 # Sauvegarder le launcher injectÃ© temporairement
 $injectedLauncherPath = Join-Path -Path $PSScriptRoot -ChildPath "launcher.ps1.injected"
@@ -144,7 +146,18 @@ Set-Content -Path $injectedLauncherPath -Value $injectedLauncher
 
 Write-Log "âœ… launcher.ps1 injectÃ© crÃ©Ã©" "SUCCESS"
 
-# Modifier temporairement jadusAgent.wxs pour pointer vers le launcher injectÃ© et enlever config.json
+# Injecter le compte gMSA dans register-task.ps1 -> register-task.ps1.injected
+Write-Log "Injection du compte gMSA dans register-task.ps1..." "INFO"
+$registerFile = Join-Path -Path $PSScriptRoot -ChildPath "register-task.ps1"
+$registerContent = Get-Content -Path $registerFile -Raw
+# .Replace (littéral) pour éviter les soucis de $ et \ du nom gMSA (ex: DOM\svc$)
+$injectedRegister = $registerContent.Replace('__GMSA_ACCOUNT__', $gmsaAccount)
+$injectedRegisterPath = Join-Path -Path $PSScriptRoot -ChildPath "register-task.ps1.injected"
+Set-Content -Path $injectedRegisterPath -Value $injectedRegister
+
+Write-Log "✅ register-task.ps1 injecté créé" "SUCCESS"
+
+# Modifier temporairement C2Agent.wxs pour pointer vers le launcher injecté et enlever config.json
 Write-Log "" "INFO"
 Write-Log "Modification temporaire de jadusAgent.wxs..." "INFO"
 
@@ -189,6 +202,7 @@ try {
         Write-Log "Erreur de compilation wixl (exit code $LASTEXITCODE)" "ERROR"
         # Restaurer le .wxs et nettoyer avant de quitter
         if (Test-Path -Path $injectedLauncherPath) { Remove-Item -Path $injectedLauncherPath -Force }
+        if (Test-Path -Path $injectedRegisterPath) { Remove-Item -Path $injectedRegisterPath -Force }
         Set-Content -Path $wxsFile -Value $wxsBackup
         exit 1
     }
@@ -223,8 +237,13 @@ if (Test-Path -Path $msiFile) {
         Remove-Item -Path $injectedLauncherPath -Force
         Write-Log "Fichier supprimÃ©: $injectedLauncherPath" "DEBUG"
     }
-    
-    # Restaurer jadusAgent.wxs
+
+    if (Test-Path -Path $injectedRegisterPath) {
+        Remove-Item -Path $injectedRegisterPath -Force
+        Write-Log "Fichier supprimé: $injectedRegisterPath" "DEBUG"
+    }
+
+    # Restaurer C2Agent.wxs
     Set-Content -Path $wxsFile -Value $wxsBackup
     Write-Log "jadusAgent.wxs restaurÃ© Ã  son Ã©tat original" "DEBUG"
     
@@ -237,8 +256,11 @@ else {
     if (Test-Path -Path $injectedLauncherPath) {
         Remove-Item -Path $injectedLauncherPath -Force
     }
+    if (Test-Path -Path $injectedRegisterPath) {
+        Remove-Item -Path $injectedRegisterPath -Force
+    }
     Set-Content -Path $wxsFile -Value $wxsBackup
-    
+
     exit 1
 }
 

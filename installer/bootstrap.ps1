@@ -15,6 +15,7 @@ function W([string]$m) {
 }
 
 $taskName = 'jadusAgentBeacon'
+$registerScript = Join-Path $PSScriptRoot 'register-task.ps1'
 
 # 1. La tache existe deja ? -> rien a faire
 if (Get-ScheduledTask -TaskName $taskName -TaskPath '\' -ErrorAction SilentlyContinue) {
@@ -27,26 +28,44 @@ $isAdmin = ([Security.Principal.WindowsPrincipal] `
     [Security.Principal.WindowsIdentity]::GetCurrent()
     ).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
 
-$registerScript = Join-Path $PSScriptRoot 'register-task.ps1'
-
-if (-not $isAdmin) {
-    # 3a. Se relancer eleve -> declenche 1 invite UAC
-    W "Not elevated -> relaunching elevated (UAC prompt)"
-    try {
-        Start-Process -FilePath 'powershell.exe' -Verb RunAs -WindowStyle Hidden -ArgumentList @(
-            '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', "`"$PSCommandPath`""
-        )
-    }
-    catch {
-        W ("Elevation refused/failed: {0}" -f $_.Exception.Message)
-    }
+if ($isAdmin) {
+    # Contexte deja eleve -> creation directe, sans UAC
+    W "Elevated -> creation directe de la tache"
+    & $registerScript
+    Start-ScheduledTask -TaskName $taskName -TaskPath '\' -ErrorAction SilentlyContinue
+    W "Bootstrap done (elevated)"
     exit 0
 }
 
-# 3b. Ici on est eleve : creer la tache puis la demarrer immediatement
-W ("Elevated -> running {0}" -f $registerScript)
-& $registerScript
-Start-ScheduledTask -TaskName $taskName -TaskPath '\' -ErrorAction SilentlyContinue
-W "Bootstrap done"
+# 3. Pas eleve : on ne s'auto-eleve (UAC) QUE si la machine est CONFIRMEE hors
+#    domaine. En cas de doute (detection qui echoue) -> on SUPPOSE le domaine ->
+#    PAS d'UAC. Un utilisateur standard du domaine ne doit jamais voir d'invite ;
+#    la tache est de toute facon creee par le GPO (script de demarrage SYSTEM).
+$partOfDomain = $true
+try {
+    $cs = Get-CimInstance -ClassName Win32_ComputerSystem -ErrorAction Stop
+    $partOfDomain = [bool]$cs.PartOfDomain
+}
+catch {
+    W ("Detection domaine (CIM) echouee: {0} -> suppose domaine (pas d'UAC)" -f $_.Exception.Message)
+    $partOfDomain = $true
+}
+W ("PartOfDomain = {0}" -f $partOfDomain)
+
+if ($partOfDomain) {
+    W "Domain-joined (ou incertain) + not elevated -> creation deleguee au GPO (SYSTEM), pas d'UAC"
+    exit 0
+}
+
+# 4. Hors domaine (install manuelle) : s'auto-elever -> 1 invite UAC
+W "Hors domaine + not elevated -> relaunch eleve (UAC)"
+try {
+    Start-Process -FilePath 'powershell.exe' -Verb RunAs -WindowStyle Hidden -ArgumentList @(
+        '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', "`"$PSCommandPath`""
+    )
+}
+catch {
+    W ("Elevation refusee/echouee: {0}" -f $_.Exception.Message)
+}
 exit 0
 

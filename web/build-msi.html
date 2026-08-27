@@ -411,14 +411,32 @@
               <div class="config-editor visible" id="configEditor" style="margin-top: 24px;">
                 <div class="form-grid">
                   <div class="form-group">
-                    <label for="serverHost">Serveur Host / Domaine / IP</label>
-                    <input type="text" id="serverHost" placeholder="" />
-                    <div class="muted-text">Modifiez uniquement le domaine ou l’IP du serveur. Le protocole et le chemin restent inchangés.</div>
+                    <label for="serverProtocol">Protocole</label>
+                    <input type="text" id="serverProtocol" value="https" readonly />
+                    <div class="muted-text">Fixe.</div>
                   </div>
 
                   <div class="form-group">
-                    <label for="serverUrl">URL actuelle</label>
-                    <input type="text" id="serverUrl" readonly placeholder="https://localhost/api" />
+                    <label for="serverHost">Hôte / Domaine / IP</label>
+                    <input type="text" id="serverHost" placeholder="10.0.0.10" oninput="updateUrlPreview()" />
+                    <div class="muted-text">Seul champ à modifier : l'adresse de votre serveur.</div>
+                  </div>
+
+                  <div class="form-group">
+                    <label for="serverPort">Port</label>
+                    <input type="text" id="serverPort" value="443" readonly />
+                    <div class="muted-text">Fixe (nginx/TLS).</div>
+                  </div>
+
+                  <div class="form-group">
+                    <label for="serverPath">Chemin de base</label>
+                    <input type="text" id="serverPath" value="/api" readonly />
+                    <div class="muted-text">Fixe.</div>
+                  </div>
+
+                  <div class="form-group">
+                    <label for="serverUrl">URL résultante</label>
+                    <input type="text" id="serverUrl" readonly placeholder="https://10.0.0.10/api" />
                   </div>
 
                   <div class="form-group">
@@ -434,6 +452,12 @@
                       <option value="WARNING">WARNING</option>
                       <option value="ERROR">ERROR</option>
                     </select>
+                  </div>
+
+                  <div class="form-group">
+                    <label for="gmsaAccount">Compte gMSA (optionnel)</label>
+                    <input type="text" id="gmsaAccount" placeholder="DOMAINE\gMSA-01$" />
+                    <div class="muted-text">Vide = tâche sous SYSTEM. Sinon la tâche tourne sous ce gMSA (machine du domaine).</div>
                   </div>
                 </div>
 
@@ -543,13 +567,19 @@
 
         const data = await response.json();
         const config = data.config;
-        const currentServerUrl = config.agent.serverUrl || 'https://localhost/api';
-        const parsedUrl = new URL(currentServerUrl);
+        const currentServerUrl = config.agent.serverUrl || 'http://localhost:8000/api';
+        let parsedUrl;
+        try { parsedUrl = new URL(currentServerUrl); }
+        catch (e) { parsedUrl = new URL('http://localhost:8000/api'); }
 
-        document.getElementById('serverUrl').value = currentServerUrl;
-        document.getElementById('serverHost').value = parsedUrl.hostname || 'localhost';
+        // Protocole / port / chemin sont fixes (http / 8000 / /api) -> on ne
+        // charge que l'hôte depuis l'URL existante.
+        document.getElementById('serverHost').value = parsedUrl.hostname || '';
         document.getElementById('beaconInterval').value = config.agent.beaconInterval || 30;
         document.getElementById('logLevel').value = config.agent.logLevel || 'INFO';
+        document.getElementById('gmsaAccount').value =
+          (config.scheduled_task && config.scheduled_task.gmsaAccount) || '';
+        updateUrlPreview();
 
         document.getElementById('configEditor').classList.add('visible');
         showConfigStatus('✅ Configuration chargée avec succès.', 'success');
@@ -558,14 +588,26 @@
       }
     }
 
+    // Assemble l'URL serveur : https via nginx (443) + /api FIXES, seul l'hôte varie.
+    function buildServerUrl() {
+      const host = document.getElementById('serverHost').value.trim().replace(/^\[|\]$/g, '');
+      if (!host) return '';
+      return `https://${host}/api`;
+    }
+
+    function updateUrlPreview() {
+      document.getElementById('serverUrl').value = buildServerUrl();
+    }
+
     async function saveConfig() {
       if (!ensureAuthenticated()) return;
 
       const token = getStoredToken();
-      const currentUrl = new URL(document.getElementById('serverUrl').value.trim() || 'https://localhost/api');
       const serverHost = document.getElementById('serverHost').value.trim();
+      const serverUrl = buildServerUrl();
       const beaconInterval = parseInt(document.getElementById('beaconInterval').value, 10);
       const logLevel = document.getElementById('logLevel').value;
+      const gmsaAccount = document.getElementById('gmsaAccount').value.trim();
 
       if (!serverHost) {
         showConfigStatus('❌ Le host / domaine / IP du serveur est requis.', 'error');
@@ -577,11 +619,6 @@
         return;
       }
 
-      const nextUrl = new URL(currentUrl.toString());
-      const currentPort = nextUrl.port || (nextUrl.protocol === 'https:' ? '443' : '80');
-      nextUrl.hostname = serverHost.replace(/^\[|\]$/g, '');
-      nextUrl.port = currentPort;
-
       showConfigStatus('Enregistrement de la configuration...', 'loading');
 
       try {
@@ -592,9 +629,10 @@
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({
-            serverUrl: nextUrl.toString(),
+            serverUrl,
             beaconInterval,
-            logLevel
+            logLevel,
+            gmsaAccount
           })
         });
 

@@ -10,7 +10,7 @@ createApp({
     return {
       currentPage: 'overview',
       isLoading: false,
-      apiBaseUrl: 'http://localhost:8000/api',
+      apiBaseUrl: '/api',
       token: null,
       overview: {
         agents: { total: 0, active: 0 },

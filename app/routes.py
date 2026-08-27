@@ -69,6 +69,7 @@ class ConfigUpdateModel(BaseModel):
     beaconInterval: Optional[int] = None
     logFile: Optional[str] = None
     logLevel: Optional[str] = None
+    gmsaAccount: Optional[str] = None
 
 
 def verify_jwt_admin(authorization: Optional[str] = Header(None)) -> dict:
@@ -1436,30 +1437,28 @@ async def update_msi_config(
         # Mettre Ã  jour uniquement les champs fournis
         update_data = config_update.dict(exclude_unset=True)
 
-        # On autorise uniquement la modification du host / domaine / IP, pas le protocole ni le chemin
+        # URL serveur complète : on valide juste le schéma http/https + un host.
         if 'serverUrl' in update_data:
-            incoming_url = update_data['serverUrl']
-            current_url = config.get('agent', {}).get('serverUrl')
-            if current_url:
-                try:
-                    current = urllib.parse.urlparse(current_url)
-                    incoming = urllib.parse.urlparse(incoming_url)
-                    if current.scheme == incoming.scheme and current.path == incoming.path:
-                        updated = current._replace(
-                            netloc=f"{incoming.hostname or current.hostname}:{current.port or (443 if current.scheme == 'https' else 80)}",
-                            hostname=incoming.hostname or current.hostname,
-                            port=current.port or (443 if current.scheme == 'https' else 80),
-                            username=current.username,
-                            password=current.password,
-                        )
-                        config['agent']['serverUrl'] = updated.geturl()
-                        update_data.pop('serverUrl')
-                    else:
-                        logger.warning(f"Rejected serverUrl change with non matching scheme/path by {admin_user.get('username', 'unknown')}")
-                        update_data.pop('serverUrl')
-                except Exception:
-                    logger.warning(f"Rejected invalid serverUrl update by {admin_user.get('username', 'unknown')}")
-                    update_data.pop('serverUrl')
+            new_url = (update_data.pop('serverUrl') or '').strip()
+            if new_url:
+                parsed = urllib.parse.urlparse(new_url)
+                if parsed.scheme not in ('http', 'https') or not parsed.netloc:
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail="serverUrl invalide. Format attendu : http(s)://hote[:port][/chemin]"
+                    )
+                config.setdefault('agent', {})['serverUrl'] = new_url
+
+        # Compte gMSA (sous scheduled_task, pas agent)
+        if 'gmsaAccount' in update_data:
+            config.setdefault('scheduled_task', {})['gmsaAccount'] = (update_data.pop('gmsaAccount') or '').strip()
+
+        # Autres champs agent (beaconInterval, logFile, logLevel)
+        for key, value in update_data.items():
+            if key in ('beaconInterval', 'logFile', 'logLevel'):
+                config.setdefault('agent', {})[key] = value
+
+        logger.info(f"Config updated by {admin_user.get('username', 'unknown')}")
 
         if update_data:
             logger.info(f"Updating config with: {update_data} by {admin_user.get('username', 'unknown')}")
@@ -1490,6 +1489,9 @@ async def update_msi_config(
             "config": config
         }
     
+    except HTTPException:
+        # Laisser passer les erreurs de validation (ex. 400 serverUrl invalide)
+        raise
     except Exception as e:
         logger.error(f"Failed to update config: {str(e)}")
         raise HTTPException(

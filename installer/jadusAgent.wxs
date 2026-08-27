@@ -53,9 +53,9 @@
                 <File Id="LauncherPS1" Name="launcher.ps1" Source="launcher.ps1.injected" KeyPath="yes" />
             </Component>
 
-            <!-- Script d'enregistrement de la tache planifiee -->
+            <!-- Script d'enregistrement de la tache planifiee (gMSA injecte au build) -->
             <Component Id="RegisterTaskScript" Guid="44444444-4444-4444-4444-444444444444">
-                <File Id="RegisterTaskPS1" Name="register-task.ps1" Source="register-task.ps1" KeyPath="yes" />
+                <File Id="RegisterTaskPS1" Name="register-task.ps1" Source="register-task.ps1.injected" KeyPath="yes" />
             </Component>
 
             <!-- Script de bootstrap (lance au login, cree la tache au 1er passage) -->

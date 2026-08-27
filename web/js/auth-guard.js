@@ -32,7 +32,7 @@ function checkAuthentication() {
  */
 async function verifyTokenOnBackend(token) {
   try {
-    const response = await fetch('http://localhost:8000/api/monitoring/overview', {
+    const response = await fetch('/api/monitoring/overview', {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`,

@@ -9,7 +9,8 @@
     "taskName": "jadusAgentBeacon",
     "triggerInterval": 30,
     "runWithHighestPrivileges": true,
-    "runUser": "SYSTEM"
+    "runUser": "SYSTEM",
+    "gmsaAccount": "POC-JADUS\\gMSA-01$"
   },
   "installation": {
     "version": "1.0.0",

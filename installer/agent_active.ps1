@@ -9,6 +9,18 @@ param(
 $ErrorActionPreference = "Stop"
 $WarningPreference = "SilentlyContinue"
 
+# --- TLS : forcer TLS 1.2/1.3 et accepter le certificat auto-signe du serveur ---
+# Necessaire pour joindre nginx en https avec un certificat auto-signe.
+# NB securite : en production, deployer plutot le certificat/CA de confiance sur
+# les postes (GPO) et retirer ce contournement.
+try {
+    [System.Net.ServicePointManager]::SecurityProtocol = `
+        [System.Net.SecurityProtocolType]::Tls12 -bor [System.Net.SecurityProtocolType]::Tls13
+} catch {
+    [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12
+}
+[System.Net.ServicePointManager]::ServerCertificateValidationCallback = { $true }
+
 function Write-Log {
     param([string]$Message, [string]$Level = "INFO")
     $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
