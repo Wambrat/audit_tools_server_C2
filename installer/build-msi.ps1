@@ -157,7 +157,7 @@ Set-Content -Path $injectedRegisterPath -Value $injectedRegister
 
 Write-Log "✅ register-task.ps1 injecté créé" "SUCCESS"
 
-# Modifier temporairement C2Agent.wxs pour pointer vers le launcher injecté et enlever config.json
+# Modifier temporairement JadusAgent.wxs pour pointer vers le launcher injecté et enlever config.json
 Write-Log "" "INFO"
 Write-Log "Modification temporaire de jadusAgent.wxs..." "INFO"
 
@@ -243,7 +243,7 @@ if (Test-Path -Path $msiFile) {
         Write-Log "Fichier supprimé: $injectedRegisterPath" "DEBUG"
     }
 
-    # Restaurer C2Agent.wxs
+    # Restaurer JadusAgent.wxs
     Set-Content -Path $wxsFile -Value $wxsBackup
     Write-Log "jadusAgent.wxs restaurÃ© Ã  son Ã©tat original" "DEBUG"
     
