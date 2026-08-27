@@ -1,6 +1,6 @@
-# 📚 Documentation C2 Server
+# 📚 Documentation Jadus Audit
 
-Bienvenue dans la documentation du système de gestion C2!
+Bienvenue dans la documentation du système de gestion Jadus Audit!
 
 ## 🚀 Pour Commencer
 
@@ -85,7 +85,7 @@ Bienvenue dans la documentation du système de gestion C2!
 
 ### 👨‍💼 **Administrateur**
 
-Vous gérez le système C2:
+Vous gérez le système Jadus Audit:
 1. Lire: [Quick Start](setup/QUICK_START.md)
 2. Lire: [API Documentation](api/API.md) - Section "Admin Operations"
 3. Consulter: [Architecture](architecture/ARCHITECTURE.md) - Dashboard & Monitoring
@@ -227,4 +227,4 @@ python -m pytest test/ --cov=app --cov-report=html
 - ✅ Lancer un audit
 - ✅ Consulter la doc selon vos besoins
 
-**Bienvenue dans le C2 Server!** 🚀
+**Bienvenue dans le Jadus Audit!** 🚀

@@ -1,4 +1,4 @@
-# 🤖 C2 Autonomous Agent - Complete Solution
+# 🤖 Jadus Agent - Complete Solution
 
 ## ✅ What Has Been Delivered
 
@@ -288,9 +288,9 @@ curl http://localhost:8000/api/tasks/{agent-id} -X POST
 
 ## ✨ Summary
 
-The C2 Autonomous Agent is now **fully functional and tested**. It can:
+The Jadus Agent is now **fully functional and tested**. It can:
 
-1. ✅ Autonomously register with the C2 server
+1. ✅ Autonomously register with the Jadus Audit server
 2. ✅ Send regular heartbeats (configurable timing)
 3. ✅ Receive and execute audit commands
 4. ✅ Report results back to the server

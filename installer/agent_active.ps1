@@ -37,7 +37,7 @@ function Write-Log {
 function Show-Banner {
     Write-Host ""
     Write-Host "========================================================" -ForegroundColor Cyan
-    Write-Host "        C2 AUTONOMOUS AGENT - PowerShell" -ForegroundColor Cyan
+    Write-Host "        JADUS AGENT - PowerShell" -ForegroundColor Cyan
     Write-Host "        Active Monitoring & Audit Execution" -ForegroundColor Cyan
     Write-Host "========================================================" -ForegroundColor Cyan
     Write-Host ""

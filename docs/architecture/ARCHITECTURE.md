@@ -1,4 +1,4 @@
-# 🏗️ Architecture Technique - C2 Dashboard
+# 🏗️ Architecture Technique - Jadus Audit
 
 ## Vue d'ensemble
 
@@ -203,7 +203,7 @@ def verify_agent_credentials(agent_id: str, api_key: str) -> bool:
 {
   "timestamp": "2026-05-28T14:35:00Z",
   "level": "INFO",
-  "logger": "C2",
+  "logger": "Jadus",
   "message": "Audit launched",
   "agent_id": "a1b2c3d4-...",
   "task_id": "task-001"
@@ -367,7 +367,7 @@ GET /api/openapi.json    → OpenAPI 3.0 schema (machine-readable)
 ```python
 # main.py
 app = FastAPI(
-    title="C2 Server API",
+    title="Jadus Audit API",
     description="...",
     version="1.0.0",
     docs_url="/api/docs",
@@ -777,7 +777,7 @@ class SecretsFilter(logging.Filter):
 ### 2. **js/api.js** - Client API
 
 ```javascript
-class C2ApiClient {
+class JadusApiClient {
   static async getSystemOverview()
   static async getAgentsDashboard()
   static async getTasksDashboard()

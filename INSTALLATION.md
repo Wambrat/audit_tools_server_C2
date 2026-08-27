@@ -1,6 +1,6 @@
-# 🚀 Installation Guide - C2 Server with TLS/HTTPS
+# 🚀 Installation Guide - Jadus Audit with TLS/HTTPS
 
-Ce guide vous accompagne à travers l'installation du C2 Server avec **chiffrement TLS/HTTPS complet**, même en développement.
+Ce guide vous accompagne à travers l'installation du Jadus Audit avec **chiffrement TLS/HTTPS complet**, même en développement.
 
 ## 📋 Prérequis
 
@@ -94,10 +94,10 @@ docker-compose ps
 **Résultat attendu:**
 ```
 NAME              STATUS              PORTS
-c2-traefik        Up (healthy)        0.0.0.0:80->80/tcp, 0.0.0.0:443->443/tcp
-c2-mongodb        Up (healthy)        27017/tcp
-c2-backend        Up (healthy)        0.0.0.0:8000->8000/tcp
-c2-frontend       Up (healthy)        80/tcp
+jadus-traefik        Up (healthy)        0.0.0.0:80->80/tcp, 0.0.0.0:443->443/tcp
+jadus-mongodb        Up (healthy)        27017/tcp
+jadus-backend        Up (healthy)        0.0.0.0:8000->8000/tcp
+jadus-frontend       Up (healthy)        80/tcp
 ```
 
 ### Étape 4: Accéder aux Services
@@ -285,7 +285,7 @@ docker-compose up -d --build
 docker-compose logs traefik
 
 # Vérifier que les certificats sont montés
-docker exec c2-traefik ls -la /etc/traefik/certs/
+docker exec jadus-traefik ls -la /etc/traefik/certs/
 
 # Redémarrer
 docker-compose restart traefik

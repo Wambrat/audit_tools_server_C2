@@ -1,0 +1,31 @@
+<!--
+  Configuration du service Windows via WinSW.
+  Le binaire du service DOIT s'appeler comme ce fichier : agent-service.exe
+  (WinSW renomme). WinSW resout %BASE% = dossier du .exe (= dossier d'install),
+  donc aucun chemin en dur.
+
+  Le COMPTE du service (gMSA ou LocalSystem) n'est PAS defini ici : il est
+  positionne a l'installation par register-service.ps1 (sc.exe config), car
+  un gMSA s'attribue avec un mot de passe vide, mal supporte dans ce XML.
+-->
+<service>
+  <id>JadusAgent</id>
+  <name>Jadus Agent</name>
+  <description>Jadus Agent - Beacon and audit execution</description>
+
+  <executable>powershell.exe</executable>
+  <arguments>-NoProfile -ExecutionPolicy Bypass -File "%BASE%\launcher.ps1"</arguments>
+  <workingdirectory>%BASE%</workingdirectory>
+
+  <startmode>Automatic</startmode>
+
+  <!-- Redemarrage automatique si le processus s'arrete (equivalent recovery) -->
+  <onfailure action="restart" delay="60 sec"/>
+  <resetfailure>1 hour</resetfailure>
+
+  <!-- Journalisation stdout/stderr du process, avec rotation -->
+  <log mode="roll-by-size">
+    <sizeThreshold>10240</sizeThreshold>
+    <keepFiles>5</keepFiles>
+  </log>
+</service>

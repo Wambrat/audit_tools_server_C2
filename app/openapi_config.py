@@ -1,5 +1,5 @@
 """
-OpenAPI Configuration for C2 Server API
+OpenAPI Configuration for Jadus Audit API
 
 Centralizes OpenAPI schema tags, examples, and metadata
 """
@@ -46,11 +46,11 @@ SERVERS = [
 
 # OpenAPI information
 INFO = {
-    "title": "C2 Server API",
+    "title": "Jadus Audit API",
     "description": """
 ## Overview
 
-C2 Server API is a REST API for managing PowerShell audit agents in an enterprise environment.
+Jadus Audit API is a REST API for managing PowerShell audit agents in an enterprise environment.
 
 ### Key Features
 
@@ -125,7 +125,7 @@ See [API_DOCUMENTATION.md](./API_DOCUMENTATION.md) for detailed examples.
 """,
     "version": "1.0.0",
     "contact": {
-        "name": "C2 Administrator",
+        "name": "Jadus Audit Administrator",
         "email": "admin@c2.internal",
     },
     "license": {

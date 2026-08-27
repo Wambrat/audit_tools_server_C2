@@ -1,4 +1,4 @@
-# C2 Server API - Python FastAPI
+# Jadus Audit API - Python FastAPI
 
 API REST pour gérer et coordonner les agents PowerShell d'audit de sécurité.
 

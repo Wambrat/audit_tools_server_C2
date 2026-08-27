@@ -28,7 +28,7 @@ from datetime import datetime, timedelta
 from typing import Optional, Dict, Any
 import logging
 
-logger = logging.getLogger("C2")
+logger = logging.getLogger("Jadus")
 
 # Configuration from environment
 ADMIN_SECRET_KEY = os.getenv("ADMIN_SECRET_KEY", "your-admin-secret-key-change-in-production-min-32-chars!!!")

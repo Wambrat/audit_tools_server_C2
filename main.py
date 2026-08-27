@@ -13,10 +13,10 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Configurer le logging structuré
-setup_logging(app_name="c2-server", log_level=os.getenv("LOG_LEVEL", "INFO"))
+setup_logging(app_name="jadus-audit", log_level=os.getenv("LOG_LEVEL", "INFO"))
 logger = get_logger(__name__)
 
-logger.info("Initializing C2 Server API")
+logger.info("Initializing Jadus Audit API")
 
 # ===== Configuration de la Base de Données =====
 DATABASE_MODE = os.getenv("DATABASE_MODE", "memory").lower()
@@ -203,7 +203,7 @@ async def root():
     logger.debug("Health check requested")
     return {
         "status": "running",
-        "service": "C2 Server API",
+        "service": "Jadus Audit API",
         "version": "1.0.0"
     }
 
@@ -235,7 +235,7 @@ if __name__ == "__main__":
     env = os.getenv("ENV", "development")
     
     logger.info(
-        f"Starting C2 Server API on {host}:{port} (environment: {env})"
+        f"Starting Jadus Audit API on {host}:{port} (environment: {env})"
     )
     
     uvicorn.run(

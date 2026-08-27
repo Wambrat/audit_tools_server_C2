@@ -1,5 +1,5 @@
 /**
- * Application Vue.js pour le Dashboard C2
+ * Application Vue.js pour le Dashboard Jadus Audit
  */
 
 const { createApp } = Vue;
@@ -110,10 +110,10 @@ const app = createApp({
 
         // Charger les données en parallèle
         const [overview, agents, tasks, alerts] = await Promise.all([
-          C2ApiClient.getSystemOverview(),
-          C2ApiClient.getAgentsDashboard(),
-          C2ApiClient.getTasksDashboard(),
-          C2ApiClient.getAlerts(),
+          JadusApiClient.getSystemOverview(),
+          JadusApiClient.getAgentsDashboard(),
+          JadusApiClient.getTasksDashboard(),
+          JadusApiClient.getAlerts(),
         ]);
 
         this.overview = overview;
@@ -229,7 +229,7 @@ const app = createApp({
         }
 
         // Appeler l'API pour créer la tâche
-        const result = await C2ApiClient.createTask(
+        const result = await JadusApiClient.createTask(
           this.selectedAgent.id,
           command,
           null,
@@ -282,7 +282,7 @@ const app = createApp({
   },
 
   mounted() {
-    console.log('Dashboard C2 - Application montée');
+    console.log('Dashboard Jadus Audit - Application montée');
 
     // Charger les données
     this.loadDashboardData();

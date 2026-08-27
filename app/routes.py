@@ -46,7 +46,7 @@ class AgentConfigModel(BaseModel):
 
 
 class ScheduledTaskConfigModel(BaseModel):
-    taskName: str = "C2AgentBeacon"
+    taskName: str = "JadusAgentBeacon"
     triggerInterval: int = 30
     runWithHighestPrivileges: bool = True
     runUser: str = "SYSTEM"
@@ -1470,7 +1470,7 @@ async def update_msi_config(
         audit_logger.log_action(
             action_type=ActionType.UPDATE,
             resource_type=ResourceType.DEPLOYMENT,
-            resource_id="C2Agent",
+            resource_id="JadusAgent",
             details=f"Configuration updated: {update_data}",
             status="SUCCESS"
         )
@@ -1563,7 +1563,7 @@ async def build_msi_package(authorization: Optional[str] = Header(None)):
     audit_logger.log_action(
         action_type=ActionType.MSI_BUILD,
         resource_type=ResourceType.DEPLOYMENT,
-        resource_id="C2Agent",
+        resource_id="JadusAgent",
         details="MSI compilation requested via API",
         status="STARTED"
     )
@@ -1620,7 +1620,7 @@ async def build_msi_package(authorization: Optional[str] = Header(None)):
         # Vérifier le statut
         if result.returncode == 0:
             # Chercher le fichier MSI généré
-            msi_path = os.path.join(installer_dir, "C2Agent.msi")
+            msi_path = os.path.join(installer_dir, "JadusAgent.msi")
             
             if os.path.exists(msi_path):
                 msi_size = os.path.getsize(msi_path) / (1024 * 1024)  # MB
@@ -1630,7 +1630,7 @@ async def build_msi_package(authorization: Optional[str] = Header(None)):
                 audit_logger.log_action(
                     action_type=ActionType.MSI_BUILD,
                     resource_type=ResourceType.DEPLOYMENT,
-                    resource_id="C2Agent",
+                    resource_id="JadusAgent",
                     details=f"MSI compiled successfully - Size: {msi_size:.2f} MB",
                     status="SUCCESS"
                 )
@@ -1663,7 +1663,7 @@ async def build_msi_package(authorization: Optional[str] = Header(None)):
             audit_logger.log_action(
                 action_type=ActionType.MSI_BUILD,
                 resource_type=ResourceType.DEPLOYMENT,
-                resource_id="C2Agent",
+                resource_id="JadusAgent",
                 details=f"Build failed: {combined_output[:200]}",
                 status="FAILED"
             )
@@ -1684,7 +1684,7 @@ async def build_msi_package(authorization: Optional[str] = Header(None)):
         audit_logger.log_action(
             action_type=ActionType.MSI_BUILD,
             resource_type=ResourceType.DEPLOYMENT,
-            resource_id="C2Agent",
+            resource_id="JadusAgent",
             details="Build timeout after 300 seconds",
             status="TIMEOUT"
         )
@@ -1700,7 +1700,7 @@ async def build_msi_package(authorization: Optional[str] = Header(None)):
         audit_logger.log_action(
             action_type=ActionType.MSI_BUILD,
             resource_type=ResourceType.DEPLOYMENT,
-            resource_id="C2Agent",
+            resource_id="JadusAgent",
             details=f"Build error: {str(e)}",
             status="ERROR"
         )
@@ -1740,7 +1740,7 @@ async def download_msi_package(authorization: Optional[str] = Header(None)):
         )
 
     installer_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "installer")
-    msi_path = os.path.join(installer_dir, "C2Agent.msi")
+    msi_path = os.path.join(installer_dir, "JadusAgent.msi")
 
     if not os.path.exists(msi_path):
         raise HTTPException(
@@ -1751,5 +1751,5 @@ async def download_msi_package(authorization: Optional[str] = Header(None)):
     return FileResponse(
         path=msi_path,
         media_type="application/octet-stream",
-        filename="C2Agent.msi"
+        filename="JadusAgent.msi"
     )

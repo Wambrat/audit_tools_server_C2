@@ -1,6 +1,6 @@
 # 📡 API Documentation
 
-Documentation complète des endpoints de l'API C2 Server.
+Documentation complète des endpoints de l'API Jadus Audit.
 
 ---
 

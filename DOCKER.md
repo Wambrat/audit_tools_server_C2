@@ -1,6 +1,6 @@
-# Guide Docker pour l'Application C2 Server
+# Guide Docker pour l'Application Jadus Audit
 
-Ce guide explique comment utiliser les images Docker pour déployer l'application C2 Server complète avec le backend, MongoDB et le frontend.
+Ce guide explique comment utiliser les images Docker pour déployer l'application Jadus Audit complète avec le backend, MongoDB et le frontend.
 
 ## 📋 Prérequis
 
@@ -205,7 +205,7 @@ docker-compose exec -u root backend chown -R app:app /app
 
 ### Vérifier les métriques
 ```bash
-docker stats c2-backend c2-frontend c2-mongodb
+docker stats jadus-backend jadus-frontend jadus-mongodb
 ```
 
 ### Accéder aux logs structurés
@@ -233,7 +233,7 @@ docker-compose up -d <service>
 - Les fichiers `.env` ne doivent jamais être commités dans Git
 - Utilisez `.env.example` comme template
 - Les secrets sensibles doivent être gérés avec Docker Secrets en production
-- MongoDB est accessible uniquement sur le réseau interne (`c2-network`)
+- MongoDB est accessible uniquement sur le réseau interne (`jadus-network`)
 - Le frontend fait un proxy des requêtes API, donc pas besoin de configurer CORS sur le frontend
 
 ## 🤝 Support

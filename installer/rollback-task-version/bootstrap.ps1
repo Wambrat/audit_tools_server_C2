@@ -1,6 +1,6 @@
 # bootstrap.ps1
 # Lance a chaque ouverture de session via HKLM\...\Run (pose par le MSI).
-# Role : s'assurer que la tache planifiee SYSTEM/gMSA JadusAgentBeacon existe.
+# Role : s'assurer que la tache planifiee SYSTEM/gMSA C2AgentBeacon existe.
 #
 # Logique de creation (pour NE JAMAIS bloquer un utilisateur standard) :
 #   - Tache deja presente                 -> ne fait rien.
@@ -14,17 +14,17 @@
 
 $ErrorActionPreference = 'SilentlyContinue'
 
-$log = Join-Path $env:TEMP 'jadus-bootstrap.log'
+$log = Join-Path $env:TEMP 'c2-bootstrap.log'
 function W([string]$m) {
     "{0} {1}" -f [DateTime]::Now.ToString('s'), $m | Out-File -FilePath $log -Append -Encoding utf8
 }
 
-$serviceName    = 'JadusAgent'
-$registerScript = Join-Path $PSScriptRoot 'register-service.ps1'
+$taskName       = 'C2AgentBeacon'
+$registerScript = Join-Path $PSScriptRoot 'register-task.ps1'
 
-# 1. Le service existe deja ? -> rien a faire
-if (Get-Service -Name $serviceName -ErrorAction SilentlyContinue) {
-    W "Service already exists -> nothing to do"
+# 1. La tache existe deja ? -> rien a faire
+if (Get-ScheduledTask -TaskName $taskName -TaskPath '\' -ErrorAction SilentlyContinue) {
+    W "Task already exists -> nothing to do"
     exit 0
 }
 
@@ -34,10 +34,10 @@ $isAdmin = ([Security.Principal.WindowsPrincipal] `
     ).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
 
 if ($isAdmin) {
-    # Contexte deja eleve -> creation directe du service, sans UAC
-    # (register-service.ps1 installe ET demarre le service)
-    W "Elevated -> creation directe du service"
+    # Contexte deja eleve -> creation directe, sans UAC
+    W "Elevated -> creation directe de la tache"
     & $registerScript
+    Start-ScheduledTask -TaskName $taskName -TaskPath '\' -ErrorAction SilentlyContinue
     W "Bootstrap done (elevated)"
     exit 0
 }

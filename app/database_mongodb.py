@@ -1,5 +1,5 @@
 """
-Couche de base de données MongoDB pour le serveur C2.
+Couche de base de données MongoDB pour le serveur Jadus Audit.
 Remplace l'implémentation en mémoire par une vraie base de données persistante.
 """
 
@@ -62,7 +62,7 @@ except Exception as e:
 
 
 class MongoDatabase:
-    """Interface MongoDB pour l'API C2"""
+    """Interface MongoDB pour l'API Jadus Audit"""
     
     def __init__(self):
         """Initialiser les collections et les index"""

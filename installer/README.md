@@ -1,10 +1,10 @@
-# 🛠️ C2 Agent MSI - Guide Rapide
+# 🛠️ Jadus Agent MSI - Guide Rapide
 
 ## 📂 Contenu du dossier
 
 | Fichier | Description |
 |---------|-------------|
-| `C2Agent.wxs` | Configuration WiX pour le MSI |
+| `JadusAgent.wxs` | Configuration WiX pour le MSI |
 | `config.json` | Fichier de configuration (ServerUrl, BeaconInterval) |
 | `launcher.ps1` | Script qui charge la config et lance l'agent |
 | `build-msi.ps1` | Script de compilation MSI |
@@ -35,7 +35,7 @@ Copy-Item "..\agent_active.ps1" ".\"
 
 ### 4. Installer
 ```powershell
-msiexec /i C2Agent.msi /quiet /norestart
+msiexec /i JadusAgent.msi /quiet /norestart
 ```
 
 ### 5. Créer la tâche planifiée
@@ -49,13 +49,13 @@ msiexec /i C2Agent.msi /quiet /norestart
 
 ```powershell
 # Vérifier la tâche
-Get-ScheduledTask -TaskName "C2AgentBeacon"
+Get-ScheduledTask -TaskName "JadusAgentBeacon"
 
 # Voir les logs
-Get-Content "C:\Program Files\C2Agent\logs\agent.log" -Tail 50
+Get-Content "C:\Program Files\JadusAgent\logs\agent.log" -Tail 50
 
 # Tester
-Start-ScheduledTask -TaskName "C2AgentBeacon"
+Start-ScheduledTask -TaskName "JadusAgentBeacon"
 ```
 
 ---
@@ -71,13 +71,13 @@ Voir `INSTALLATION_GUIDE.md` pour tous les détails.
 ```json
 {
   "agent": {
-    "serverUrl": "http://localhost:8000/api",     // URL du serveur C2
+    "serverUrl": "http://localhost:8000/api",     // URL du serveur Jadus Audit
     "beaconInterval": 30,                         // Fréquence en secondes
-    "logFile": "%PROGRAMFILES%\\C2Agent\\logs\\agent.log",
+    "logFile": "%PROGRAMFILES%\\JadusAgent\\logs\\agent.log",
     "logLevel": "INFO"
   },
   "scheduled_task": {
-    "taskName": "C2AgentBeacon",                  // Nom de la tâche
+    "taskName": "JadusAgentBeacon",                  // Nom de la tâche
     "triggerInterval": 30,                        // Intervalle en secondes
     "runWithHighestPrivileges": true,
     "runUser": "SYSTEM"                           // Utilisateur d'exécution
@@ -94,9 +94,9 @@ Voir `INSTALLATION_GUIDE.md` pour tous les détails.
    ↓
 2. Copier agent_active.ps1
    ↓
-3. ./build-msi.ps1  (crée C2Agent.msi)
+3. ./build-msi.ps1  (crée JadusAgent.msi)
    ↓
-4. msiexec /i C2Agent.msi /quiet
+4. msiexec /i JadusAgent.msi /quiet
    ↓
 5. ./install-scheduled-task.ps1
    ↓
@@ -110,7 +110,7 @@ Voir `INSTALLATION_GUIDE.md` pour tous les détails.
 ✅ **Installation silencieuse** - Pas d'interface, discret  
 ✅ **Configuration flexible** - Modifiable via JSON  
 ✅ **Tâche planifiée** - S'exécute toutes les 30s (configurable)  
-✅ **Logs structurés** - `C:\Program Files\C2Agent\logs\agent.log`  
+✅ **Logs structurés** - `C:\Program Files\JadusAgent\logs\agent.log`  
 ✅ **Privilèges SYSTEM** - Exécution en tant qu'administrateur  
 ✅ **Auto-démarrage** - S'exécute même après reboot  
 
@@ -120,4 +120,4 @@ Voir `INSTALLATION_GUIDE.md` pour tous les détails.
 
 - Éditer `config.json` si l'URL du serveur change
 - Voir `INSTALLATION_GUIDE.md` pour le déploiement en masse (GPO/SCCM)
-- Les logs se trouvent dans `C:\Program Files\C2Agent\logs\`
+- Les logs se trouvent dans `C:\Program Files\JadusAgent\logs\`

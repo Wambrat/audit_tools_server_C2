@@ -163,7 +163,7 @@ Pour le frontend (JavaScript/Jest):
 
 ### Test du Client API
 ```javascript
-describe('C2ApiClient', () => {
+describe('JadusApiClient', () => {
   beforeEach(() => {
     global.fetch = jest.fn(); // Mock fetch
   });
@@ -175,7 +175,7 @@ describe('C2ApiClient', () => {
       json: async () => mockData
     });
 
-    const result = await C2ApiClient.getSystemOverview();
+    const result = await JadusApiClient.getSystemOverview();
     expect(result).toEqual(mockData);
   });
 });

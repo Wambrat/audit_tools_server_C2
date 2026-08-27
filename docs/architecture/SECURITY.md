@@ -1,6 +1,6 @@
 # 🔐 Sécurité - Phase 5 Tier 3 Hardening
 
-Documentation complète des mesures de sécurité du système C2.
+Documentation complète des mesures de sécurité du système Jadus Audit.
 
 **Statut:** ✅ **376/376 tests passants** - Toutes les mesures validées
 

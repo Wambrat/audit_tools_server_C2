@@ -96,7 +96,7 @@ class JSONFormatter(logging.Formatter):
         return json.dumps(log_data, ensure_ascii=False)
 
 
-def setup_logging(app_name: str = "c2-server", log_level: str = None):
+def setup_logging(app_name: str = "jadus-audit", log_level: str = None):
     """
     Configurer le logging structuré pour l'application.
     

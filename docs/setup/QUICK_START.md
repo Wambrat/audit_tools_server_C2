@@ -1,6 +1,6 @@
 # 🚀 Guide Rapide de Démarrage
 
-Bienvenue dans votre interface de gestion du parc informatique C2!
+Bienvenue dans votre interface de gestion du parc informatique Jadus Audit!
 
 ## ⏱️ Démarrage en 5 minutes
 

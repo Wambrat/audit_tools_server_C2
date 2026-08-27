@@ -1,4 +1,4 @@
-# C2 Dashboard - Application Web Vue.js
+# Jadus Audit - Application Web Vue.js
 
 Interface web pour surveiller la conformité du parc informatique et lancer des audits de sécurité.
 

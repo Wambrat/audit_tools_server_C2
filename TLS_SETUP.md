@@ -95,10 +95,10 @@ docker-compose up -d --build
 docker-compose ps
 
 # Expected output:
-# c2-traefik    Up (healthy)
-# c2-mongodb    Up (healthy)  
-# c2-backend    Up (healthy)
-# c2-frontend   Up (healthy)
+# jadus-traefik    Up (healthy)
+# jadus-mongodb    Up (healthy)  
+# jadus-backend    Up (healthy)
+# jadus-frontend   Up (healthy)
 ```
 
 ## Accès aux Services
@@ -182,7 +182,7 @@ docker-compose logs mongodb -f
 docker-compose logs traefik
 
 # Certificats dans le volume
-docker exec c2-traefik ls -la /etc/traefik/certs/
+docker exec jadus-traefik ls -la /etc/traefik/certs/
 ```
 
 ## Configuration Avancée

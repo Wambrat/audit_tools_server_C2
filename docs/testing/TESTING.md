@@ -1,6 +1,6 @@
 # 🧪 Testing Guide - Stratégie & Exécution
 
-Documentation complète du testing du système C2.
+Documentation complète du testing du système Jadus Audit.
 
 ---
 

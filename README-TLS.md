@@ -2,7 +2,7 @@
 
 ## Qu'est-ce qui a changé?
 
-Votre C2 Server utilise maintenant **HTTPS/TLS** pour le chiffrement complet:
+Votre Jadus Audit utilise maintenant **HTTPS/TLS** pour le chiffrement complet:
 
 | Avant | Maintenant |
 |-------|-----------|

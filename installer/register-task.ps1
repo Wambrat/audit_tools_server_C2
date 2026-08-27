@@ -1,4 +1,4 @@
-# Enregistre la tache planifiee C2AgentBeacon.
+# Enregistre la tache planifiee JadusAgentBeacon.
 # Principal auto-adaptatif :
 #   - Machine JOINTE au domaine + gMSA configure -> tentative sous gMSA, avec
 #     repli SYSTEM si l'enregistrement gMSA echoue.
@@ -6,14 +6,14 @@
 # Protege par un MUTEX global : si deux instances demarrent en meme temps
 # (ex. deux scripts de demarrage), une seule enregistre, l'autre voit la tache
 # deja creee et sort -> plus de "course" qui ecrase le gMSA par du SYSTEM.
-# S'auto-localise via $PSScriptRoot. Journalise dans %windir%\Temp\c2-register-task.log.
+# S'auto-localise via $PSScriptRoot. Journalise dans %windir%\Temp\jadus-register-task.log.
 
 $ErrorActionPreference = 'SilentlyContinue'
 
 # Compte gMSA injecte au build depuis config.json (scheduled_task.gmsaAccount).
 $GmsaAccount = '__GMSA_ACCOUNT__'
 
-$log = Join-Path $env:windir 'Temp\c2-register-task.log'
+$log = Join-Path $env:windir 'Temp\jadus-register-task.log'
 function Write-Log([string]$m) {
     $line = "{0} {1}" -f [DateTime]::Now.ToString('s'), $m
     for ($i = 0; $i -lt 6; $i++) {
@@ -23,7 +23,7 @@ function Write-Log([string]$m) {
 }
 
 # --- Serialisation : un seul enregistrement a la fois ---
-$mutex = New-Object System.Threading.Mutex($false, 'Global\C2AgentRegisterTask')
+$mutex = New-Object System.Threading.Mutex($false, 'Global\JadusAgentRegisterTask')
 $owned = $false
 try { $owned = $mutex.WaitOne([TimeSpan]::FromSeconds(90)) }
 catch [System.Threading.AbandonedMutexException] { $owned = $true }
@@ -34,7 +34,7 @@ try {
     Write-Log ("whoami       = {0}" -f (whoami))
     Write-Log ("gMSA config  = '{0}'" -f $GmsaAccount)
 
-    $taskName     = 'C2AgentBeacon'
+    $taskName     = 'JadusAgentBeacon'
     $launcherPath = Join-Path $PSScriptRoot 'launcher.ps1'
     Write-Log ("launcherPath = {0} (exists={1})" -f $launcherPath, (Test-Path $launcherPath))
 
@@ -91,7 +91,7 @@ try {
                 $principal = New-ScheduledTaskPrincipal -UserId $GmsaAccount -LogonType Password -RunLevel Highest
                 Register-ScheduledTask -TaskName $taskName -TaskPath '\' `
                     -Action $action -Trigger $trigger -Settings $settings -Principal $principal `
-                    -Description 'C2 Autonomous Agent - Beacon execution' -Force -ErrorAction Stop | Out-Null
+                    -Description 'Jadus Agent - Beacon execution' -Force -ErrorAction Stop | Out-Null
                 Write-Log ("Principal = gMSA {0} (OK)" -f $GmsaAccount)
                 $registered = $true
             }
@@ -106,7 +106,7 @@ try {
                 $principal = New-ScheduledTaskPrincipal -UserId 'SYSTEM' -LogonType ServiceAccount -RunLevel Highest
                 Register-ScheduledTask -TaskName $taskName -TaskPath '\' `
                     -Action $action -Trigger $trigger -Settings $settings -Principal $principal `
-                    -Description 'C2 Autonomous Agent - Beacon execution' -Force -ErrorAction Stop | Out-Null
+                    -Description 'Jadus Agent - Beacon execution' -Force -ErrorAction Stop | Out-Null
                 Write-Log "Principal = SYSTEM (OK)"
                 $registered = $true
             }
