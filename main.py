@@ -12,8 +12,12 @@ from dotenv import load_dotenv
 # Charger les variables d'environnement
 load_dotenv()
 
-# Configurer le logging structurÃ©
-setup_logging(app_name="jadus-server", log_level=os.getenv("LOG_LEVEL", "INFO"))
+# Configurer le logging structurÃ© pour le service API
+setup_logging(
+    app_name=os.getenv("JADUS_SERVICE_NAME", "jadus-server"),
+    log_level=os.getenv("LOG_LEVEL", "INFO"),
+    service_name=os.getenv("JADUS_SERVICE_NAME", "api"),
+)
 logger = get_logger(__name__)
 
 logger.info("Initializing jadus Server API")

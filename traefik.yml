@@ -5,12 +5,26 @@
 entryPoints:
   web:
     address: ":80"
+    http:
+      redirections:
+        entryPoint:
+          to: websecure
+          scheme: https
+  websecure:
+    address: ":443"
+    http:
+      tls: {}
 
 providers:
   docker:
     endpoint: "unix:///var/run/docker.sock"
     exposedByDefault: false
-    network: jadus-network
+    network: "jadus_jadus-network"
+
+tls:
+  certificates:
+    - certFile: "/certs/api.pem"
+      keyFile: "/certs/api-key.pem"
 
 log:
   level: INFO

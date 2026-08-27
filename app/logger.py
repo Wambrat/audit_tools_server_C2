@@ -9,7 +9,7 @@ import re
 
 class SecretsFilter(logging.Filter):
     """Filter to mask sensitive information in logs (passwords, tokens, API keys)"""
-    
+
     # Patterns for sensitive data
     PATTERNS = [
         # JWT tokens (eyJ...)
@@ -31,18 +31,16 @@ class SecretsFilter(logging.Filter):
         (r'ADMIN_SECRET_KEY["\']?\s*[:=]\s*["\']?[^"\'\s,}]+["\']?', 'ADMIN_SECRET_KEY=[REDACTED]'),
         (r'ENCRYPTION_KEY["\']?\s*[:=]\s*["\']?[^"\'\s,}]+["\']?', 'ENCRYPTION_KEY=[REDACTED]'),
     ]
-    
+
     def filter(self, record: logging.LogRecord) -> bool:
         """Filter and redact sensitive information from log records"""
         try:
-            # Mask message
             if record.msg:
                 msg_text = str(record.msg)
                 for pattern, replacement in self.PATTERNS:
                     msg_text = re.sub(pattern, replacement, msg_text, flags=re.IGNORECASE)
                 record.msg = msg_text
 
-            # Mask args if present
             if record.args:
                 if isinstance(record.args, dict):
                     sanitized_args = {}
@@ -66,14 +64,14 @@ class SecretsFilter(logging.Filter):
                             sanitized_args.append(arg)
                     record.args = tuple(sanitized_args)
         except Exception:
-            pass  # If filtering fails, still log the message
+            pass
 
         return True
 
 
 class JSONFormatter(logging.Formatter):
-    """Formatteur personnalisÃ© pour le logging en JSON"""
-    
+    """Formatter for structured JSON logs."""
+
     def format(self, record):
         log_data = {
             "timestamp": datetime.utcnow().isoformat(),
@@ -84,100 +82,141 @@ class JSONFormatter(logging.Formatter):
             "function": record.funcName,
             "line": record.lineno,
         }
-        
-        # Ajouter les informations d'exception si prÃ©sentes
+
         if record.exc_info:
             log_data["exception"] = self.formatException(record.exc_info)
-        
-        # Ajouter les champs personnalisÃ©s
+
         if hasattr(record, "extra_fields"):
             log_data.update(record.extra_fields)
-        
+
         return json.dumps(log_data, ensure_ascii=False)
 
 
-def setup_logging(app_name: str = "jadus-server", log_level: str = None):
-    """
-    Configurer le logging structurÃ© pour l'application.
-    
-    Args:
-        app_name: Nom de l'application
-        log_level: Niveau de log (DEBUG, INFO, WARNING, ERROR, CRITICAL)
-    """
-    # DÃ©terminer le niveau de log
-    if log_level is None:
-        log_level = os.getenv("LOG_LEVEL", "INFO")
-    
-    log_level = getattr(logging, log_level.upper(), logging.INFO)
-    
-    # CrÃ©er le rÃ©pertoire logs s'il n'existe pas
+def _normalize_service_name(name: str) -> str:
+    """Retourne le service associé à un logger : api, db, web."""
+    service_name = str(name or "api").lower().strip()
+
+    if service_name in {"web", "website", "frontend", "panel", "ui", "dashboard"}:
+        return "web"
+    if any(token in service_name for token in ("db", "database", "mongo", "mongodb", "sql")):
+        return "db"
+    if any(token in service_name for token in ("web", "panel", "frontend", "ui", "dashboard")):
+        return "web"
+    return "api"
+
+
+def _ensure_service_log_dir(service_name: str) -> Path:
     log_dir = Path("logs")
     log_dir.mkdir(exist_ok=True)
-    
-    # CrÃ©er le logger racine
-    root_logger = logging.getLogger()
-    root_logger.setLevel(log_level)
-    
-    # Create secrets filter
+    service_dir = log_dir / service_name
+    service_dir.mkdir(exist_ok=True)
+    return service_dir
+
+
+def _attach_service_handlers(logger: logging.Logger, service_name: str, level: int):
+    """Crée logs/<service>/info.log et logs/<service>/error.log."""
+    service_dir = _ensure_service_log_dir(service_name)
+    info_file = service_dir / "info.log"
+    error_file = service_dir / "error.log"
+
+    logger.handlers.clear()
+    logger.setLevel(level)
+    logger.propagate = False
+
     secrets_filter = SecretsFilter()
-    
-    # Formatteur JSON
     json_formatter = JSONFormatter()
-    
-    # ===== Handler Console (dÃ©veloppement) =====
-    console_handler = logging.StreamHandler()
-    console_handler.setLevel(log_level)
-    console_handler.addFilter(secrets_filter)
-    
-    # Formatteur simple pour la console (lisible)
-    console_formatter = logging.Formatter(
-        "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-        datefmt="%Y-%m-%d %H:%M:%S"
+
+    info_handler = logging.handlers.RotatingFileHandler(
+        filename=info_file,
+        maxBytes=10 * 1024 * 1024,
+        backupCount=10,
+        encoding="utf-8",
     )
-    console_handler.setFormatter(console_formatter)
-    root_logger.addHandler(console_handler)
-    
-    # ===== Handler File (JSON) =====
-    # Fichier global
-    file_handler = logging.handlers.RotatingFileHandler(
-        filename=log_dir / f"{app_name}.log",
-        maxBytes=10 * 1024 * 1024,  # 10 MB
-        backupCount=10,  # Garder 10 fichiers de backup
-        encoding="utf-8"
+    info_handler.setLevel(logging.INFO)
+    info_handler.addFilter(secrets_filter)
+    info_handler.setFormatter(json_formatter)
+    logger.addHandler(info_handler)
+
+    error_handler = logging.handlers.RotatingFileHandler(
+        filename=error_file,
+        maxBytes=10 * 1024 * 1024,
+        backupCount=10,
+        encoding="utf-8",
     )
-    file_handler.setLevel(logging.DEBUG)  # Tout enregistrer dans le fichier
-    file_handler.addFilter(secrets_filter)
-    file_handler.setFormatter(json_formatter)
-    root_logger.addHandler(file_handler)
-    
-    # ===== Handler File pour les erreurs (JSON) =====
-    error_file_handler = logging.handlers.RotatingFileHandler(
-        filename=log_dir / f"{app_name}_errors.log",
-        maxBytes=10 * 1024 * 1024,  # 10 MB
-        backupCount=5,
-        encoding="utf-8"
+    error_handler.setLevel(logging.ERROR)
+    error_handler.addFilter(secrets_filter)
+    error_handler.setFormatter(json_formatter)
+    logger.addHandler(error_handler)
+
+
+def setup_logging(app_name: str = "jadus-server", log_level: str = None, service_name: str = None):
+    """
+    Configure le logging structuré pour un service.
+    Les logs sont stockés dans logs/<service>/info.log et error.log.
+    Le service peut être explicite via l'argument service_name ou les variables
+    JADUS_SERVICE_NAME / SERVICE_NAME / LOG_SERVICE_NAME.
+    """
+    if log_level is None:
+        log_level = os.getenv("LOG_LEVEL", "INFO")
+
+    resolved_service_name = (
+        service_name or os.getenv("JADUS_SERVICE_NAME") or os.getenv("SERVICE_NAME") or os.getenv("LOG_SERVICE_NAME") or app_name
     )
-    error_file_handler.setLevel(logging.ERROR)
-    error_file_handler.addFilter(secrets_filter)
-    error_file_handler.setFormatter(json_formatter)
-    root_logger.addHandler(error_file_handler)
-    
-    return root_logger
+    service_name = _normalize_service_name(resolved_service_name)
+    log_level_value = getattr(logging, log_level.upper(), logging.INFO)
+
+    root_logger = logging.getLogger()
+    root_logger.setLevel(log_level_value)
+
+    if not any(
+        isinstance(handler, logging.StreamHandler) and not isinstance(handler, logging.FileHandler)
+        for handler in root_logger.handlers
+    ):
+        console_handler = logging.StreamHandler()
+        console_handler.setLevel(log_level_value)
+        console_handler.setFormatter(logging.Formatter(
+            "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+            datefmt="%Y-%m-%d %H:%M:%S",
+        ))
+        root_logger.addHandler(console_handler)
+
+    service_logger = logging.getLogger(service_name)
+    _attach_service_handlers(service_logger, service_name, log_level_value)
+    return service_logger
+
+
+def setup_web_logging(log_level: str = None):
+    """Configure le logger dédié au service web dans logs/web/*.log."""
+    return setup_logging(app_name="web", log_level=log_level, service_name="web")
+
+
+def get_service_logger(service_name: str, log_level: str = None) -> logging.Logger:
+    """Retourne un logger dédié à un service technique (api, db, web)."""
+    return setup_logging(app_name=service_name, log_level=log_level, service_name=service_name)
 
 
 def get_logger(name: str) -> logging.Logger:
-    """RÃ©cupÃ©rer un logger pour un module"""
-    return logging.getLogger(name)
+    """Récupérer un logger pour un module, classé par service."""
+    logger_name = str(name or "api")
+    service_name = _normalize_service_name(logger_name)
+    logger = logging.getLogger(logger_name)
+    logger.setLevel(logging.getLogger().getEffectiveLevel())
+    logger.propagate = False
+
+    if not logger.handlers:
+        _attach_service_handlers(logger, service_name, logger.level)
+
+    return logger
 
 
 class StructuredLogger:
-    """Wrapper pour logging structurÃ© avec champs personnalisÃ©s"""
-    
+    """Wrapper pour logging structuré avec champs personnalisés"""
+
     def __init__(self, name: str):
         self.logger = get_logger(name)
-    
+
     def _log(self, level: int, message: str, **extra_fields):
-        """Enregistrer un message avec champs personnalisÃ©s"""
+        """Enregistrer un message avec champs personnalisés"""
         record = self.logger.makeRecord(
             self.logger.name,
             level,
@@ -185,23 +224,22 @@ class StructuredLogger:
             0,
             message,
             (),
-            None
+            None,
         )
         record.extra_fields = extra_fields
         self.logger.handle(record)
-    
+
     def debug(self, message: str, **extra):
         self._log(logging.DEBUG, message, **extra)
-    
+
     def info(self, message: str, **extra):
         self._log(logging.INFO, message, **extra)
-    
+
     def warning(self, message: str, **extra):
         self._log(logging.WARNING, message, **extra)
-    
+
     def error(self, message: str, **extra):
         self._log(logging.ERROR, message, **extra)
-    
+
     def critical(self, message: str, **extra):
         self._log(logging.CRITICAL, message, **extra)
-

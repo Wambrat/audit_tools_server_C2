@@ -5,7 +5,7 @@ Teste le système de logging structuré
 import pytest
 import logging
 from pathlib import Path
-from app.logger import get_logger
+from app.logger import get_logger, setup_logging
 
 
 class TestLogger:
@@ -93,7 +93,35 @@ class TestLoggerIntegration:
         if logs_dir.exists():
             log_files = list(logs_dir.glob("*.log*"))
             assert len(log_files) >= 0  # Au moins 0 fichiers (peut être créé dynamiquement)
-    
+
+    def test_service_logs_are_created_in_service_folder(self, tmp_path, monkeypatch):
+        """Test: chaque service doit avoir son propre dossier avec info.log et error.log"""
+        monkeypatch.chdir(tmp_path)
+        setup_logging("api")
+        api_logger = get_logger("api.test")
+        api_logger.info("API info message")
+        api_logger.error("API error message")
+
+        info_file = tmp_path / "logs" / "api" / "info.log"
+        error_file = tmp_path / "logs" / "api" / "error.log"
+
+        assert info_file.exists()
+        assert error_file.exists()
+
+    def test_web_service_logs_are_created_in_service_folder(self, tmp_path, monkeypatch):
+        """Test: le service web doit créer logs/web/info.log et logs/web/error.log"""
+        monkeypatch.chdir(tmp_path)
+        setup_logging("web")
+        web_logger = get_logger("web.frontend")
+        web_logger.info("Web info message")
+        web_logger.error("Web error message")
+
+        info_file = tmp_path / "logs" / "web" / "info.log"
+        error_file = tmp_path / "logs" / "web" / "error.log"
+
+        assert info_file.exists()
+        assert error_file.exists()
+
     def test_logger_no_exceptions(self):
         """Test: Le logger ne lève pas d'exceptions"""
         logger = get_logger("test_no_exceptions")

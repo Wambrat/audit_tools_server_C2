@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
@@ -279,17 +279,17 @@
 <body>
   <div id="app">
     <div class="login-container">
-      <a href="index.html" class="back-button">â† Retour au dashboard</a>
+      <a href="index.html" class="back-button"> Retour au dashboard</a>
       
       <div class="login-header">
-        <div class="login-logo">ðŸ”</div>
+        <div class="login-logo"></div>
         <h1 class="login-title">Admin Login</h1>
-        <p class="login-subtitle">Connectez-vous pour accÃ©der aux fonctionnalitÃ©s d'administration</p>
+        <p class="login-subtitle">Connectez-vous pour accéder aux fonctionnalités d'administration</p>
       </div>
 
       <div class="info-box">
-        <span class="info-icon">â„¹ï¸</span>
-        <strong>Identifiants par dÃ©faut:</strong><br>
+        <span class="info-icon">️</span>
+        <strong>Identifiants par défaut:</strong><br>
         Username: <code>admin</code><br>
         Password: <code>change_me</code>
       </div>
@@ -309,7 +309,7 @@
             :disabled="isLoading"
           >
           <div v-if="errors.username" class="error-message">
-            <span class="error-icon">âš ï¸</span>
+            <span class="error-icon">️</span>
             {{ errors.username }}
           </div>
         </div>
@@ -328,7 +328,7 @@
             :disabled="isLoading"
           >
           <div v-if="errors.password" class="error-message">
-            <span class="error-icon">âš ï¸</span>
+            <span class="error-icon">️</span>
             {{ errors.password }}
           </div>
         </div>
@@ -345,12 +345,12 @@
         </div>
 
         <div v-if="errors.general" class="error-message" style="margin-top: 15px;">
-          <span class="error-icon">âœ•</span>
+          <span class="error-icon"></span>
           {{ errors.general }}
         </div>
 
         <div v-if="successMessage" class="success-message" style="margin-top: 15px;">
-          <span class="success-icon">âœ“</span>
+          <span class="success-icon"></span>
           {{ successMessage }}
         </div>
 
@@ -371,14 +371,14 @@
             @click="clearForm"
             :disabled="isLoading"
           >
-            RÃ©initialiser
+            Réinitialiser
           </button>
         </div>
       </form>
 
       <div class="links">
         <p style="margin-bottom: 12px;">
-          AccÃ¨s refusÃ©? <a href="javascript:void(0)" @click="contactAdmin">Contacter l'administrateur</a>
+          Accès refusé? <a href="javascript:void(0)" @click="contactAdmin">Contacter l'administrateur</a>
         </p>
       </div>
     </div>

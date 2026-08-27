@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Client API pour communiquer avec le serveur jadus FastAPI
  */
 
@@ -6,7 +6,7 @@ const API_BASE_URL = '/api';
 
 class jadusApiClient {
   /**
-   * RÃ©cupÃ©rer l'aperÃ§u du systÃ¨me
+   * Récupérer l'aperçu du système
    */
   static async getSystemOverview() {
     try {
@@ -20,7 +20,7 @@ class jadusApiClient {
   }
 
   /**
-   * RÃ©cupÃ©rer le dashboard des agents
+   * Récupérer le dashboard des agents
    */
   static async getAgentsDashboard() {
     try {
@@ -34,7 +34,7 @@ class jadusApiClient {
   }
 
   /**
-   * RÃ©cupÃ©rer le dashboard des tÃ¢ches
+   * Récupérer le dashboard des tâches
    */
   static async getTasksDashboard() {
     try {
@@ -48,7 +48,7 @@ class jadusApiClient {
   }
 
   /**
-   * RÃ©cupÃ©rer le dashboard des rÃ©sultats
+   * Récupérer le dashboard des résultats
    */
   static async getResultsDashboard() {
     try {
@@ -62,7 +62,7 @@ class jadusApiClient {
   }
 
   /**
-   * RÃ©cupÃ©rer les alertes du systÃ¨me
+   * Récupérer les alertes du système
    */
   static async getAlerts() {
     try {
@@ -76,7 +76,7 @@ class jadusApiClient {
   }
 
   /**
-   * RÃ©cupÃ©rer la liste de tous les agents
+   * Récupérer la liste de tous les agents
    */
   static async getAgents() {
     try {
@@ -90,11 +90,11 @@ class jadusApiClient {
   }
 
   /**
-   * CrÃ©er une nouvelle tÃ¢che pour un agent
+   * Créer une nouvelle tâche pour un agent
    * @param {string} agentId - ID de l'agent
-   * @param {string} command - Commande Ã  exÃ©cuter
-   * @param {object} parameters - ParamÃ¨tres optionnels
-   * @param {number} priority - PrioritÃ© (par dÃ©faut 0)
+   * @param {string} command - Commande à exécuter
+   * @param {object} parameters - Paramètres optionnels
+   * @param {number} priority - Priorité (par défaut 0)
    */
   static async createTask(agentId, command, parameters = null, priority = 0) {
     try {
@@ -123,7 +123,7 @@ class jadusApiClient {
   }
 
   /**
-   * RÃ©cupÃ©rer les rÃ©sultats d'un agent
+   * Récupérer les résultats d'un agent
    */
   static async getAgentResults(agentId) {
     try {
@@ -137,7 +137,7 @@ class jadusApiClient {
   }
 
   /**
-   * RÃ©cupÃ©rer les tÃ¢ches d'un agent
+   * Récupérer les tâches d'un agent
    */
   static async getAgentTasks(agentId) {
     try {
@@ -151,7 +151,7 @@ class jadusApiClient {
   }
 
   /**
-   * RÃ©cupÃ©rer les stats de beacon d'un agent
+   * Récupérer les stats de beacon d'un agent
    */
   static async getBeaconStats(agentId) {
     try {
@@ -165,7 +165,7 @@ class jadusApiClient {
   }
 
   /**
-   * RÃ©cupÃ©rer l'historique des beacons d'un agent
+   * Récupérer l'historique des beacons d'un agent
    */
   static async getBeaconHistory(agentId, limit = 50) {
     try {
@@ -182,7 +182,7 @@ class jadusApiClient {
 }
 
 /**
- * Utilitaires pour formater les donnÃ©es
+ * Utilitaires pour formater les données
  */
 const formatters = {
   /**
@@ -195,7 +195,7 @@ const formatters = {
   },
 
   /**
-   * Formater une durÃ©e en secondes
+   * Formater une durée en secondes
    */
   formatDuration(seconds) {
     if (!seconds) return '0s';

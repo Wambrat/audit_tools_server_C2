@@ -1,9 +1,9 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>jadus Dashboard - ConformitÃ© Parc Informatique</title>
+  <title>jadus Dashboard - Conformité Parc Informatique</title>
   
   <!-- Vue 3 -->
   <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
@@ -15,7 +15,7 @@
   <link rel="stylesheet" href="css/style.css">
   
   <style>
-    /* Styles spÃ©cifiques du dashboard */
+    /* Styles spécifiques du dashboard */
     .dashboard-section {
       margin-bottom: 40px;
     }
@@ -181,8 +181,8 @@
   <div id="app">
     <!-- Header -->
     <div class="app-header">
-      <h1>ðŸ›¡ï¸ Dashboard ConformitÃ© jadus</h1>
-      <p>Surveillance en temps rÃ©el du parc informatique et des audits de sÃ©curitÃ©</p>
+      <h1>️ Dashboard Conformité jadus</h1>
+      <p>Surveillance en temps réel du parc informatique et des audits de sécurité</p>
       <div style="position: absolute; top: 20px; right: 20px; display: flex; gap: 10px;">
         <a href="admin-login.html" style="
           display: inline-block;
@@ -194,7 +194,7 @@
           font-weight: 600;
           transition: background 0.3s;
         " onmouseover="this.style.background='#5a3a7a'" onmouseout="this.style.background='#764ba2'">
-          ðŸ” Admin
+           Admin
         </a>
         <a href="results.html" style="
           display: inline-block;
@@ -206,7 +206,7 @@
           font-weight: 600;
           transition: background 0.3s;
         " onmouseover="this.style.background='#764ba2'" onmouseout="this.style.background='#667eea'">
-          ðŸ“Š Voir les RÃ©sultats
+           Voir les Résultats
         </a>
       </div>
     </div>
@@ -215,21 +215,21 @@
     <div class="app-container">
       <!-- Erreur de connexion API -->
       <div v-if="apiError" class="error-message">
-        <strong>âš ï¸ Erreur de connexion:</strong> {{ apiError }}
+        <strong>️ Erreur de connexion:</strong> {{ apiError }}
       </div>
 
       <!-- Loading -->
       <div v-if="loading" class="loading">
         <div class="spinner"></div>
-        <span style="margin-left: 16px;">Chargement des donnÃ©es...</span>
+        <span style="margin-left: 16px;">Chargement des données...</span>
       </div>
 
       <!-- Dashboard Content -->
       <template v-if="!loading && !apiError">
-        <!-- Section SantÃ© Globale -->
+        <!-- Section Santé Globale -->
         <div class="dashboard-section">
           <div class="card-header">
-            <h2 class="card-title">ðŸ“Š SantÃ© Globale du SystÃ¨me</h2>
+            <h2 class="card-title"> Santé Globale du Système</h2>
           </div>
 
           <div class="grid grid-4">
@@ -248,11 +248,11 @@
             <div class="stat-box" v-else>
               <div class="stat-label">Agents Inactifs</div>
               <div class="stat-value">{{ overview.agents.by_status.inactive }}</div>
-              <div class="stat-subtext">Tous en ligne âœ“</div>
+              <div class="stat-subtext">Tous en ligne </div>
             </div>
 
             <div class="stat-box success">
-              <div class="stat-label">Taux de SuccÃ¨s</div>
+              <div class="stat-label">Taux de Succès</div>
               <div class="stat-value">{{ formatPercent(successRate) }}</div>
               <div class="stat-subtext">{{ overview.results.by_status.success }}/{{ overview.results.total }}</div>
             </div>
@@ -261,22 +261,22 @@
           <div class="grid grid-3">
             <div class="card">
               <div class="card-header">
-                <h3 class="card-title">TÃ¢ches</h3>
+                <h3 class="card-title">Tâches</h3>
               </div>
               <div class="inline-stat">
                 <div class="inline-stat-label">En attente</div>
                 <div class="inline-stat-value">{{ overview.tasks.by_status.pending }}</div>
               </div>
               <div class="inline-stat">
-                <div class="inline-stat-label">AssignÃ©es</div>
+                <div class="inline-stat-label">Assignées</div>
                 <div class="inline-stat-value">{{ overview.tasks.by_status.assigned }}</div>
               </div>
               <div class="inline-stat">
-                <div class="inline-stat-label">ComplÃ©tÃ©es</div>
+                <div class="inline-stat-label">Complétées</div>
                 <div class="inline-stat-value">{{ overview.tasks.by_status.completed }}</div>
               </div>
               <div class="inline-stat">
-                <div class="inline-stat-label">Ã‰chouÃ©es</div>
+                <div class="inline-stat-label">chouées</div>
                 <div class="inline-stat-value">{{ overview.tasks.by_status.failed }}</div>
               </div>
             </div>
@@ -286,24 +286,24 @@
                 <h3 class="card-title">Temps Moyen</h3>
               </div>
               <div class="inline-stat">
-                <div class="inline-stat-label">ExÃ©cution</div>
+                <div class="inline-stat-label">Exécution</div>
                 <div class="inline-stat-value">{{ overview.results.avg_execution_time_ms }}ms</div>
               </div>
               <p style="margin-top: 16px; font-size: 12px; color: var(--color-muted);">
-                Sur {{ overview.results.total }} rÃ©sultats
+                Sur {{ overview.results.total }} résultats
               </p>
             </div>
 
             <div class="card">
               <div class="card-header">
-                <h3 class="card-title">DerniÃ¨re Mise Ã  Jour</h3>
+                <h3 class="card-title">Dernière Mise à Jour</h3>
               </div>
               <div class="inline-stat">
                 <div class="inline-stat-label">Timestamp</div>
                 <div class="inline-stat-value" style="font-size: 14px;">{{ formatDate(overview.timestamp) }}</div>
               </div>
               <button @click="refreshData" class="btn btn-sm btn-primary" style="margin-top: 12px; width: 100%;">
-                ðŸ”„ RafraÃ®chir
+                 Rafraîchir
               </button>
             </div>
           </div>
@@ -313,14 +313,14 @@
         <div class="dashboard-section" v-if="alerts.alerts.length > 0">
           <div class="card">
             <div class="card-header">
-              <h2 class="card-title">âš ï¸ Alertes du SystÃ¨me</h2>
+              <h2 class="card-title">️ Alertes du Système</h2>
               <span class="badge" :class="`alert-${alerts.overall_level}`">
                 {{ alerts.overall_level.toUpperCase() }} ({{ alerts.critical_alerts + alerts.warning_alerts }})
               </span>
             </div>
 
             <div v-if="alerts.alerts.length === 0" class="text-center text-muted">
-              Aucune alerte - SystÃ¨me sain âœ“
+              Aucune alerte - Système sain 
             </div>
 
             <div v-for="alert in alerts.alerts" :key="`${alert.type}-${alert.agent_id}`" 
@@ -342,14 +342,14 @@
         <div class="dashboard-section">
           <div class="card">
             <div class="card-header">
-              <h2 class="card-title">ðŸ‘¥ Ã‰tat des Agents</h2>
+              <h2 class="card-title"> tat des Agents</h2>
               <span class="badge" style="background-color: var(--color-primary); color: white;">
                 {{ agents.total_agents }} agents
               </span>
             </div>
 
             <div v-if="agents.agents.length === 0" class="no-data">
-              Aucun agent enregistrÃ©
+              Aucun agent enregistré
             </div>
 
             <div v-for="agent in agents.agents" :key="agent.agent_id" class="card agent-card">
@@ -365,14 +365,14 @@
                     </span>
                   </div>
                   <div class="agent-details">
-                    <strong>{{ agent.hostname }}</strong> â€¢ {{ agent.os_version }}<br>
-                    Utilisateur: {{ agent.username }} | CrÃ©Ã©: {{ formatDate(agent.created_at) }}<br>
-                    Dernier beacon: {{ formatDate(agent.last_beacon) }} | Inactif depuis: {{ getInactivityDuration(agent.last_beacon) }} | SuccÃ¨s: {{ formatPercent(agent.success_rate) }}
+                    <strong>{{ agent.hostname }}</strong>  {{ agent.os_version }}<br>
+                    Utilisateur: {{ agent.username }} | Créé: {{ formatDate(agent.created_at) }}<br>
+                    Dernier beacon: {{ formatDate(agent.last_beacon) }} | Inactif depuis: {{ getInactivityDuration(agent.last_beacon) }} | Succès: {{ formatPercent(agent.success_rate) }}
                   </div>
 
                   <div style="margin-top: 8px;">
                     <div style="font-size: 11px; color: var(--color-muted); margin-bottom: 4px;">
-                      Taux de succÃ¨s: {{ formatPercent(agent.success_rate) }}
+                      Taux de succès: {{ formatPercent(agent.success_rate) }}
                     </div>
                     <div class="progress-bar">
                       <div class="progress-fill" 
@@ -387,11 +387,11 @@
                       <div class="inline-stat-value">{{ agent.beacon_stats.total_beacons }}</div>
                     </span>
                     <span class="inline-stat">
-                      <div class="inline-stat-label">TÃ¢ches</div>
+                      <div class="inline-stat-label">Tâches</div>
                       <div class="inline-stat-value">{{ agent.tasks.completed + agent.tasks.failed + agent.tasks.pending + agent.tasks.assigned }}</div>
                     </span>
                     <span class="inline-stat">
-                      <div class="inline-stat-label">RÃ©sultats</div>
+                      <div class="inline-stat-label">Résultats</div>
                       <div class="inline-stat-value">{{ agent.results_count }}</div>
                     </span>
                   </div>
@@ -401,7 +401,7 @@
                   <button @click="launchAudit(agent.agent_id, agent.agent_name)" 
                           class="btn btn-success"
                           :disabled="agent.status !== 'active'">
-                    ðŸš€ Audit
+                     Audit
                   </button>
                 </div>
               </div>
@@ -413,7 +413,7 @@
         <div class="dashboard-section" v-if="inactiveAgents.length > 0">
           <div class="card">
             <div class="card-header">
-              <h2 class="card-title">âŒ Agents Hors Ligne</h2>
+              <h2 class="card-title"> Agents Hors Ligne</h2>
               <span class="badge" style="background-color: var(--color-danger); color: white;">
                 {{ inactiveAgents.length }} hors ligne
               </span>
@@ -426,7 +426,7 @@
                   <th>Hostname</th>
                   <th>Statut</th>
                   <th>Dernier Beacon</th>
-                  <th>DurÃ©e d'InactivitÃ©</th>
+                  <th>Durée d'Inactivité</th>
                   <th>Actions</th>
                 </tr>
               </thead>
@@ -443,7 +443,7 @@
                   <td>{{ getInactivityDuration(agent.last_beacon) }}</td>
                   <td>
                     <button class="btn btn-sm btn-warning" @click="retryAgent(agent.agent_id)">
-                      ðŸ”„ RÃ©essayer
+                       Réessayer
                     </button>
                   </td>
                 </tr>
@@ -452,11 +452,11 @@
           </div>
         </div>
 
-        <!-- Section TÃ¢ches -->
+        <!-- Section Tâches -->
         <div class="dashboard-section">
           <div class="card">
             <div class="card-header">
-              <h2 class="card-title">ðŸ“‹ RÃ©sumÃ© des TÃ¢ches</h2>
+              <h2 class="card-title"> Résumé des Tâches</h2>
             </div>
 
             <div class="grid grid-4">
@@ -465,30 +465,30 @@
                 <div class="stat-value">{{ tasks.by_status.pending }}</div>
               </div>
               <div class="stat-box">
-                <div class="stat-label">AssignÃ©es</div>
+                <div class="stat-label">Assignées</div>
                 <div class="stat-value">{{ tasks.by_status.assigned }}</div>
               </div>
               <div class="stat-box success">
-                <div class="stat-label">ComplÃ©tÃ©es</div>
+                <div class="stat-label">Complétées</div>
                 <div class="stat-value">{{ tasks.by_status.completed }}</div>
               </div>
               <div class="stat-box danger" v-if="tasks.by_status.failed > 0">
-                <div class="stat-label">Ã‰chouÃ©es</div>
+                <div class="stat-label">chouées</div>
                 <div class="stat-value">{{ tasks.by_status.failed }}</div>
               </div>
               <div class="stat-box" v-else>
-                <div class="stat-label">Ã‰chouÃ©es</div>
+                <div class="stat-label">chouées</div>
                 <div class="stat-value">{{ tasks.by_status.failed }}</div>
               </div>
             </div>
 
             <div v-if="tasks.overdue_tasks_count > 0" class="alert alert-warning" style="margin-top: 16px;">
-              <strong>âš ï¸ {{ tasks.overdue_tasks_count }} tÃ¢che(s) en retard:</strong>
+              <strong>️ {{ tasks.overdue_tasks_count }} tâche(s) en retard:</strong>
               {{ tasks.overdue_task_ids.join(', ') }}
             </div>
 
             <p style="margin-top: 16px; font-size: 12px; color: var(--color-muted);">
-              Temps d'exÃ©cution moyen: {{ formatDuration(tasks.avg_execution_time_seconds) }}
+              Temps d'exécution moyen: {{ formatDuration(tasks.avg_execution_time_seconds) }}
             </p>
           </div>
         </div>
@@ -497,14 +497,14 @@
 
     <!-- Footer -->
     <div class="app-footer">
-      <p>jadus Dashboard v1.0 â€¢ <a href="#" style="color: inherit; text-decoration: underline;">Documentation</a> â€¢ DonnÃ©es mises Ã  jour en temps rÃ©el</p>
+      <p>jadus Dashboard v1.0  <a href="#" style="color: inherit; text-decoration: underline;">Documentation</a>  Données mises à jour en temps réel</p>
     </div>
 
     <!-- Modal Lancer Audit -->
     <div :class="['modal', { active: showAuditModal }]">
       <div class="modal-content">
         <div class="modal-header">
-          <h2 class="modal-title">ðŸš€ Lancer un Audit</h2>
+          <h2 class="modal-title"> Lancer un Audit</h2>
         </div>
 
         <div class="form-group">
@@ -517,24 +517,24 @@
         <div class="form-group">
           <label class="form-label">Commande</label>
           <select v-model="auditCommand" class="form-control">
-            <option value="Get-AuditPolicy">RÃ©cupÃ©rer les politiques d'audit</option>
-            <option value="Get-EventLog">RÃ©cupÃ©rer les logs d'Ã©vÃ©nements</option>
+            <option value="Get-AuditPolicy">Récupérer les politiques d'audit</option>
+            <option value="Get-EventLog">Récupérer les logs d'événements</option>
             <option value="Get-LocalUser">Lister les utilisateurs locaux</option>
             <option value="Get-Service">Lister les services</option>
             <option value="Get-Process">Lister les processus</option>
-            <option value="Get-NetConnectionProfile">VÃ©rifier la connectivitÃ© rÃ©seau</option>
-            <option value="Get-WindowsFeature">VÃ©rifier les rÃ´les/fonctionnalitÃ©s Windows</option>
-            <option value="">Autre (personnalisÃ©e)</option>
+            <option value="Get-NetConnectionProfile">Vérifier la connectivité réseau</option>
+            <option value="Get-WindowsFeature">Vérifier les rôles/fonctionnalités Windows</option>
+            <option value="">Autre (personnalisée)</option>
           </select>
         </div>
 
         <div class="form-group" v-if="auditCommand === ''">
-          <label class="form-label">Commande PersonnalisÃ©e</label>
+          <label class="form-label">Commande Personnalisée</label>
           <input v-model="customCommand" type="text" class="form-control" placeholder="Ex: Get-ChildItem -Path C:\\">
         </div>
 
         <div class="form-group">
-          <label class="form-label">PrioritÃ©</label>
+          <label class="form-label">Priorité</label>
           <select v-model.number="auditPriority" class="form-control">
             <option value="0">Normal</option>
             <option value="1">Haute</option>
@@ -545,7 +545,7 @@
         <div class="modal-footer">
           <button @click="closeAuditModal" class="btn btn-secondary">Annuler</button>
           <button @click="submitAudit" class="btn btn-success" :disabled="auditLoading">
-            <span v-if="!auditLoading">âœ“ Lancer l'Audit</span>
+            <span v-if="!auditLoading"> Lancer l'Audit</span>
             <span v-else><span class="spinner"></span> Envoi...</span>
           </button>
         </div>

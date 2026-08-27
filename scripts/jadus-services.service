@@ -1,0 +1,19 @@
+[Unit]
+Description=Jadus Linux services
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/jadus
+Environment=PYTHONPATH=/opt/jadus
+Environment=JADUS_API_SERVICE_NAME=JadusAPI
+Environment=JADUS_DB_SERVICE_NAME=JadusDB
+Environment=JADUS_WEB_SERVICE_NAME=JadusPanelWeb
+ExecStart=/usr/bin/python3 /opt/jadus/main.py
+Restart=on-failure
+RestartSec=5
+User=jadus
+Group=jadus
+
+[Install]
+WantedBy=multi-user.target

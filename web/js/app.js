@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Application Vue.js pour le Dashboard jadus
  */
 
@@ -7,7 +7,7 @@ const { createApp } = Vue;
 const app = createApp({
   data() {
     return {
-      // DonnÃ©es du dashboard
+      // Données du dashboard
       overview: {
         timestamp: new Date().toISOString(),
         agents: {
@@ -63,7 +63,7 @@ const app = createApp({
         alerts: [],
       },
 
-      // Ã‰tat de l'application
+      // tat de l'application
       loading: true,
       apiError: null,
       autoRefreshInterval: null,
@@ -83,7 +83,7 @@ const app = createApp({
 
   computed: {
     /**
-     * Calculer le taux de succÃ¨s global
+     * Calculer le taux de succès global
      */
     successRate() {
       const total = this.overview.results.total;
@@ -92,7 +92,7 @@ const app = createApp({
     },
 
     /**
-     * Agents inactifs pour affichage sÃ©parÃ©
+     * Agents inactifs pour affichage séparé
      */
     inactiveAgents() {
       return this.agents.agents.filter((a) => a.is_inactive);
@@ -101,14 +101,14 @@ const app = createApp({
 
   methods: {
     /**
-     * Charger toutes les donnÃ©es du dashboard
+     * Charger toutes les données du dashboard
      */
     async loadDashboardData() {
       try {
         this.loading = true;
         this.apiError = null;
 
-        // Charger les donnÃ©es en parallÃ¨le
+        // Charger les données en parallèle
         const [overview, agents, tasks, alerts] = await Promise.all([
           jadusApiClient.getSystemOverview(),
           jadusApiClient.getAgentsDashboard(),
@@ -123,14 +123,14 @@ const app = createApp({
 
         this.loading = false;
       } catch (error) {
-        console.error('Erreur lors du chargement des donnÃ©es:', error);
-        this.apiError = `Impossible de charger les donnÃ©es: ${error.message}`;
+        console.error('Erreur lors du chargement des données:', error);
+        this.apiError = `Impossible de charger les données: ${error.message}`;
         this.loading = false;
       }
     },
 
     /**
-     * RafraÃ®chir les donnÃ©es du dashboard
+     * Rafraîchir les données du dashboard
      */
     refreshData() {
       this.loadDashboardData();
@@ -144,7 +144,7 @@ const app = createApp({
     },
 
     /**
-     * Formater une durÃ©e
+     * Formater une durée
      */
     formatDuration(seconds) {
       return formatters.formatDuration(seconds);
@@ -165,7 +165,7 @@ const app = createApp({
     },
 
     /**
-     * Calculer la durÃ©e d'inactivitÃ©
+     * Calculer la durée d'inactivité
      */
     getInactivityDuration(lastBeacon) {
       if (!lastBeacon) return 'Jamais';
@@ -218,17 +218,17 @@ const app = createApp({
       try {
         this.auditLoading = true;
 
-        // DÃ©terminer la commande Ã  envoyer
+        // Déterminer la commande à envoyer
         const command =
           this.auditCommand === '' ? this.customCommand : this.auditCommand;
 
         if (!command.trim()) {
-          alert('Veuillez sÃ©lectionner ou entrer une commande');
+          alert('Veuillez sélectionner ou entrer une commande');
           this.auditLoading = false;
           return;
         }
 
-        // Appeler l'API pour crÃ©er la tÃ¢che
+        // Appeler l'API pour créer la tâche
         const result = await jadusApiClient.createTask(
           this.selectedAgent.id,
           command,
@@ -236,25 +236,25 @@ const app = createApp({
           this.auditPriority
         );
 
-        // Notification de succÃ¨s
-        alert(`âœ“ Audit lancÃ© avec succÃ¨s!\n\nID TÃ¢che: ${result.task_id}`);
+        // Notification de succès
+        alert(` Audit lancé avec succès!\n\nID Tâche: ${result.task_id}`);
 
         this.closeAuditModal();
         this.auditLoading = false;
 
-        // RafraÃ®chir les donnÃ©es
+        // Rafraîchir les données
         setTimeout(() => {
           this.loadDashboardData();
         }, 1000);
       } catch (error) {
         console.error('Erreur lors du lancement de l\'audit:', error);
-        alert(`âš ï¸ Erreur: ${error.message}`);
+        alert(`️ Erreur: ${error.message}`);
         this.auditLoading = false;
       }
     },
 
     /**
-     * RÃ©essayer de contacter un agent
+     * Réessayer de contacter un agent
      */
     retryAgent(agentId) {
       alert(`Tentative de reconnexion avec l'agent ${agentId}...\n\n(Action: envoyer un beacon de test)`);
@@ -262,17 +262,17 @@ const app = createApp({
     },
 
     /**
-     * Initialiser l'auto-rafraÃ®chissement
+     * Initialiser l'auto-rafraîchissement
      */
     startAutoRefresh() {
-      // RafraÃ®chir toutes les 30 secondes
+      // Rafraîchir toutes les 30 secondes
       this.autoRefreshInterval = setInterval(() => {
         this.loadDashboardData();
       }, 30000);
     },
 
     /**
-     * ArrÃªter l'auto-rafraÃ®chissement
+     * Arrêter l'auto-rafraîchissement
      */
     stopAutoRefresh() {
       if (this.autoRefreshInterval) {
@@ -282,15 +282,15 @@ const app = createApp({
   },
 
   mounted() {
-    console.log('Dashboard jadus - Application montÃ©e');
+    console.log('Dashboard jadus - Application montée');
 
-    // Charger les donnÃ©es
+    // Charger les données
     this.loadDashboardData();
 
-    // DÃ©marrer l'auto-rafraÃ®chissement
+    // Démarrer l'auto-rafraîchissement
     this.startAutoRefresh();
 
-    // Nettoyer lors du dÃ©montage
+    // Nettoyer lors du démontage
     window.addEventListener('beforeunload', () => {
       this.stopAutoRefresh();
     });
