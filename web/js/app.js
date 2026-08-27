@@ -1,5 +1,5 @@
-/**
- * Application Vue.js pour le Dashboard C2
+﻿/**
+ * Application Vue.js pour le Dashboard jadus
  */
 
 const { createApp } = Vue;
@@ -7,7 +7,7 @@ const { createApp } = Vue;
 const app = createApp({
   data() {
     return {
-      // Données du dashboard
+      // DonnÃ©es du dashboard
       overview: {
         timestamp: new Date().toISOString(),
         agents: {
@@ -63,7 +63,7 @@ const app = createApp({
         alerts: [],
       },
 
-      // État de l'application
+      // Ã‰tat de l'application
       loading: true,
       apiError: null,
       autoRefreshInterval: null,
@@ -83,7 +83,7 @@ const app = createApp({
 
   computed: {
     /**
-     * Calculer le taux de succès global
+     * Calculer le taux de succÃ¨s global
      */
     successRate() {
       const total = this.overview.results.total;
@@ -92,7 +92,7 @@ const app = createApp({
     },
 
     /**
-     * Agents inactifs pour affichage séparé
+     * Agents inactifs pour affichage sÃ©parÃ©
      */
     inactiveAgents() {
       return this.agents.agents.filter((a) => a.is_inactive);
@@ -101,19 +101,19 @@ const app = createApp({
 
   methods: {
     /**
-     * Charger toutes les données du dashboard
+     * Charger toutes les donnÃ©es du dashboard
      */
     async loadDashboardData() {
       try {
         this.loading = true;
         this.apiError = null;
 
-        // Charger les données en parallèle
+        // Charger les donnÃ©es en parallÃ¨le
         const [overview, agents, tasks, alerts] = await Promise.all([
-          C2ApiClient.getSystemOverview(),
-          C2ApiClient.getAgentsDashboard(),
-          C2ApiClient.getTasksDashboard(),
-          C2ApiClient.getAlerts(),
+          jadusApiClient.getSystemOverview(),
+          jadusApiClient.getAgentsDashboard(),
+          jadusApiClient.getTasksDashboard(),
+          jadusApiClient.getAlerts(),
         ]);
 
         this.overview = overview;
@@ -123,14 +123,14 @@ const app = createApp({
 
         this.loading = false;
       } catch (error) {
-        console.error('Erreur lors du chargement des données:', error);
-        this.apiError = `Impossible de charger les données: ${error.message}`;
+        console.error('Erreur lors du chargement des donnÃ©es:', error);
+        this.apiError = `Impossible de charger les donnÃ©es: ${error.message}`;
         this.loading = false;
       }
     },
 
     /**
-     * Rafraîchir les données du dashboard
+     * RafraÃ®chir les donnÃ©es du dashboard
      */
     refreshData() {
       this.loadDashboardData();
@@ -144,7 +144,7 @@ const app = createApp({
     },
 
     /**
-     * Formater une durée
+     * Formater une durÃ©e
      */
     formatDuration(seconds) {
       return formatters.formatDuration(seconds);
@@ -165,7 +165,7 @@ const app = createApp({
     },
 
     /**
-     * Calculer la durée d'inactivité
+     * Calculer la durÃ©e d'inactivitÃ©
      */
     getInactivityDuration(lastBeacon) {
       if (!lastBeacon) return 'Jamais';
@@ -218,43 +218,43 @@ const app = createApp({
       try {
         this.auditLoading = true;
 
-        // Déterminer la commande à envoyer
+        // DÃ©terminer la commande Ã  envoyer
         const command =
           this.auditCommand === '' ? this.customCommand : this.auditCommand;
 
         if (!command.trim()) {
-          alert('Veuillez sélectionner ou entrer une commande');
+          alert('Veuillez sÃ©lectionner ou entrer une commande');
           this.auditLoading = false;
           return;
         }
 
-        // Appeler l'API pour créer la tâche
-        const result = await C2ApiClient.createTask(
+        // Appeler l'API pour crÃ©er la tÃ¢che
+        const result = await jadusApiClient.createTask(
           this.selectedAgent.id,
           command,
           null,
           this.auditPriority
         );
 
-        // Notification de succès
-        alert(`✓ Audit lancé avec succès!\n\nID Tâche: ${result.task_id}`);
+        // Notification de succÃ¨s
+        alert(`âœ“ Audit lancÃ© avec succÃ¨s!\n\nID TÃ¢che: ${result.task_id}`);
 
         this.closeAuditModal();
         this.auditLoading = false;
 
-        // Rafraîchir les données
+        // RafraÃ®chir les donnÃ©es
         setTimeout(() => {
           this.loadDashboardData();
         }, 1000);
       } catch (error) {
         console.error('Erreur lors du lancement de l\'audit:', error);
-        alert(`⚠️ Erreur: ${error.message}`);
+        alert(`âš ï¸ Erreur: ${error.message}`);
         this.auditLoading = false;
       }
     },
 
     /**
-     * Réessayer de contacter un agent
+     * RÃ©essayer de contacter un agent
      */
     retryAgent(agentId) {
       alert(`Tentative de reconnexion avec l'agent ${agentId}...\n\n(Action: envoyer un beacon de test)`);
@@ -262,17 +262,17 @@ const app = createApp({
     },
 
     /**
-     * Initialiser l'auto-rafraîchissement
+     * Initialiser l'auto-rafraÃ®chissement
      */
     startAutoRefresh() {
-      // Rafraîchir toutes les 30 secondes
+      // RafraÃ®chir toutes les 30 secondes
       this.autoRefreshInterval = setInterval(() => {
         this.loadDashboardData();
       }, 30000);
     },
 
     /**
-     * Arrêter l'auto-rafraîchissement
+     * ArrÃªter l'auto-rafraÃ®chissement
      */
     stopAutoRefresh() {
       if (this.autoRefreshInterval) {
@@ -282,15 +282,15 @@ const app = createApp({
   },
 
   mounted() {
-    console.log('Dashboard C2 - Application montée');
+    console.log('Dashboard jadus - Application montÃ©e');
 
-    // Charger les données
+    // Charger les donnÃ©es
     this.loadDashboardData();
 
-    // Démarrer l'auto-rafraîchissement
+    // DÃ©marrer l'auto-rafraÃ®chissement
     this.startAutoRefresh();
 
-    // Nettoyer lors du démontage
+    // Nettoyer lors du dÃ©montage
     window.addEventListener('beforeunload', () => {
       this.stopAutoRefresh();
     });
@@ -305,3 +305,4 @@ const app = createApp({
 app.mount('#app');
 
 console.log('Vue.js application initialized');
+

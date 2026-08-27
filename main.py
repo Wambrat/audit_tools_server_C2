@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+﻿from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -12,40 +12,40 @@ from dotenv import load_dotenv
 # Charger les variables d'environnement
 load_dotenv()
 
-# Configurer le logging structuré
-setup_logging(app_name="c2-server", log_level=os.getenv("LOG_LEVEL", "INFO"))
+# Configurer le logging structurÃ©
+setup_logging(app_name="jadus-server", log_level=os.getenv("LOG_LEVEL", "INFO"))
 logger = get_logger(__name__)
 
-logger.info("Initializing C2 Server API")
+logger.info("Initializing jadus Server API")
 
-# ===== Configuration de la Base de Données =====
+# ===== Configuration de la Base de DonnÃ©es =====
 DATABASE_MODE = os.getenv("DATABASE_MODE", "memory").lower()
 
 if DATABASE_MODE == "mongodb":
     try:
         from app.database_mongodb import MongoDatabase
-        logger.info("🟢 Database mode: MongoDB (persistent)")
+        logger.info("ðŸŸ¢ Database mode: MongoDB (persistent)")
         db_instance = MongoDatabase()
-        logger.info("✅ MongoDB connected successfully")
+        logger.info("âœ… MongoDB connected successfully")
     except Exception as e:
-        logger.warning(f"⚠️ MongoDB connection failed: {e}")
-        logger.info("📡 Fallback to in-memory database")
+        logger.warning(f"âš ï¸ MongoDB connection failed: {e}")
+        logger.info("ðŸ“¡ Fallback to in-memory database")
         from app.database import Database
         db_instance = Database()
 else:
     try:
         from app.database import Database
-        logger.info("🟢 Database mode: In-Memory (development)")
+        logger.info("ðŸŸ¢ Database mode: In-Memory (development)")
         db_instance = Database()
-        logger.info("✅ In-Memory database initialized")
+        logger.info("âœ… In-Memory database initialized")
     except Exception as e:
-        logger.error(f"❌ Database initialization failed: {e}")
+        logger.error(f"âŒ Database initialization failed: {e}")
         raise
 
-# Enregistrer l'instance pour que routes.py et autres modules y accèdent
+# Enregistrer l'instance pour que routes.py et autres modules y accÃ¨dent
 set_db_instance(db_instance)
 
-# Peupler les commandes/templates système depuis le zip d'archive de modules
+# Peupler les commandes/templates systÃ¨me depuis le zip d'archive de modules
 if hasattr(db_instance, "seed_default_modules"):
     try:
         seeded = db_instance.seed_default_modules()
@@ -53,7 +53,7 @@ if hasattr(db_instance, "seed_default_modules"):
     except Exception as exc:
         logger.warning(f"Default module seeding skipped: {exc}")
 
-# Créer l'application FastAPI avec configuration OpenAPI complète
+# CrÃ©er l'application FastAPI avec configuration OpenAPI complÃ¨te
 app = FastAPI(
     title=INFO["title"],
     description=INFO["description"],
@@ -140,8 +140,8 @@ app.add_middleware(SecurityHeadersMiddleware)
 
 
 # ===== Middleware CORS =====
-# Autoriser explicitement les frontends locaux utilisés par le projet
-# Traefik expose en HTTPS maintenant, donc les origins doivent être en HTTPS
+# Autoriser explicitement les frontends locaux utilisÃ©s par le projet
+# Traefik expose en HTTPS maintenant, donc les origins doivent Ãªtre en HTTPS
 configured_origins = [origin.strip() for origin in os.getenv(
     "ALLOWED_ORIGINS",
     "https://localhost,https://127.0.0.1"
@@ -160,7 +160,7 @@ fallback_origins = [
     "http://127.0.0.1:8000",
 ]
 
-# Combiner et dédupliquer
+# Combiner et dÃ©dupliquer
 origins = list(dict.fromkeys(configured_origins + fallback_origins + [
     "https://localhost",
     "https://localhost:443",
@@ -203,14 +203,14 @@ async def root():
     logger.debug("Health check requested")
     return {
         "status": "running",
-        "service": "C2 Server API",
+        "service": "jadus Server API",
         "version": "1.0.0"
     }
 
 
 @app.get("/health")
 async def health():
-    """Endpoint de santé"""
+    """Endpoint de santÃ©"""
     logger.debug("Health endpoint called")
     return {"status": "healthy"}
 
@@ -235,7 +235,7 @@ if __name__ == "__main__":
     env = os.getenv("ENV", "development")
     
     logger.info(
-        f"Starting C2 Server API on {host}:{port} (environment: {env})"
+        f"Starting jadus Server API on {host}:{port} (environment: {env})"
     )
     
     uvicorn.run(
@@ -244,3 +244,4 @@ if __name__ == "__main__":
         port=port,
         reload=env == "development"
     )
+

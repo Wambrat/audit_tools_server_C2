@@ -1,9 +1,9 @@
-#!/usr/bin/env powershell
+﻿#!/usr/bin/env powershell
 $ErrorActionPreference = "Stop"
 
 Write-Host ""
 Write-Host "========================================" -ForegroundColor Cyan
-Write-Host "C2 Server - TLS Setup" -ForegroundColor Cyan
+Write-Host "jadus Server - TLS Setup" -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan
 
 Write-Host ""
@@ -89,3 +89,4 @@ Write-Host ""
 Write-Host "Logs (Ctrl+C pour arreter):" -ForegroundColor Yellow
 Write-Host ""
 docker-compose logs -f
+

@@ -1,27 +1,27 @@
-# Guide Docker pour l'Application C2 Server
+﻿# Guide Docker pour l'Application jadus Server
 
-Ce guide explique comment utiliser les images Docker pour déployer l'application C2 Server complète avec le backend, MongoDB et le frontend.
+Ce guide explique comment utiliser les images Docker pour dÃ©ployer l'application jadus Server complÃ¨te avec le backend, MongoDB et le frontend.
 
-## 📋 Prérequis
+## ðŸ“‹ PrÃ©requis
 
-- Docker (version 20.10 ou supérieure)
-- Docker Compose (version 1.29 ou supérieure)
+- Docker (version 20.10 ou supÃ©rieure)
+- Docker Compose (version 1.29 ou supÃ©rieure)
 - Au minimum 2GB de RAM disponible
 
-## 🚀 Démarrage rapide
+## ðŸš€ DÃ©marrage rapide
 
 ### 1. Configuration de l'environnement
 
-Avant de démarrer, créez un fichier `.env` à la racine du projet :
+Avant de dÃ©marrer, crÃ©ez un fichier `.env` Ã  la racine du projet :
 
 ```bash
 cp .env.example .env
 ```
 
-Éditez le fichier `.env` et mettez à jour les valeurs sensibles :
+Ã‰ditez le fichier `.env` et mettez Ã  jour les valeurs sensibles :
 - `MONGO_INITDB_ROOT_PASSWORD`: Changez le mot de passe MongoDB
-- `SECRET_KEY`: Générez une clé secrète pour JWT
-- `CORS_ORIGINS`: Ajoutez vos domaines autorisés
+- `SECRET_KEY`: GÃ©nÃ©rez une clÃ© secrÃ¨te pour JWT
+- `CORS_ORIGINS`: Ajoutez vos domaines autorisÃ©s
 
 ### 2. Lancer l'application
 
@@ -30,14 +30,14 @@ docker-compose up -d
 ```
 
 Cela va :
-- Créer et démarrer le conteneur MongoDB
-- Créer et démarrer le conteneur backend FastAPI
-- Créer et démarrer le conteneur frontend Nginx
+- CrÃ©er et dÃ©marrer le conteneur MongoDB
+- CrÃ©er et dÃ©marrer le conteneur backend FastAPI
+- CrÃ©er et dÃ©marrer le conteneur frontend Nginx
 
-### 3. Vérifier que tout fonctionne
+### 3. VÃ©rifier que tout fonctionne
 
 ```bash
-# Vérifier l'état des conteneurs
+# VÃ©rifier l'Ã©tat des conteneurs
 docker-compose ps
 
 # Consulter les logs
@@ -50,49 +50,49 @@ curl http://localhost:8000/health
 curl http://localhost/health
 ```
 
-## 📍 Accès aux services
+## ðŸ“ AccÃ¨s aux services
 
 | Service | URL | Description |
 |---------|-----|-------------|
 | **Frontend** | http://localhost | Interface web (Nginx) |
 | **API Backend** | http://localhost:8000 | API REST FastAPI |
-| **MongoDB** | localhost:27017 | Base de données (port interne) |
+| **MongoDB** | localhost:27017 | Base de donnÃ©es (port interne) |
 | **API Docs** | http://localhost:8000/docs | Documentation Swagger |
 
-## 🔧 Commandes utiles
+## ðŸ”§ Commandes utiles
 
 ### Afficher les logs
 ```bash
 # Tous les services
 docker-compose logs -f
 
-# Service spécifique
+# Service spÃ©cifique
 docker-compose logs -f backend
 docker-compose logs -f frontend
 docker-compose logs -f mongodb
 ```
 
-### Arrêter l'application
+### ArrÃªter l'application
 ```bash
 docker-compose down
 ```
 
-### Arrêter et supprimer les données
+### ArrÃªter et supprimer les donnÃ©es
 ```bash
 docker-compose down -v
 ```
 
-### Redémarrer un service
+### RedÃ©marrer un service
 ```bash
 docker-compose restart backend
 ```
 
-### Exécuter une commande dans un conteneur
+### ExÃ©cuter une commande dans un conteneur
 ```bash
-# Accéder au shell du backend
+# AccÃ©der au shell du backend
 docker-compose exec backend bash
 
-# Accéder à la console MongoDB
+# AccÃ©der Ã  la console MongoDB
 docker-compose exec mongodb mongosh -u root -p --authenticationDatabase admin
 ```
 
@@ -102,54 +102,54 @@ docker-compose build --no-cache
 docker-compose up -d
 ```
 
-## 🏗️ Structure des images
+## ðŸ—ï¸ Structure des images
 
 ### Dockerfile.backend
 - **Base**: Python 3.11-slim
-- **Build en deux étapes** pour réduire la taille de l'image
+- **Build en deux Ã©tapes** pour rÃ©duire la taille de l'image
 - **Expose**: Port 8000
 - **Healthcheck**: Inclus pour monitoring
 
 ### Dockerfile.frontend
 - **Base**: Nginx alpine
-- **Proxy**: Redirige les requêtes `/api/` vers le backend
+- **Proxy**: Redirige les requÃªtes `/api/` vers le backend
 - **Expose**: Port 80
 - **Healthcheck**: Inclus pour monitoring
 
 ### Service MongoDB
 - **Image**: mongo:7.0
-- **Volume**: Persistance des données dans `mongodb_data`
+- **Volume**: Persistance des donnÃ©es dans `mongodb_data`
 - **Authentification**: Utilisateur root avec mot de passe
 
-## 🌐 Nginx Configuration
+## ðŸŒ Nginx Configuration
 
 La configuration Nginx dans `nginx.conf` :
 - Sert les fichiers statiques du frontend
-- Proxy les requêtes API vers le backend
-- Gère le cache des assets
+- Proxy les requÃªtes API vers le backend
+- GÃ¨re le cache des assets
 - Configure les headers CORS
 
-## 📊 Volumes et Persistance
+## ðŸ“Š Volumes et Persistance
 
 | Volume | Usage |
 |--------|-------|
-| `mongodb_data` | Données MongoDB persistantes |
+| `mongodb_data` | DonnÃ©es MongoDB persistantes |
 | `mongodb_config` | Configuration MongoDB |
 | `./logs` | Logs de l'application (volume local) |
 | `./web` | Fichiers frontend (volume read-only) |
 
-## 🔒 Sécurité en Production
+## ðŸ”’ SÃ©curitÃ© en Production
 
-Avant de déployer en production :
+Avant de dÃ©ployer en production :
 
-1. **Changez tous les mots de passe par défaut** dans le `.env`
-2. **Générez une clé secrète forte** pour JWT
+1. **Changez tous les mots de passe par dÃ©faut** dans le `.env`
+2. **GÃ©nÃ©rez une clÃ© secrÃ¨te forte** pour JWT
 3. **Configurez CORS** correctement pour votre domaine
 4. **Utilisez HTTPS** avec un reverse proxy (Traefik, etc.)
-5. **Limitez l'accès MongoDB** à localhost uniquement
+5. **Limitez l'accÃ¨s MongoDB** Ã  localhost uniquement
 6. **Configurez des ressources limits** dans docker-compose
 7. **Activez l'audit logging** 
-8. **Utilisez des secrets Docker** pour les données sensibles
+8. **Utilisez des secrets Docker** pour les donnÃ©es sensibles
 
 ### Exemple d'ajout de limites de ressources
 
@@ -166,79 +166,80 @@ backend:
         memory: 256M
 ```
 
-## 🐛 Dépannage
+## ðŸ› DÃ©pannage
 
-### Le backend ne peut pas se connecter à MongoDB
+### Le backend ne peut pas se connecter Ã  MongoDB
 
 ```bash
-# Vérifier que MongoDB est running
+# VÃ©rifier que MongoDB est running
 docker-compose ps mongodb
 
-# Vérifier les logs
+# VÃ©rifier les logs
 docker-compose logs mongodb
 
-# Vérifier la connectivité
+# VÃ©rifier la connectivitÃ©
 docker-compose exec backend ping mongodb
 ```
 
 ### Le frontend retourne 404 pour les routes
 
-C'est normal ! Nginx redirige toutes les requêtes vers `index.html` pour supporter le routing SPA.
+C'est normal ! Nginx redirige toutes les requÃªtes vers `index.html` pour supporter le routing SPA.
 
 ### Les changements au frontend ne s'appliquent pas
 
 ```bash
-# Arrêter et reconstruire le frontend
+# ArrÃªter et reconstruire le frontend
 docker-compose down frontend
 docker-compose build frontend
 docker-compose up -d frontend
 ```
 
-### Problèmes de permissions
+### ProblÃ¨mes de permissions
 
 ```bash
-# Réinitialiser les permissions
+# RÃ©initialiser les permissions
 docker-compose exec -u root backend chown -R app:app /app
 ```
 
-## 📈 Monitoring et Logs
+## ðŸ“ˆ Monitoring et Logs
 
-### Vérifier les métriques
+### VÃ©rifier les mÃ©triques
 ```bash
-docker stats c2-backend c2-frontend c2-mongodb
+docker stats jadus-backend jadus-frontend jadus-mongodb
 ```
 
-### Accéder aux logs structurés
+### AccÃ©der aux logs structurÃ©s
 ```bash
 docker-compose logs backend | grep "level.*error"
 ```
 
-## 🔄 Mise à jour
+## ðŸ”„ Mise Ã  jour
 
-Pour mettre à jour une image :
+Pour mettre Ã  jour une image :
 
 ```bash
-# Mettre à jour le code
+# Mettre Ã  jour le code
 git pull
 
 # Reconstruire l'image
 docker-compose build <service>
 
-# Redémarrer le service
+# RedÃ©marrer le service
 docker-compose up -d <service>
 ```
 
-## 📝 Notes importantes
+## ðŸ“ Notes importantes
 
-- Les fichiers `.env` ne doivent jamais être commités dans Git
+- Les fichiers `.env` ne doivent jamais Ãªtre commitÃ©s dans Git
 - Utilisez `.env.example` comme template
-- Les secrets sensibles doivent être gérés avec Docker Secrets en production
-- MongoDB est accessible uniquement sur le réseau interne (`c2-network`)
-- Le frontend fait un proxy des requêtes API, donc pas besoin de configurer CORS sur le frontend
+- Les secrets sensibles doivent Ãªtre gÃ©rÃ©s avec Docker Secrets en production
+- MongoDB est accessible uniquement sur le rÃ©seau interne (`jadus-network`)
+- Le frontend fait un proxy des requÃªtes API, donc pas besoin de configurer CORS sur le frontend
 
-## 🤝 Support
+## ðŸ¤ Support
 
 Pour plus d'informations :
 - Documentation FastAPI: https://fastapi.tiangolo.com/
 - Documentation MongoDB: https://docs.mongodb.com/
 - Documentation Nginx: https://nginx.org/en/docs/
+

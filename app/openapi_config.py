@@ -1,5 +1,5 @@
-"""
-OpenAPI Configuration for C2 Server API
+﻿"""
+OpenAPI Configuration for jadus Server API
 
 Centralizes OpenAPI schema tags, examples, and metadata
 """
@@ -11,7 +11,7 @@ TAGS_METADATA = [
         "description": "Enroll agents and manage agent information",
         "externalDocs": {
             "description": "Agent Management Guide",
-            "url": "https://c2.internal/docs/agents",
+            "url": "https://jadus.internal/docs/agents",
         },
     },
     {
@@ -39,42 +39,42 @@ SERVERS = [
         "description": "Development server",
     },
     {
-        "url": "https://api.c2.internal",
+        "url": "https://api.jadus.internal",
         "description": "Production server",
     },
 ]
 
 # OpenAPI information
 INFO = {
-    "title": "C2 Server API",
+    "title": "jadus Server API",
     "description": """
 ## Overview
 
-C2 Server API is a REST API for managing PowerShell audit agents in an enterprise environment.
+jadus Server API is a REST API for managing PowerShell audit agents in an enterprise environment.
 
 ### Key Features
 
-- 🔐 **Secure Authentication**: UUID + API Key authentication per agent
-- 🚦 **Rate Limiting**: Sliding window algorithm per agent per endpoint
-- 📊 **Real-time Monitoring**: Dashboard with live agent statistics
-- 🔒 **Encrypted Results**: AES-256-GCM encryption for sensitive audit data
-- 📝 **Audit Logging**: JSON structured logging for compliance
-- ⚡ **High Performance**: Sub-second response times for 1000+ agents
+- ðŸ” **Secure Authentication**: UUID + API Key authentication per agent
+- ðŸš¦ **Rate Limiting**: Sliding window algorithm per agent per endpoint
+- ðŸ“Š **Real-time Monitoring**: Dashboard with live agent statistics
+- ðŸ”’ **Encrypted Results**: AES-256-GCM encryption for sensitive audit data
+- ðŸ“ **Audit Logging**: JSON structured logging for compliance
+- âš¡ **High Performance**: Sub-second response times for 1000+ agents
 
 ### Architecture
 
 ```
 Agent (PowerShell)
-    ↓
-POST /api/enroll → Get agent_id + api_key
-    ↓
-POST /api/beacon → Heartbeat + get pending tasks
-    ↓
+    â†“
+POST /api/enroll â†’ Get agent_id + api_key
+    â†“
+POST /api/beacon â†’ Heartbeat + get pending tasks
+    â†“
 Execute task locally
-    ↓
-POST /api/results → Submit encrypted results
-    ↓
-GET /api/monitoring/* → Admin dashboard (Vue.js)
+    â†“
+POST /api/results â†’ Submit encrypted results
+    â†“
+GET /api/monitoring/* â†’ Admin dashboard (Vue.js)
 ```
 
 ### Authentication
@@ -125,10 +125,11 @@ See [API_DOCUMENTATION.md](./API_DOCUMENTATION.md) for detailed examples.
 """,
     "version": "1.0.0",
     "contact": {
-        "name": "C2 Administrator",
-        "email": "admin@c2.internal",
+        "name": "jadus Administrator",
+        "email": "admin@jadus.internal",
     },
     "license": {
         "name": "Internal Use Only",
     },
 }
+

@@ -1,10 +1,10 @@
-# 💾 Configuration MongoDB - Base de Données pour Production
+﻿# ðŸ’¾ Configuration MongoDB - Base de DonnÃ©es pour Production
 
-## 🚀 Démarrage Rapide
+## ðŸš€ DÃ©marrage Rapide
 
 ### 1. Lancer MongoDB
 
-**Docker (Recommandé):**
+**Docker (RecommandÃ©):**
 ```bash
 docker run -d --name mongodb -p 27017:27017 mongo:latest
 ```
@@ -21,58 +21,58 @@ docker run -d --name mongodb -p 27017:27017 mongo:latest
 ```env
 DATABASE_MODE=mongodb
 MONGODB_URL=mongodb://localhost:27017
-MONGODB_DB=c2_server
+MONGODB_DB=jadus_server
 MONGODB_TIMEOUT=5000
 ```
 
-### 3. Installer dépendances
+### 3. Installer dÃ©pendances
 
 ```bash
 pip install -r requirements.txt
 # Ajoute: pymongo==4.6.0
 ```
 
-### 4. Démarrer l'API
+### 4. DÃ©marrer l'API
 
 ```bash
 python main.py
 ```
 
-**Résultat attendu:**
+**RÃ©sultat attendu:**
 ```
-🟢 Database mode: MongoDB (persistent)
-✅ MongoDB connected successfully
+ðŸŸ¢ Database mode: MongoDB (persistent)
+âœ… MongoDB connected successfully
 ```
 
 ---
 
-## 📊 Pourquoi MongoDB pour EDR?
+## ðŸ“Š Pourquoi MongoDB pour EDR?
 
 | Avantage | Description |
 |----------|-------------|
-| **Schéma Flexible** | Chaque résultat d'audit a sa structure propre |
+| **SchÃ©ma Flexible** | Chaque rÃ©sultat d'audit a sa structure propre |
 | **JSON Natif** | PowerShell retourne du JSON, MongoDB le stocke directement |
-| **Scalabilité** | Facile d'ajouter des centaines d'agents |
-| **Performant** | Index automatiques, requêtes optimisées |
-| **Persistance** | Les données restent après redémarrage |
+| **ScalabilitÃ©** | Facile d'ajouter des centaines d'agents |
+| **Performant** | Index automatiques, requÃªtes optimisÃ©es |
+| **Persistance** | Les donnÃ©es restent aprÃ¨s redÃ©marrage |
 
 ---
 
-## ⚙️ Configuration Avancée
+## âš™ï¸ Configuration AvancÃ©e
 
 ### Atlas Cloud (MongoDB)
 
 ```env
-MONGODB_URL=mongodb+srv://user:password@cluster.mongodb.net/c2_server
+MONGODB_URL=mongodb+srv://user:password@cluster.mongodb.net/jadus_server
 ```
 
 ### Authentication Locale
 
 ```env
-MONGODB_URL=mongodb://user:password@localhost:27017/c2_server?authSource=admin
+MONGODB_URL=mongodb://user:password@localhost:27017/jadus_server?authSource=admin
 ```
 
-### Replica Set (Haute Disponibilité)
+### Replica Set (Haute DisponibilitÃ©)
 
 ```bash
 docker run -d \
@@ -88,7 +88,7 @@ docker exec mongodb mongosh --eval "rs.initiate()"
 
 ```bash
 mongosh
-use c2_server
+use jadus_server
 
 # Index par agent
 db.agents.createIndex({ "agent_id": 1 })
@@ -96,13 +96,13 @@ db.agents.createIndex({ "agent_id": 1 })
 # Index par timestamp
 db.results.createIndex({ "created_at": -1 })
 
-# Index composé
+# Index composÃ©
 db.results.createIndex({ "agent_id": 1, "created_at": -1 })
 ```
 
 ---
 
-## 🗄️ Structure des Collections
+## ðŸ—„ï¸ Structure des Collections
 
 ### agents
 ```json
@@ -148,7 +148,7 @@ db.results.createIndex({ "agent_id": 1, "created_at": -1 })
 
 ---
 
-## 🧪 Tests MongoDB
+## ðŸ§ª Tests MongoDB
 
 ### Tester les Connexions
 
@@ -156,13 +156,13 @@ db.results.createIndex({ "agent_id": 1, "created_at": -1 })
 python test_mongodb.py
 ```
 
-**Résultat:**
+**RÃ©sultat:**
 ```
-✅ Database connection OK
-✅ Create agent OK
-✅ List agents OK
+âœ… Database connection OK
+âœ… Create agent OK
+âœ… List agents OK
 ...
-✅ ALL TESTS PASSED!
+âœ… ALL TESTS PASSED!
 ```
 
 ### Tester via API
@@ -178,36 +178,36 @@ curl -X POST http://localhost:8000/api/enroll \
     "username": "admin"
   }'
 
-# Vérifier
+# VÃ©rifier
 curl http://localhost:8000/api/monitoring/overview
 ```
 
 ---
 
-## 🔄 Migration: Mémoire → MongoDB
+## ðŸ”„ Migration: MÃ©moire â†’ MongoDB
 
-Si vous avez des données en mémoire:
+Si vous avez des donnÃ©es en mÃ©moire:
 
 ```bash
 python migrate_to_mongodb.py
 ```
 
 **Processus:**
-1. Arrêter l'API
-2. Sauvegarder les données
+1. ArrÃªter l'API
+2. Sauvegarder les donnÃ©es
 3. Configurer DATABASE_MODE=mongodb
 4. Relancer l'API
 5. Tester avec `python test_mongodb.py`
 
 ---
 
-## 📡 Requêtes MongoDB
+## ðŸ“¡ RequÃªtes MongoDB
 
 ### CLI (mongosh)
 
 ```bash
 mongosh
-use c2_server
+use jadus_server
 
 # Compter les agents
 db.agents.countDocuments()
@@ -218,14 +218,14 @@ db.agents.find()
 # Agents actifs
 db.agents.find({ "status": "active" })
 
-# Résultats des 24 dernières heures
+# RÃ©sultats des 24 derniÃ¨res heures
 db.results.find({ 
   "submitted_at": { 
     "$gte": new Date(Date.now() - 24*60*60*1000)
   }
 })
 
-# Taux de succès par agent
+# Taux de succÃ¨s par agent
 db.results.aggregate([
   { "$group": {
     "_id": "$agent_id",
@@ -245,10 +245,10 @@ db = MongoDatabase()
 # Lister agents
 agents = db.list_agents()
 
-# Créer agent
+# CrÃ©er agent
 db.create_agent(...)
 
-# Recherche personnalisée
+# Recherche personnalisÃ©e
 results = db.results.find({"status": "success"})
 for r in results:
     print(r)
@@ -256,28 +256,28 @@ for r in results:
 
 ---
 
-## 🐛 Troubleshooting
+## ðŸ› Troubleshooting
 
 ### Erreur: "Connection refused"
 
 ```bash
-# Vérifier MongoDB
+# VÃ©rifier MongoDB
 docker ps | grep mongodb
 
-# Redémarrer
+# RedÃ©marrer
 docker restart mongodb
 
-# Vérifier la connectivité
+# VÃ©rifier la connectivitÃ©
 telnet localhost 27017
 ```
 
 ### Erreur: "Authentication failed"
 
 ```bash
-# Vérifier les credentials dans .env
+# VÃ©rifier les credentials dans .env
 cat .env | grep MONGODB
 
-# Réinitialiser (Docker)
+# RÃ©initialiser (Docker)
 docker rm mongodb
 docker run -d --name mongodb -p 27017:27017 mongo:latest
 ```
@@ -285,26 +285,26 @@ docker run -d --name mongodb -p 27017:27017 mongo:latest
 ### Performance lente
 
 ```bash
-# Vérifier les index
+# VÃ©rifier les index
 mongosh
-use c2_server
+use jadus_server
 db.agents.getIndexes()
 
-# Créer des index manquants
+# CrÃ©er des index manquants
 db.agents.createIndex({ "agent_id": 1 })
 db.results.createIndex({ "agent_id": 1, "submitted_at": -1 })
 ```
 
-### Données perdues
+### DonnÃ©es perdues
 
-- Mode mémoire: Les données sont perdues au redémarrage
-- Mode MongoDB: **Les données persistent** sur le disque
+- Mode mÃ©moire: Les donnÃ©es sont perdues au redÃ©marrage
+- Mode MongoDB: **Les donnÃ©es persistent** sur le disque
 
-Pour persister les données: `DATABASE_MODE=mongodb`
+Pour persister les donnÃ©es: `DATABASE_MODE=mongodb`
 
 ---
 
-## 📊 Backup & Restore
+## ðŸ“Š Backup & Restore
 
 ### Backup complet
 
@@ -328,7 +328,7 @@ mongorestore /backup
 
 ---
 
-## ⚡ Performance - Production
+## âš¡ Performance - Production
 
 ### Recommandations
 
@@ -338,9 +338,9 @@ mongorestore /backup
    db.results.createIndex({ "agent_id": 1, "submitted_at": -1 })
    ```
 
-2. **Réplication (HA):**
-   - Utiliser Replica Set pour la haute disponibilité
-   - Minimum 3 nœuds pour production
+2. **RÃ©plication (HA):**
+   - Utiliser Replica Set pour la haute disponibilitÃ©
+   - Minimum 3 nÅ“uds pour production
 
 3. **Monitoring:**
    ```bash
@@ -349,12 +349,12 @@ mongorestore /backup
    ```
 
 4. **Archivage:**
-   - Archiver les vieilles données après 6 mois
-   - Garder les indexes sur les données actives
+   - Archiver les vieilles donnÃ©es aprÃ¨s 6 mois
+   - Garder les indexes sur les donnÃ©es actives
 
 ---
 
-## 📚 Documentation
+## ðŸ“š Documentation
 
 - [Architecture](../architecture/ARCHITECTURE.md)
 - [Quick Start](./QUICK_START.md)
@@ -363,12 +363,13 @@ mongorestore /backup
 
 ---
 
-## ✅ Checklist
+## âœ… Checklist
 
-- [ ] MongoDB lancé
-- [ ] MONGODB_URL configuré dans .env
-- [ ] `python test_mongodb.py` ✅
-- [ ] API lancée (`python main.py`)
-- [ ] Agents enregistrés et actifs
-- [ ] Backups configurés
+- [ ] MongoDB lancÃ©
+- [ ] MONGODB_URL configurÃ© dans .env
+- [ ] `python test_mongodb.py` âœ…
+- [ ] API lancÃ©e (`python main.py`)
+- [ ] Agents enregistrÃ©s et actifs
+- [ ] Backups configurÃ©s
+
 

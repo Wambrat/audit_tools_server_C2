@@ -1,5 +1,5 @@
-/**
- * Feuille de styles pour le dashboard C2
+﻿/**
+ * Feuille de styles pour le dashboard jadus
  */
 
 :root {
@@ -310,12 +310,12 @@ body {
 
 .status-inactive {
   background-color: #f8d7da;
-  color: #721c24;
+  color: #721jadus4;
 }
 
 .status-compromised {
   background-color: #f5c6cb;
-  color: #721c24;
+  color: #721jadus4;
   font-weight: 700;
 }
 
@@ -336,7 +336,7 @@ body {
 
 .alert-critical {
   background-color: #f8d7da;
-  color: #721c24;
+  color: #721jadus4;
 }
 
 .alert-unknown {
@@ -372,8 +372,8 @@ body {
 
 .alert-danger {
   background-color: #f8d7da;
-  color: #721c24;
-  border-color: #721c24;
+  color: #721jadus4;
+  border-color: #721jadus4;
 }
 
 /* Forms */
@@ -576,3 +576,4 @@ body {
   justify-content: center;
   align-items: center;
 }
+

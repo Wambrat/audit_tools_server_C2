@@ -1,4 +1,4 @@
-#Requires -Version 5.0
+﻿#Requires -Version 5.0
 
 param(
     [string]$ServerUrl = "http://localhost:8000/api",
@@ -25,7 +25,7 @@ function Write-Log {
 function Show-Banner {
     Write-Host ""
     Write-Host "========================================================" -ForegroundColor Cyan
-    Write-Host "        C2 AUTONOMOUS AGENT - PowerShell" -ForegroundColor Cyan
+    Write-Host "        jadus AUTONOMOUS AGENT - PowerShell" -ForegroundColor Cyan
     Write-Host "        Active Monitoring & Audit Execution" -ForegroundColor Cyan
     Write-Host "========================================================" -ForegroundColor Cyan
     Write-Host ""
@@ -88,7 +88,7 @@ function Invoke-EnrollmentWithRetry {
             $result = Invoke-Enrollment -ServerUrl $ServerUrl
             
             if ($result) {
-                Write-Log "✅ Enrollment successful after $attemptCount attempt(s)" "SUCCESS"
+                Write-Log "âœ… Enrollment successful after $attemptCount attempt(s)" "SUCCESS"
                 return $result
             }
             
@@ -427,3 +427,4 @@ catch {
     Write-Log "Fatal: $_" "ERROR"
     exit 1
 }
+

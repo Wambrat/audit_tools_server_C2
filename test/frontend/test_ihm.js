@@ -1,19 +1,19 @@
-/**
- * Tests d'intégration pour l'interface utilisateur (IHM)
+﻿/**
+ * Tests d'intÃ©gration pour l'interface utilisateur (IHM)
  * Teste les interactions et le rendu DOM
  */
 
-describe('Interface Utilisateur - Tests d\'intégration', () => {
+describe('Interface Utilisateur - Tests d\'intÃ©gration', () => {
 
   let container;
 
   beforeEach(() => {
-    // Créer un conteneur pour tester le DOM
+    // CrÃ©er un conteneur pour tester le DOM
     container = document.createElement('div');
     document.body.appendChild(container);
 
     // Mock des API
-    global.C2ApiClient = {
+    global.jadusApiClient = {
       getSystemOverview: jest.fn(),
       getAgentsDashboard: jest.fn(),
       getTasksDashboard: jest.fn(),
@@ -57,21 +57,21 @@ describe('Interface Utilisateur - Tests d\'intégration', () => {
       expect(agent.last_beacon).toMatch(/^\d{4}-\d{2}-\d{2}T/);
     });
 
-    it('devrait afficher une icône de statut appropriée', () => {
+    it('devrait afficher une icÃ´ne de statut appropriÃ©e', () => {
       const statusIcons = {
-        'active': '🟢',
-        'inactive': '⚪',
-        'compromised': '🔴'
+        'active': 'ðŸŸ¢',
+        'inactive': 'âšª',
+        'compromised': 'ðŸ”´'
       };
 
-      expect(statusIcons['active']).toBe('🟢');
-      expect(statusIcons['inactive']).toBe('⚪');
-      expect(statusIcons['compromised']).toBe('🔴');
+      expect(statusIcons['active']).toBe('ðŸŸ¢');
+      expect(statusIcons['inactive']).toBe('âšª');
+      expect(statusIcons['compromised']).toBe('ðŸ”´');
     });
   });
 
   describe('Modal d\'audit', () => {
-    it('devrait ouvrir la modal avec l\'agent sélectionné', () => {
+    it('devrait ouvrir la modal avec l\'agent sÃ©lectionnÃ©', () => {
       const selectedAgent = { id: 'agent-1', name: 'Agent-1' };
       const showModal = true;
 
@@ -90,30 +90,30 @@ describe('Interface Utilisateur - Tests d\'intégration', () => {
       expect(commands).toContain('Get-Service');
     });
 
-    it('devrait permettre d\'entrer une commande personnalisée', () => {
+    it('devrait permettre d\'entrer une commande personnalisÃ©e', () => {
       const customCommand = 'Get-EventLog -LogName Application -Newest 10';
 
       expect(customCommand).toContain('Get-EventLog');
       expect(customCommand.length).toBeGreaterThan(0);
     });
 
-    it('devrait permettre de sélectionner la priorité', () => {
+    it('devrait permettre de sÃ©lectionner la prioritÃ©', () => {
       const priorities = [0, 1, 2, 3];
       const selectedPriority = 2;
 
       expect(priorities).toContain(selectedPriority);
     });
 
-    it('devrait soumettre la tâche avec les paramètres corrects', async () => {
-      global.C2ApiClient.createTask.mockResolvedValue({ task_id: 'task-1' });
+    it('devrait soumettre la tÃ¢che avec les paramÃ¨tres corrects', async () => {
+      global.jadusApiClient.createTask.mockResolvedValue({ task_id: 'task-1' });
 
-      const result = await global.C2ApiClient.createTask('agent-1', 'Get-Service', null, 1);
+      const result = await global.jadusApiClient.createTask('agent-1', 'Get-Service', null, 1);
 
-      expect(global.C2ApiClient.createTask).toHaveBeenCalledWith('agent-1', 'Get-Service', null, 1);
+      expect(global.jadusApiClient.createTask).toHaveBeenCalledWith('agent-1', 'Get-Service', null, 1);
       expect(result.task_id).toBe('task-1');
     });
 
-    it('devrait fermer la modal après soumission réussie', () => {
+    it('devrait fermer la modal aprÃ¨s soumission rÃ©ussie', () => {
       const showModal = true;
       const taskSubmitted = true;
 
@@ -123,19 +123,19 @@ describe('Interface Utilisateur - Tests d\'intégration', () => {
       }
     });
 
-    it('devrait afficher une erreur en cas d\'échec', async () => {
-      global.C2ApiClient.createTask.mockRejectedValue(new Error('API Error'));
+    it('devrait afficher une erreur en cas d\'Ã©chec', async () => {
+      global.jadusApiClient.createTask.mockRejectedValue(new Error('API Error'));
 
       try {
-        await global.C2ApiClient.createTask('agent-1', 'Get-Service');
+        await global.jadusApiClient.createTask('agent-1', 'Get-Service');
       } catch (error) {
         expect(error.message).toBe('API Error');
       }
     });
   });
 
-  describe('Tableau des résultats', () => {
-    it('devrait afficher les résultats des tâches', () => {
+  describe('Tableau des rÃ©sultats', () => {
+    it('devrait afficher les rÃ©sultats des tÃ¢ches', () => {
       const results = [
         { result_id: '1', task_id: 'task-1', status: 'success', execution_time_ms: 1250 },
         { result_id: '2', task_id: 'task-2', status: 'failed', execution_time_ms: 500 }
@@ -145,30 +145,30 @@ describe('Interface Utilisateur - Tests d\'intégration', () => {
       expect(results[0].status).toBe('success');
     });
 
-    it('devrait afficher le statut du résultat', () => {
+    it('devrait afficher le statut du rÃ©sultat', () => {
       const result = { result_id: '1', status: 'success' };
 
       expect(['success', 'failed']).toContain(result.status);
     });
 
-    it('devrait afficher le temps d\'exécution', () => {
+    it('devrait afficher le temps d\'exÃ©cution', () => {
       const result = { execution_time_ms: 1250 };
 
       expect(result.execution_time_ms).toBeGreaterThan(0);
       expect(typeof result.execution_time_ms).toBe('number');
     });
 
-    it('devrait afficher une icône de résultat appropriée', () => {
+    it('devrait afficher une icÃ´ne de rÃ©sultat appropriÃ©e', () => {
       const statusIcons = {
-        'success': '✅',
-        'failed': '❌'
+        'success': 'âœ…',
+        'failed': 'âŒ'
       };
 
-      expect(statusIcons['success']).toBe('✅');
-      expect(statusIcons['failed']).toBe('❌');
+      expect(statusIcons['success']).toBe('âœ…');
+      expect(statusIcons['failed']).toBe('âŒ');
     });
 
-    it('devrait permettre d\'afficher les détails du résultat', () => {
+    it('devrait permettre d\'afficher les dÃ©tails du rÃ©sultat', () => {
       const result = {
         result_id: '1',
         result: 'Status   Name               DisplayName\n---      ----               -----------\nRunning  svchost            ...'
@@ -191,7 +191,7 @@ describe('Interface Utilisateur - Tests d\'intégration', () => {
       expect(overview.agents.total).toBe(5);
     });
 
-    it('devrait afficher le nombre de tâches par statut', () => {
+    it('devrait afficher le nombre de tÃ¢ches par statut', () => {
       const tasks = {
         by_status: {
           pending: 2,
@@ -205,7 +205,7 @@ describe('Interface Utilisateur - Tests d\'intégration', () => {
       expect(total).toBe(10);
     });
 
-    it('devrait calculer le taux de succès des résultats', () => {
+    it('devrait calculer le taux de succÃ¨s des rÃ©sultats', () => {
       const results = {
         total: 100,
         by_status: {
@@ -239,7 +239,7 @@ describe('Interface Utilisateur - Tests d\'intégration', () => {
       expect(filtered).toHaveLength(2);
     });
 
-    it('devrait filtrer les résultats par statut', () => {
+    it('devrait filtrer les rÃ©sultats par statut', () => {
       const results = [
         { result_id: '1', status: 'success' },
         { result_id: '2', status: 'failed' },
@@ -250,7 +250,7 @@ describe('Interface Utilisateur - Tests d\'intégration', () => {
       expect(successResults).toHaveLength(2);
     });
 
-    it('devrait filtrer les tâches par priorité', () => {
+    it('devrait filtrer les tÃ¢ches par prioritÃ©', () => {
       const tasks = [
         { task_id: '1', priority: 0 },
         { task_id: '2', priority: 2 },
@@ -262,15 +262,15 @@ describe('Interface Utilisateur - Tests d\'intégration', () => {
     });
   });
 
-  describe('Rafraîchissement automatique', () => {
-    it('devrait initialiser l\'intervalle de rafraîchissement', () => {
+  describe('RafraÃ®chissement automatique', () => {
+    it('devrait initialiser l\'intervalle de rafraÃ®chissement', () => {
       const autoRefreshInterval = setInterval(() => {}, 10000); // 10 secondes
 
       expect(autoRefreshInterval).not.toBeNull();
       clearInterval(autoRefreshInterval);
     });
 
-    it('devrait pouvoir arrêter le rafraîchissement automatique', () => {
+    it('devrait pouvoir arrÃªter le rafraÃ®chissement automatique', () => {
       let autoRefreshInterval = setInterval(() => {}, 10000);
       
       clearInterval(autoRefreshInterval);
@@ -279,20 +279,20 @@ describe('Interface Utilisateur - Tests d\'intégration', () => {
       expect(autoRefreshInterval).toBeNull();
     });
 
-    it('devrait charger les données lors d\'un rafraîchissement', async () => {
-      global.C2ApiClient.getSystemOverview.mockResolvedValue({ agents: { total: 5 } });
+    it('devrait charger les donnÃ©es lors d\'un rafraÃ®chissement', async () => {
+      global.jadusApiClient.getSystemOverview.mockResolvedValue({ agents: { total: 5 } });
 
-      const result = await global.C2ApiClient.getSystemOverview();
+      const result = await global.jadusApiClient.getSystemOverview();
 
-      expect(global.C2ApiClient.getSystemOverview).toHaveBeenCalled();
+      expect(global.jadusApiClient.getSystemOverview).toHaveBeenCalled();
       expect(result.agents.total).toBe(5);
     });
   });
 
   describe('Gestion des erreurs et messages', () => {
-    it('devrait afficher un message d\'erreur en cas de problème API', () => {
+    it('devrait afficher un message d\'erreur en cas de problÃ¨me API', () => {
       const error = new Error('Connection refused');
-      const errorMessage = `Impossible de charger les données: ${error.message}`;
+      const errorMessage = `Impossible de charger les donnÃ©es: ${error.message}`;
 
       expect(errorMessage).toContain('Connection refused');
     });
@@ -303,16 +303,16 @@ describe('Interface Utilisateur - Tests d\'intégration', () => {
       expect(loading).toBe(true);
     });
 
-    it('devrait afficher un message de succès après une action', () => {
+    it('devrait afficher un message de succÃ¨s aprÃ¨s une action', () => {
       const success = true;
-      const message = 'Tâche créée avec succès';
+      const message = 'TÃ¢che crÃ©Ã©e avec succÃ¨s';
 
       expect(success).toBe(true);
-      expect(message).toContain('succès');
+      expect(message).toContain('succÃ¨s');
     });
 
-    it('devrait nettoyer les messages après un délai', (done) => {
-      let message = 'Tâche créée';
+    it('devrait nettoyer les messages aprÃ¨s un dÃ©lai', (done) => {
+      let message = 'TÃ¢che crÃ©Ã©e';
 
       setTimeout(() => {
         message = '';
@@ -325,11 +325,11 @@ describe('Interface Utilisateur - Tests d\'intégration', () => {
     });
   });
 
-  describe('Responsive et accessibilité', () => {
+  describe('Responsive et accessibilitÃ©', () => {
     it('devrait avoir des labels pour les champs de formulaire', () => {
       const formLabels = {
         'command': 'Commande',
-        'priority': 'Priorité',
+        'priority': 'PrioritÃ©',
         'agent': 'Agent'
       };
 
@@ -339,8 +339,8 @@ describe('Interface Utilisateur - Tests d\'intégration', () => {
 
     it('devrait avoir des boutons avec aria-labels', () => {
       const buttons = {
-        'submit': 'Soumettre la tâche',
-        'refresh': 'Rafraîchir les données',
+        'submit': 'Soumettre la tÃ¢che',
+        'refresh': 'RafraÃ®chir les donnÃ©es',
         'close': 'Fermer la modal'
       };
 
@@ -348,14 +348,15 @@ describe('Interface Utilisateur - Tests d\'intégration', () => {
       expect(buttons['refresh']).toBeDefined();
     });
 
-    it('devrait avoir un contraste adéquat', () => {
+    it('devrait avoir un contraste adÃ©quat', () => {
       const colors = {
         'text': '#000000',
         'background': '#FFFFFF'
       };
 
-      // Vérifier que les couleurs ne sont pas identiques
+      // VÃ©rifier que les couleurs ne sont pas identiques
       expect(colors.text).not.toBe(colors.background);
     });
   });
 });
+

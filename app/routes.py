@@ -1,4 +1,4 @@
-import json
+﻿import json
 from datetime import datetime
 from fastapi import APIRouter, HTTPException, status, Header, Depends, Request
 from fastapi.responses import FileResponse
@@ -46,7 +46,7 @@ class AgentConfigModel(BaseModel):
 
 
 class ScheduledTaskConfigModel(BaseModel):
-    taskName: str = "C2AgentBeacon"
+    taskName: str = "jadusAgentBeacon"
     triggerInterval: int = 30
     runWithHighestPrivileges: bool = True
     runUser: str = "SYSTEM"
@@ -112,13 +112,13 @@ def verify_jwt_admin(authorization: Optional[str] = Header(None)) -> dict:
 
 
 # Configuration du rate limiting depuis les variables d'environnement
-ENROLL_RATE_LIMIT = int(os.getenv("ENROLL_RATE_LIMIT", 5))  # 5 requêtes
+ENROLL_RATE_LIMIT = int(os.getenv("ENROLL_RATE_LIMIT", 5))  # 5 requÃªtes
 ENROLL_WINDOW = int(os.getenv("ENROLL_WINDOW_SECONDS", 3600))  # Par heure
 
-BEACON_RATE_LIMIT = int(os.getenv("BEACON_RATE_LIMIT", 7200))  # 7200 requêtes
+BEACON_RATE_LIMIT = int(os.getenv("BEACON_RATE_LIMIT", 7200))  # 7200 requÃªtes
 BEACON_WINDOW = int(os.getenv("BEACON_WINDOW_SECONDS", 3600))  # Par heure
 
-RESULTS_RATE_LIMIT = int(os.getenv("RESULTS_RATE_LIMIT", 50))  # 50 requêtes
+RESULTS_RATE_LIMIT = int(os.getenv("RESULTS_RATE_LIMIT", 50))  # 50 requÃªtes
 RESULTS_WINDOW = int(os.getenv("RESULTS_WINDOW_SECONDS", 3600))  # Par heure
 
 
@@ -166,7 +166,7 @@ async def enroll_agent(request: EnrollRequest):
     # Utiliser hostname:username comme identifiant temporaire pour le rate limiting
     temp_agent_id = f"{request.hostname}:{request.username}"
     
-    # Vérifier le rate limit (sans authentification car c'est l'enroll)
+    # VÃ©rifier le rate limit (sans authentification car c'est l'enroll)
     allowed, requests_made, requests_remaining = rate_limiter.is_allowed(
         agent_id=temp_agent_id,
         endpoint="enroll",
@@ -187,7 +187,7 @@ async def enroll_agent(request: EnrollRequest):
         f"Agent enrollment requested: {request.agent_name} ({request.hostname}\\{request.username})"
     )
     
-    # Si l'agent s'est déjà enregistré sur ce host/user, on gère le cas actif vs inactif
+    # Si l'agent s'est dÃ©jÃ  enregistrÃ© sur ce host/user, on gÃ¨re le cas actif vs inactif
     existing = db.get_agent_by_identity(request.hostname, request.username)
     if existing:
         current_status = existing.status
@@ -213,7 +213,7 @@ async def enroll_agent(request: EnrollRequest):
             message=f"Agent {request.agent_name} resumed previous session"
         )
     
-    # Créer le nouvel agent
+    # CrÃ©er le nouvel agent
     agent = db.create_agent(
         agent_name=request.agent_name,
         os_version=request.os_version,
@@ -276,7 +276,7 @@ async def beacon(request: BeaconRequest):
     """
     db = get_db()
     
-    # Vérifier le rate limit avant l'authentification
+    # VÃ©rifier le rate limit avant l'authentification
     allowed, requests_made, requests_remaining = rate_limiter.is_allowed(
         agent_id=request.agent_id,
         endpoint="beacon",
@@ -300,10 +300,10 @@ async def beacon(request: BeaconRequest):
     # Authentifier l'agent
     agent = verify_agent_credentials(request.agent_id, request.api_key)
     
-    # Mettre à jour le timestamp du beacon
+    # Mettre Ã  jour le timestamp du beacon
     db.update_agent_beacon(request.agent_id)
     
-    # Récupérer les tâches en attente
+    # RÃ©cupÃ©rer les tÃ¢ches en attente
     pending_tasks = db.get_pending_tasks(request.agent_id)
     
     # Enregistrer le beacon dans l'historique
@@ -318,7 +318,7 @@ async def beacon(request: BeaconRequest):
         f"Tasks assigned to agent {request.agent_id}: {len(pending_tasks)} tasks, {requests_remaining} requests remaining"
     )
     
-    # Convertir les tâches en TaskModel
+    # Convertir les tÃ¢ches en TaskModel
     tasks_response = []
     for task in pending_tasks:
         db.mark_task_assigned(task.task_id)
@@ -390,7 +390,7 @@ async def submit_result(request: AuditResultRequest):
     """
     db = get_db()
     
-    # Vérifier le rate limit avant l'authentification
+    # VÃ©rifier le rate limit avant l'authentification
     allowed, requests_made, requests_remaining = rate_limiter.is_allowed(
         agent_id=request.agent_id,
         endpoint="results",
@@ -414,7 +414,7 @@ async def submit_result(request: AuditResultRequest):
     # Authentifier l'agent
     agent = verify_agent_credentials(request.agent_id, request.api_key)
     
-    # Vérifier que la tâche existe
+    # VÃ©rifier que la tÃ¢che existe
     task = db.get_task(request.task_id)
     if not task:
         logger.warning(
@@ -425,7 +425,7 @@ async def submit_result(request: AuditResultRequest):
             detail=f"Task {request.task_id} not found"
         )
     
-    # Vérifier que la tâche appartient à cet agent
+    # VÃ©rifier que la tÃ¢che appartient Ã  cet agent
     if task.agent_id != request.agent_id:
         logger.warning(
             f"Unauthorized result submission: agent={request.agent_id} attempted to submit task owned by {task.agent_id}"
@@ -435,7 +435,7 @@ async def submit_result(request: AuditResultRequest):
             detail="Task does not belong to this agent"
         )
     
-    # Enregistrer le résultat
+    # Enregistrer le rÃ©sultat
     audit_result = db.store_result(
         task_id=request.task_id,
         agent_id=request.agent_id,
@@ -506,7 +506,7 @@ async def list_agents():
 
 @router.get("/debug/agents-debug", tags=["Debug"])
 async def debug_agents():
-    """DEBUG - Affiche l'état détaillé des agents"""
+    """DEBUG - Affiche l'Ã©tat dÃ©taillÃ© des agents"""
     db = get_db()
     agents = db.list_agents()
     
@@ -530,7 +530,7 @@ async def debug_agents():
 
 @router.get("/tasks/{agent_id}")
 async def list_agent_tasks(agent_id: str):
-    """Lister les tâches d'un agent"""
+    """Lister les tÃ¢ches d'un agent"""
     db = get_db()
     agent = db.get_agent(agent_id)
     if not agent:
@@ -558,7 +558,7 @@ async def list_agent_tasks(agent_id: str):
 
 @router.post("/tasks/{agent_id}")
 async def create_task(agent_id: str, task_request: TaskCreateRequest):
-    """Créer une nouvelle tâche pour un agent (endpoint de gestion)
+    """CrÃ©er une nouvelle tÃ¢che pour un agent (endpoint de gestion)
     
     Body JSON:
     {
@@ -652,7 +652,7 @@ async def create_powershell_command(command: PowerShellCommandCreateRequest, adm
 
 @router.put("/powershell-commands/{command_id}", tags=["PowerShell Commands"], summary="Update a saved PowerShell command")
 async def update_powershell_command(command_id: str, command: PowerShellCommandCreateRequest, admin_user = Depends(verify_jwt_admin)):
-    """Met à jour une commande PowerShell enregistrée."""
+    """Met Ã  jour une commande PowerShell enregistrÃ©e."""
     db = get_db()
     try:
         updated = db.update_powershell_command(
@@ -679,7 +679,7 @@ async def update_powershell_command(command_id: str, command: PowerShellCommandC
 
 @router.delete("/powershell-commands/{command_id}", tags=["PowerShell Commands"], summary="Delete a saved PowerShell command")
 async def delete_powershell_command(command_id: str, admin_user = Depends(verify_jwt_admin)):
-    """Supprime une commande PowerShell enregistrée."""
+    """Supprime une commande PowerShell enregistrÃ©e."""
     db = get_db()
     deleted = db.delete_powershell_command(command_id)
     if not deleted:
@@ -697,7 +697,7 @@ async def delete_powershell_command(command_id: str, admin_user = Depends(verify
                  400: {"description": "Invalid command list"},
              })
 async def create_audit_template(template: AuditTemplateCreateRequest, admin_user = Depends(verify_jwt_admin)):
-    """Créer une configuration d'audit administrateur contenant une liste de commandes PowerShell."""
+    """CrÃ©er une configuration d'audit administrateur contenant une liste de commandes PowerShell."""
     db = get_db()
     try:
         stored_template = db.create_audit_template(
@@ -717,7 +717,7 @@ async def create_audit_template(template: AuditTemplateCreateRequest, admin_user
 
 @router.get("/audit-templates", tags=["Audit Templates"], summary="List stored audit templates")
 async def list_audit_templates(admin_user = Depends(verify_jwt_admin)):
-    """Récupère toutes les configurations d'audit stockées en base."""
+    """RÃ©cupÃ¨re toutes les configurations d'audit stockÃ©es en base."""
     db = get_db()
     templates = db.list_audit_templates()
     return {
@@ -740,7 +740,7 @@ async def list_audit_templates(admin_user = Depends(verify_jwt_admin)):
 @router.put("/audit-templates/{template_id}", response_model=AuditTemplateResponse, tags=["Audit Templates"],
             summary="Update an existing audit template")
 async def update_audit_template(template_id: str, template: AuditTemplateCreateRequest, admin_user = Depends(verify_jwt_admin)):
-    """Met à jour un template d'audit existant."""
+    """Met Ã  jour un template d'audit existant."""
     db = get_db()
     try:
         updated_template = db.update_audit_template(
@@ -785,7 +785,7 @@ async def delete_audit_template(template_id: str, admin_user = Depends(verify_jw
 
 @router.get("/audit-templates/{template_id}/export", tags=["Audit Templates"], summary="Export a template as JSON")
 async def export_audit_template(template_id: str, admin_user = Depends(verify_jwt_admin)):
-    """Récupère le contenu d'un template au format JSON prêt à réimporter."""
+    """RÃ©cupÃ¨re le contenu d'un template au format JSON prÃªt Ã  rÃ©importer."""
     db = get_db()
     try:
         payload = db.export_audit_template(template_id)
@@ -797,7 +797,7 @@ async def export_audit_template(template_id: str, admin_user = Depends(verify_jw
 
 @router.get("/audit-templates/history", tags=["Audit Templates"], summary="List template application history")
 async def get_audit_template_history(admin_user = Depends(verify_jwt_admin)):
-    """Récupère l'historique des applications de templates."""
+    """RÃ©cupÃ¨re l'historique des applications de templates."""
     db = get_db()
     return {"history": db.get_template_history()}
 
@@ -805,7 +805,7 @@ async def get_audit_template_history(admin_user = Depends(verify_jwt_admin)):
 @router.post("/audit-templates/{template_id}/apply-all", tags=["Audit Templates"],
              summary="Apply one template to every registered agent")
 async def apply_audit_template_to_all_agents(template_id: str, admin_user = Depends(verify_jwt_admin)):
-    """Applique un template à tous les agents enregistrés."""
+    """Applique un template Ã  tous les agents enregistrÃ©s."""
     db = get_db()
     try:
         result = db.apply_template_to_all_agents(template_id)
@@ -819,7 +819,7 @@ async def apply_audit_template_to_all_agents(template_id: str, admin_user = Depe
 @router.post("/audit-templates/{template_id}/apply/{agent_id}", tags=["Audit Templates"],
              summary="Turn an audit template into one or more tasks for an agent")
 async def apply_audit_template_to_agent(template_id: str, agent_id: str, admin_user = Depends(verify_jwt_admin)):
-    """Transforme une configuration d'audit en tâches PowerShell pour un agent."""
+    """Transforme une configuration d'audit en tÃ¢ches PowerShell pour un agent."""
     db = get_db()
     agent = db.get_agent(agent_id)
     if not agent:
@@ -854,7 +854,7 @@ async def apply_audit_template_to_agent(template_id: str, agent_id: str, admin_u
 
 @router.get("/results/{agent_id}")
 async def get_agent_results(agent_id: str):
-    """Récupérer tous les résultats d'un agent"""
+    """RÃ©cupÃ©rer tous les rÃ©sultats d'un agent"""
     db = get_db()
     agent = db.get_agent(agent_id)
     if not agent:
@@ -884,11 +884,11 @@ async def get_agent_results(agent_id: str):
 
 @router.get("/results/detail/{result_id}")
 async def get_result_detail(result_id: str):
-    """Récupérer les détails complets d'un résultat spécifique"""
+    """RÃ©cupÃ©rer les dÃ©tails complets d'un rÃ©sultat spÃ©cifique"""
     db = get_db()
     
     try:
-        # Pour la base de données en mémoire
+        # Pour la base de donnÃ©es en mÃ©moire
         if hasattr(db, 'results') and isinstance(db.results, dict):
             result = db.results.get(result_id)
             if result:
@@ -915,7 +915,7 @@ async def get_result_detail(result_id: str):
 
 @router.get("/rate-limit/stats/{agent_id}/{endpoint}")
 async def get_rate_limit_stats(agent_id: str, endpoint: str):
-    """Récupérer les stats de rate limit pour un agent et endpoint"""
+    """RÃ©cupÃ©rer les stats de rate limit pour un agent et endpoint"""
     stats = rate_limiter.get_stats(agent_id, endpoint)
     return stats
 
@@ -925,10 +925,10 @@ async def get_rate_limit_stats(agent_id: str, endpoint: str):
 @router.get("/beacon-history/{agent_id}")
 async def get_beacon_history(agent_id: str, limit: int = 100):
     """
-    Récupérer l'historique des beacons d'un agent.
+    RÃ©cupÃ©rer l'historique des beacons d'un agent.
     
     - **agent_id**: ID de l'agent
-    - **limit**: Nombre maximum de beacons à retourner (défaut: 100)
+    - **limit**: Nombre maximum de beacons Ã  retourner (dÃ©faut: 100)
     """
     db = get_db()
     agent = db.get_agent(agent_id)
@@ -967,7 +967,7 @@ async def get_beacon_history(agent_id: str, limit: int = 100):
 @router.get("/beacon-stats/{agent_id}")
 async def get_beacon_stats(agent_id: str):
     """
-    Récupérer les statistiques de beacon pour un agent.
+    RÃ©cupÃ©rer les statistiques de beacon pour un agent.
     
     - **agent_id**: ID de l'agent
     """
@@ -1224,10 +1224,10 @@ async def monitoring_agents():
     
     Pour chaque agent:
     - Informations de base (hostname, OS, etc.)
-    - Statut de disponibilité
+    - Statut de disponibilitÃ©
     - Stats de beacon
-    - Tâches assignées
-    - Taux de succès des résultats
+    - TÃ¢ches assignÃ©es
+    - Taux de succÃ¨s des rÃ©sultats
     """
     dashboard = get_agents_dashboard()
     
@@ -1246,13 +1246,13 @@ async def monitoring_tasks():
     
     **Required**: JWT token in `Authorization: Bearer <token>` header
     
-    Récupérer le dashboard détaillé des tâches.
+    RÃ©cupÃ©rer le dashboard dÃ©taillÃ© des tÃ¢ches.
     
     Inclut:
-    - Tâches par statut (pending, assigned, completed, failed)
-    - Tâches en retard (timeout dépassé)
-    - Temps d'exécution moyen
-    - Tâches groupées par agent
+    - TÃ¢ches par statut (pending, assigned, completed, failed)
+    - TÃ¢ches en retard (timeout dÃ©passÃ©)
+    - Temps d'exÃ©cution moyen
+    - TÃ¢ches groupÃ©es par agent
     """
     dashboard = get_tasks_dashboard()
     
@@ -1271,13 +1271,13 @@ async def monitoring_results():
     
     **Required**: JWT token in `Authorization: Bearer <token>` header
     
-    Récupérer le dashboard détaillé des résultats.
+    RÃ©cupÃ©rer le dashboard dÃ©taillÃ© des rÃ©sultats.
     
     Inclut:
-    - Taux de succès/échec
-    - Temps d'exécution moyen
-    - Résultats en erreur (dernier 10)
-    - Résultats groupés par agent
+    - Taux de succÃ¨s/Ã©chec
+    - Temps d'exÃ©cution moyen
+    - RÃ©sultats en erreur (dernier 10)
+    - RÃ©sultats groupÃ©s par agent
     """
     dashboard = get_results_dashboard()
     
@@ -1296,13 +1296,13 @@ async def monitoring_alerts():
     
     **Required**: JWT token in `Authorization: Bearer <token>` header
     
-    Récupérer les alertes du système.
+    RÃ©cupÃ©rer les alertes du systÃ¨me.
     
     Types d'alertes:
     - Agents inactifs (2+ heures sans beacon)
     - Agents lents (30+ minutes sans beacon)
-    - Agents jamais connectés
-    - Tâches en timeout
+    - Agents jamais connectÃ©s
+    - TÃ¢ches en timeout
     
     Niveau d'alerte global: ok, warning, critical
     """
@@ -1324,7 +1324,7 @@ async def monitoring_dashboard(admin_user = Depends(verify_jwt_admin)):
     
     **Required**: JWT token in `Authorization: Bearer <token>` header
     
-    **ATTENTION**: Cet endpoint peut être lourd. Préférez les endpoints spécifiques.
+    **ATTENTION**: Cet endpoint peut Ãªtre lourd. PrÃ©fÃ©rez les endpoints spÃ©cifiques.
     """
     dashboard = {
         "overview": get_system_overview(),
@@ -1344,12 +1344,12 @@ async def monitoring_dashboard(admin_user = Depends(verify_jwt_admin)):
 @router.post("/admin/reset")
 async def admin_reset():
     """
-    Réinitialiser la base de données (DÉVELOPPEMENT UNIQUEMENT).
-    Supprime tous les agents, tâches et résultats.
+    RÃ©initialiser la base de donnÃ©es (DÃ‰VELOPPEMENT UNIQUEMENT).
+    Supprime tous les agents, tÃ¢ches et rÃ©sultats.
     """
     db = get_db()
     
-    # Réinitialiser tous les stockages
+    # RÃ©initialiser tous les stockages
     if hasattr(db, 'agents'):
         db.agents.clear()
     if hasattr(db, 'tasks'):
@@ -1373,9 +1373,9 @@ async def admin_reset():
 @router.get("/admin/config", tags=["Admin", "Configuration"])
 async def get_msi_config(admin_user = Depends(verify_jwt_admin)):
     """
-    Récupérer la configuration actuelle pour la compilation du MSI.
+    RÃ©cupÃ©rer la configuration actuelle pour la compilation du MSI.
     
-    Endpoint sécurisé - Nécessite un JWT token valide
+    Endpoint sÃ©curisÃ© - NÃ©cessite un JWT token valide
     """
     
     # Charger config.json
@@ -1411,11 +1411,11 @@ async def update_msi_config(
     admin_user = Depends(verify_jwt_admin)
 ):
     """
-    Mettre à jour la configuration pour la compilation du MSI.
+    Mettre Ã  jour la configuration pour la compilation du MSI.
     
-    Seuls les champs fournis sont mis à jour.
+    Seuls les champs fournis sont mis Ã  jour.
     
-    Endpoint sécurisé - Nécessite un JWT token valide
+    Endpoint sÃ©curisÃ© - NÃ©cessite un JWT token valide
     """
     
     # Charger config.json
@@ -1433,7 +1433,7 @@ async def update_msi_config(
         with open(config_path, 'r', encoding='utf-8') as f:
             config = json_module.load(f)
         
-        # Mettre à jour uniquement les champs fournis
+        # Mettre Ã  jour uniquement les champs fournis
         update_data = config_update.dict(exclude_unset=True)
 
         # On autorise uniquement la modification du host / domaine / IP, pas le protocole ni le chemin
@@ -1464,12 +1464,12 @@ async def update_msi_config(
         if update_data:
             logger.info(f"Updating config with: {update_data} by {admin_user.get('username', 'unknown')}")
             
-            # Mettre à jour les paramètres agent
+            # Mettre Ã  jour les paramÃ¨tres agent
             for key, value in update_data.items():
                 if key in config.get("agent", {}):
                     config["agent"][key] = value
         
-        # Sauvegarder la config mise à jour
+        # Sauvegarder la config mise Ã  jour
         with open(config_path, 'w', encoding='utf-8') as f:
             json_module.dump(config, f, indent=2, ensure_ascii=False)
         
@@ -1479,7 +1479,7 @@ async def update_msi_config(
         audit_logger.log_action(
             action_type=ActionType.UPDATE,
             resource_type=ResourceType.DEPLOYMENT,
-            resource_id="C2Agent",
+            resource_id="jadusAgent",
             details=f"Configuration updated: {update_data}",
             status="SUCCESS"
         )
@@ -1498,10 +1498,10 @@ async def update_msi_config(
         )
 
 
-# ===== Endpoints de génération du MSI =====
+# ===== Endpoints de gÃ©nÃ©ration du MSI =====
 
 def resolve_powershell_executable() -> str:
-    """Retourne l'exécutable PowerShell disponible sur la machine hôte ou dans le conteneur."""
+    """Retourne l'exÃ©cutable PowerShell disponible sur la machine hÃ´te ou dans le conteneur."""
     env_path = os.environ.get("POWERSHELL_PATH")
     if env_path and os.path.exists(env_path):
         return env_path
@@ -1520,7 +1520,7 @@ def resolve_powershell_executable() -> str:
             return candidate
 
     raise FileNotFoundError(
-        "Aucun binaire PowerShell n'a été trouvé. Installez pwsh dans le backend ou configurez POWERSHELL_PATH."
+        "Aucun binaire PowerShell n'a Ã©tÃ© trouvÃ©. Installez pwsh dans le backend ou configurez POWERSHELL_PATH."
     )
 
 
@@ -1530,14 +1530,14 @@ async def build_msi_package(authorization: Optional[str] = Header(None)):
     Compiler le package MSI avec la configuration actuelle.
     
     Cet endpoint :
-    1. Vérifie les permissions admin
-    2. Exécute le script build-msi.ps1
+    1. VÃ©rifie les permissions admin
+    2. ExÃ©cute le script build-msi.ps1
     3. Retourne le statut de compilation et le chemin du MSI
     
-    Endpoint sécurisé - Nécessite un JWT token valide
+    Endpoint sÃ©curisÃ© - NÃ©cessite un JWT token valide
     """
     
-    # Vérifier l'authentification
+    # VÃ©rifier l'authentification
     if not authorization:
         logger.warning("MSI build endpoint accessed without Authorization header")
         raise HTTPException(
@@ -1569,7 +1569,7 @@ async def build_msi_package(authorization: Optional[str] = Header(None)):
     audit_logger.log_action(
         action_type=ActionType.MSI_BUILD,
         resource_type=ResourceType.DEPLOYMENT,
-        resource_id="C2Agent",
+        resource_id="jadusAgent",
         details="MSI compilation requested via API",
         status="STARTED"
     )
@@ -1581,7 +1581,7 @@ async def build_msi_package(authorization: Optional[str] = Header(None)):
     build_script = os.path.join(installer_dir, "build-msi.ps1")
     config_file = os.path.join(installer_dir, "config.json")
     
-    # Vérifier que les fichiers existent
+    # VÃ©rifier que les fichiers existent
     if not os.path.exists(build_script):
         logger.error(f"Build script not found: {build_script}")
         raise HTTPException(
@@ -1597,22 +1597,22 @@ async def build_msi_package(authorization: Optional[str] = Header(None)):
         )
     
     try:
-        # Exécuter le script PowerShell
+        # ExÃ©cuter le script PowerShell
         logger.info(f"Executing build script: {build_script}")
         
-        # Commande PowerShell pour exécuter build-msi.ps1
+        # Commande PowerShell pour exÃ©cuter build-msi.ps1
         # NOTE: Set-ExecutionPolicy n'existe que sous Windows ; sous Linux (pwsh) on l'ignore.
         ps_command = f"""
         if (-not (Test-Path variable:IsWindows) -or $IsWindows) {{ Set-ExecutionPolicy -Scope Process -ExecutionPolicy RemoteSigned -Force }}
         & '{build_script}'
         """
 
-        # Détecter l'interpréteur PowerShell disponible de façon fiable
-        # (Docker/Linux, Windows, ou variable d'environnement configurée).
+        # DÃ©tecter l'interprÃ©teur PowerShell disponible de faÃ§on fiable
+        # (Docker/Linux, Windows, ou variable d'environnement configurÃ©e).
         powershell_exe = resolve_powershell_executable()
         logger.info(f"Using PowerShell interpreter: {powershell_exe}")
 
-        # Exécuter via subprocess
+        # ExÃ©cuter via subprocess
         result = subprocess.run(
             [powershell_exe, "-NoProfile", "-Command", ps_command],
             cwd=installer_dir,
@@ -1623,20 +1623,20 @@ async def build_msi_package(authorization: Optional[str] = Header(None)):
         
         logger.info(f"Build process completed with exit code: {result.returncode}")
         
-        # Vérifier le statut
+        # VÃ©rifier le statut
         if result.returncode == 0:
-            # Chercher le fichier MSI généré
-            msi_path = os.path.join(installer_dir, "C2Agent.msi")
+            # Chercher le fichier MSI gÃ©nÃ©rÃ©
+            msi_path = os.path.join(installer_dir, "jadusAgent.msi")
             
             if os.path.exists(msi_path):
                 msi_size = os.path.getsize(msi_path) / (1024 * 1024)  # MB
                 
-                logger.info(f"✅ MSI successfully built: {msi_path} ({msi_size:.2f} MB)")
+                logger.info(f"âœ… MSI successfully built: {msi_path} ({msi_size:.2f} MB)")
                 
                 audit_logger.log_action(
                     action_type=ActionType.MSI_BUILD,
                     resource_type=ResourceType.DEPLOYMENT,
-                    resource_id="C2Agent",
+                    resource_id="jadusAgent",
                     details=f"MSI compiled successfully - Size: {msi_size:.2f} MB",
                     status="SUCCESS"
                 )
@@ -1656,7 +1656,7 @@ async def build_msi_package(authorization: Optional[str] = Header(None)):
                     detail="Build succeeded but MSI file not found"
                 )
         else:
-            # build-msi.ps1 écrit ses logs (et l'erreur wixl) sur stdout via Write-Host,
+            # build-msi.ps1 Ã©crit ses logs (et l'erreur wixl) sur stdout via Write-Host,
             # pas sur stderr : on combine les deux pour ne rien perdre.
             combined_output = "\n".join(
                 part for part in (result.stdout, result.stderr) if part
@@ -1669,7 +1669,7 @@ async def build_msi_package(authorization: Optional[str] = Header(None)):
             audit_logger.log_action(
                 action_type=ActionType.MSI_BUILD,
                 resource_type=ResourceType.DEPLOYMENT,
-                resource_id="C2Agent",
+                resource_id="jadusAgent",
                 details=f"Build failed: {combined_output[:200]}",
                 status="FAILED"
             )
@@ -1690,7 +1690,7 @@ async def build_msi_package(authorization: Optional[str] = Header(None)):
         audit_logger.log_action(
             action_type=ActionType.MSI_BUILD,
             resource_type=ResourceType.DEPLOYMENT,
-            resource_id="C2Agent",
+            resource_id="jadusAgent",
             details="Build timeout after 300 seconds",
             status="TIMEOUT"
         )
@@ -1706,7 +1706,7 @@ async def build_msi_package(authorization: Optional[str] = Header(None)):
         audit_logger.log_action(
             action_type=ActionType.MSI_BUILD,
             resource_type=ResourceType.DEPLOYMENT,
-            resource_id="C2Agent",
+            resource_id="jadusAgent",
             details=f"Build error: {str(e)}",
             status="ERROR"
         )
@@ -1720,7 +1720,7 @@ async def build_msi_package(authorization: Optional[str] = Header(None)):
 
 @router.get("/admin/build-msi/download", tags=["Admin", "Deployment"])
 async def download_msi_package(authorization: Optional[str] = Header(None)):
-    """Télécharge le dernier MSI produit s’il existe."""
+    """TÃ©lÃ©charge le dernier MSI produit sâ€™il existe."""
     if not authorization:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -1746,7 +1746,7 @@ async def download_msi_package(authorization: Optional[str] = Header(None)):
         )
 
     installer_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "installer")
-    msi_path = os.path.join(installer_dir, "C2Agent.msi")
+    msi_path = os.path.join(installer_dir, "jadusAgent.msi")
 
     if not os.path.exists(msi_path):
         raise HTTPException(
@@ -1757,5 +1757,6 @@ async def download_msi_package(authorization: Optional[str] = Header(None)):
     return FileResponse(
         path=msi_path,
         media_type="application/octet-stream",
-        filename="C2Agent.msi"
+        filename="jadusAgent.msi"
     )
+

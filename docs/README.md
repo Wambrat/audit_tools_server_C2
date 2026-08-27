@@ -1,20 +1,20 @@
-# 📚 Documentation C2 Server
+﻿# ðŸ“š Documentation jadus Server
 
-Bienvenue dans la documentation du système de gestion C2!
+Bienvenue dans la documentation du systÃ¨me de gestion jadus!
 
-## 🚀 Pour Commencer
+## ðŸš€ Pour Commencer
 
 **Nouveau sur le projet?** Commencez par:
-- 👉 [Guide Rapide - 5 minutes](setup/QUICK_START.md)
-- 🔧 [MongoDB - Configuration Production](setup/MONGODB.md)
+- ðŸ‘‰ [Guide Rapide - 5 minutes](setup/QUICK_START.md)
+- ðŸ”§ [MongoDB - Configuration Production](setup/MONGODB.md)
 
 ---
 
-## 📖 Index Complet
+## ðŸ“– Index Complet
 
-### 🟢 **Setup & Démarrage**
+### ðŸŸ¢ **Setup & DÃ©marrage**
 
-- **[Quick Start](setup/QUICK_START.md)** - Démarrer en 5 minutes
+- **[Quick Start](setup/QUICK_START.md)** - DÃ©marrer en 5 minutes
   - Installation
   - Configuration basique
   - Lancer le dashboard
@@ -22,32 +22,32 @@ Bienvenue dans la documentation du système de gestion C2!
 
 - **[MongoDB](setup/MONGODB.md)** - Production Database
   - Configuration MongoDB
-  - Migration mémoire → MongoDB
+  - Migration mÃ©moire â†’ MongoDB
   - Backup & Restore
   - Performance & HA
 
 ---
 
-### 📡 **API & Intégration**
+### ðŸ“¡ **API & IntÃ©gration**
 
 - **[API Documentation](api/API.md)** - Endpoints & Authentification
   - Architecture des endpoints
   - Authentification JWT pour admin
   - Rate limiting
   - Exemples d'utilisation
-  - Codes de réponse
+  - Codes de rÃ©ponse
 
 ---
 
-### 🏗️ **Architecture & Sécurité**
+### ðŸ—ï¸ **Architecture & SÃ©curitÃ©**
 
-- **[Architecture](architecture/ARCHITECTURE.md)** - Design Global du Système
+- **[Architecture](architecture/ARCHITECTURE.md)** - Design Global du SystÃ¨me
   - Composants
-  - Flux de données
+  - Flux de donnÃ©es
   - Database schema
   - Monitoring
 
-- **[Sécurité](architecture/SECURITY.md)** - Phase 5 Security Hardening
+- **[SÃ©curitÃ©](architecture/SECURITY.md)** - Phase 5 Security Hardening
   - SQL Injection Prevention (59 tests)
   - CORS Security (45 tests)
   - Session Management & Key Rotation (29 tests)
@@ -59,20 +59,20 @@ Bienvenue dans la documentation du système de gestion C2!
 
 ---
 
-### 🧪 **Tests & Validation**
+### ðŸ§ª **Tests & Validation**
 
-- **[Testing Guide](testing/TESTING.md)** - Stratégie & Guides de Test
+- **[Testing Guide](testing/TESTING.md)** - StratÃ©gie & Guides de Test
   - Unit tests (376 tests passants)
   - Integration tests
   - Backend API tests
   - Frontend tests
-  - Exécution des tests
+  - ExÃ©cution des tests
   - CI/CD
 
-- **[Test Summary](testing/TEST_SUMMARY.md)** - Résumé des Résultats
+- **[Test Summary](testing/TEST_SUMMARY.md)** - RÃ©sumÃ© des RÃ©sultats
   - Couverture
   - Statistiques
-  - Résultats Phase 5
+  - RÃ©sultats Phase 5
 
 - **[Frontend Tests](testing/FRONTEND_TESTS.md)** - Tests du Dashboard
   - Jest tests
@@ -81,32 +81,32 @@ Bienvenue dans la documentation du système de gestion C2!
 
 ---
 
-## 🎯 Guides par Rôle
+## ðŸŽ¯ Guides par RÃ´le
 
-### 👨‍💼 **Administrateur**
+### ðŸ‘¨â€ðŸ’¼ **Administrateur**
 
-Vous gérez le système C2:
+Vous gÃ©rez le systÃ¨me jadus:
 1. Lire: [Quick Start](setup/QUICK_START.md)
 2. Lire: [API Documentation](api/API.md) - Section "Admin Operations"
 3. Consulter: [Architecture](architecture/ARCHITECTURE.md) - Dashboard & Monitoring
 
-**Tâches courantes:**
+**TÃ¢ches courantes:**
 - Lancer le serveur: `python main.py`
-- Accéder au dashboard: `http://localhost:8000/docs`
+- AccÃ©der au dashboard: `http://localhost:8000/docs`
 - Enregistrer des agents PowerShell
 - Voir les alertes et les statistiques
 
 ---
 
-### 👨‍💻 **Développeur Backend**
+### ðŸ‘¨â€ðŸ’» **DÃ©veloppeur Backend**
 
-Vous développez ou intégrez l'API:
+Vous dÃ©veloppez ou intÃ©grez l'API:
 1. Lire: [Architecture](architecture/ARCHITECTURE.md)
 2. Lire: [API Documentation](api/API.md)
-3. Consulter: [Sécurité](architecture/SECURITY.md) - Vérifications obligatoires
+3. Consulter: [SÃ©curitÃ©](architecture/SECURITY.md) - VÃ©rifications obligatoires
 4. Lancer les tests: [Testing Guide](testing/TESTING.md)
 
-**Fichiers clés:**
+**Fichiers clÃ©s:**
 - `main.py` - Initialisation FastAPI
 - `app/routes.py` - Endpoints
 - `app/models.py` - Pydantic models
@@ -114,36 +114,36 @@ Vous développez ou intégrez l'API:
 
 ---
 
-### 🔐 **DevSecOps**
+### ðŸ” **DevSecOps**
 
-Vous maintenez la sécurité:
-1. Lire: [Sécurité](architecture/SECURITY.md) - **Impératif!**
-2. Lire: [MongoDB](setup/MONGODB.md) - Configuration sécurisée
+Vous maintenez la sÃ©curitÃ©:
+1. Lire: [SÃ©curitÃ©](architecture/SECURITY.md) - **ImpÃ©ratif!**
+2. Lire: [MongoDB](setup/MONGODB.md) - Configuration sÃ©curisÃ©e
 3. Consulter: [API Documentation](api/API.md) - JWT & Authentification
 
-**Points de contrôle:**
-- ✅ 376 tests de sécurité passants
-- ✅ Encryption key rotation
-- ✅ SQL injection prevention
-- ✅ CORS security
-- ✅ Rate limiting
-- ✅ Audit logging
+**Points de contrÃ´le:**
+- âœ… 376 tests de sÃ©curitÃ© passants
+- âœ… Encryption key rotation
+- âœ… SQL injection prevention
+- âœ… CORS security
+- âœ… Rate limiting
+- âœ… Audit logging
 
 ---
 
-### 🧪 **QA/Testeur**
+### ðŸ§ª **QA/Testeur**
 
-Vous testez le système:
+Vous testez le systÃ¨me:
 1. Lire: [Testing Guide](testing/TESTING.md)
 2. Consulter: [Quick Start](setup/QUICK_START.md) - Setup
-3. Lire: [Architecture](architecture/ARCHITECTURE.md) - Composants à tester
+3. Lire: [Architecture](architecture/ARCHITECTURE.md) - Composants Ã  tester
 
 **Commandes:**
 ```bash
 # Tous les tests
 python -m pytest test/ -v
 
-# Tests spécifiques
+# Tests spÃ©cifiques
 python -m pytest test/test_sql_injection_prevention.py -v
 
 # Coverage
@@ -152,12 +152,12 @@ python -m pytest test/ --cov=app --cov-report=html
 
 ---
 
-## 📊 Statistiques du Projet
+## ðŸ“Š Statistiques du Projet
 
-| Métrique | Valeur |
+| MÃ©trique | Valeur |
 |----------|--------|
-| **Tests Unitaires** | 376/376 ✅ |
-| **Tests de Sécurité** | 133 |
+| **Tests Unitaires** | 376/376 âœ… |
+| **Tests de SÃ©curitÃ©** | 133 |
 | **SQL Injection Tests** | 59 |
 | **CORS Tests** | 45 |
 | **Session Management Tests** | 29 |
@@ -168,24 +168,24 @@ python -m pytest test/ --cov=app --cov-report=html
 
 ---
 
-## 🚨 Important - Sécurité
+## ðŸš¨ Important - SÃ©curitÃ©
 
-⚠️ **Avant de déployer en production:**
+âš ï¸ **Avant de dÃ©ployer en production:**
 
-1. ✅ Lire [Sécurité](architecture/SECURITY.md) complètement
-2. ✅ Vérifier `.env` - Secrets configurés (voir `ENCRYPTION_KEY`, `CSRF_SECRET_KEY`, `ADMIN_SECRET_KEY`)
-3. ✅ Configurer MongoDB avec authentification
-4. ✅ Activer HTTPS en production
-5. ✅ Vérifier les CORS - Uniquement les origines autorisées
-6. ✅ Mettre en place les backups
-7. ✅ Configurer la rotation des logs
-8. ✅ Utiliser JWT tokens avec expiration courte
-9. ✅ Auditer les accès administrateur
-10. ✅ Tester les scenarios de sécurité (voir [Tests](testing/TESTING.md))
+1. âœ… Lire [SÃ©curitÃ©](architecture/SECURITY.md) complÃ¨tement
+2. âœ… VÃ©rifier `.env` - Secrets configurÃ©s (voir `ENCRYPTION_KEY`, `CSRF_SECRET_KEY`, `ADMIN_SECRET_KEY`)
+3. âœ… Configurer MongoDB avec authentification
+4. âœ… Activer HTTPS en production
+5. âœ… VÃ©rifier les CORS - Uniquement les origines autorisÃ©es
+6. âœ… Mettre en place les backups
+7. âœ… Configurer la rotation des logs
+8. âœ… Utiliser JWT tokens avec expiration courte
+9. âœ… Auditer les accÃ¨s administrateur
+10. âœ… Tester les scenarios de sÃ©curitÃ© (voir [Tests](testing/TESTING.md))
 
 ---
 
-## 🔗 Ressources Externes
+## ðŸ”— Ressources Externes
 
 - [FastAPI Documentation](https://fastapi.tiangolo.com/)
 - [MongoDB Documentation](https://docs.mongodb.com/)
@@ -194,37 +194,38 @@ python -m pytest test/ --cov=app --cov-report=html
 
 ---
 
-## 📞 Support & Issues
+## ðŸ“ž Support & Issues
 
-**En cas de problème:**
+**En cas de problÃ¨me:**
 
 1. Consulter la doc pertinente (voir index ci-dessus)
-2. Vérifier les logs: `tail -f logs/c2_server.log`
+2. VÃ©rifier les logs: `tail -f logs/jadus_server.log`
 3. Lancer les tests: `python -m pytest test/ -v`
-4. Vérifier MongoDB: `mongosh` → `db.serverStatus()`
-5. Vérifier l'API: `curl http://localhost:8000/health`
+4. VÃ©rifier MongoDB: `mongosh` â†’ `db.serverStatus()`
+5. VÃ©rifier l'API: `curl http://localhost:8000/health`
 
 ---
 
-## 📄 Fichiers de Configuration
+## ðŸ“„ Fichiers de Configuration
 
-| Fichier | Rôle |
+| Fichier | RÃ´le |
 |---------|------|
 | `.env` | Variables d'environnement |
-| `requirements.txt` | Dépendances Python |
+| `requirements.txt` | DÃ©pendances Python |
 | `pytest.ini` | Configuration tests |
-| `main.py` | Point d'entrée API |
+| `main.py` | Point d'entrÃ©e API |
 | `docker-compose.yml` | Stack Docker (optionnel) |
 
 ---
 
-## 🎯 Prochaines Étapes
+## ðŸŽ¯ Prochaines Ã‰tapes
 
-- ✅ Lire [Quick Start](setup/QUICK_START.md)
-- ✅ Lancer `python main.py`
-- ✅ Accéder au dashboard
-- ✅ Enregistrer un agent
-- ✅ Lancer un audit
-- ✅ Consulter la doc selon vos besoins
+- âœ… Lire [Quick Start](setup/QUICK_START.md)
+- âœ… Lancer `python main.py`
+- âœ… AccÃ©der au dashboard
+- âœ… Enregistrer un agent
+- âœ… Lancer un audit
+- âœ… Consulter la doc selon vos besoins
 
-**Bienvenue dans le C2 Server!** 🚀
+**Bienvenue dans le jadus Server!** ðŸš€
+

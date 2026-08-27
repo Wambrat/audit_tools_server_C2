@@ -1,5 +1,5 @@
 ﻿"""
-Système de monitoring pour tracker l'état global du système C2.
+Système de monitoring pour tracker l'état global du système jadus.
 Fournit des stats agrégées sur les agents, tâches et résultats.
 
 Cette implémentation est une reconstruction complète du script Start-Audit.ps1,
@@ -1194,3 +1194,4 @@ __all__ = [
     "get_results_dashboard",
     "get_alerts",
 ]
+

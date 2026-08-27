@@ -1,4 +1,4 @@
-"""
+﻿"""
 Security Tests - Password Hashing, Rate Limiting, Payload Validation, Secrets Masking
 
 Tests for security enhancements:
@@ -86,7 +86,7 @@ class TestSecretsFilter:
             level=logging.INFO,
             pathname="test.py",
             lineno=1,
-            msg="Login failed for token eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiYWRtaW4ifQ.signature",
+            msg="Login failed for token eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1jadusVyIjoiYWRtaW4ifQ.signature",
             args=(),
             exc_info=None
         )
@@ -206,7 +206,7 @@ class TestSecretsFilter:
             level=logging.INFO,
             pathname="test.py",
             lineno=1,
-            msg="Token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiYWRtaW4ifQ.signature with unicode: café",
+            msg="Token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1jadusVyIjoiYWRtaW4ifQ.signature with unicode: cafÃ©",
             args=(),
             exc_info=None
         )
@@ -272,3 +272,4 @@ class TestAdminLoginRateLimit:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
+

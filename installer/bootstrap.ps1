@@ -1,6 +1,6 @@
-# bootstrap.ps1
+﻿# bootstrap.ps1
 # Lance a chaque ouverture de session via HKLM\...\Run (pose par le MSI).
-# Role : creer la tache planifiee SYSTEM C2AgentBeacon au tout premier passage.
+# Role : creer la tache planifiee SYSTEM jadusAgentBeacon au tout premier passage.
 #  - Si la tache existe deja  -> ne fait rien (aucune invite UAC).
 #  - Sinon                    -> s'auto-eleve (1 invite UAC), cree la tache via
 #                                register-task.ps1, puis la demarre.
@@ -9,12 +9,12 @@
 
 $ErrorActionPreference = 'SilentlyContinue'
 
-$log = Join-Path $env:TEMP 'c2-bootstrap.log'
+$log = Join-Path $env:TEMP 'jadus-bootstrap.log'
 function W([string]$m) {
     "{0} {1}" -f [DateTime]::Now.ToString('s'), $m | Out-File -FilePath $log -Append -Encoding utf8
 }
 
-$taskName = 'C2AgentBeacon'
+$taskName = 'jadusAgentBeacon'
 
 # 1. La tache existe deja ? -> rien a faire
 if (Get-ScheduledTask -TaskName $taskName -TaskPath '\' -ErrorAction SilentlyContinue) {
@@ -49,3 +49,4 @@ W ("Elevated -> running {0}" -f $registerScript)
 Start-ScheduledTask -TaskName $taskName -TaskPath '\' -ErrorAction SilentlyContinue
 W "Bootstrap done"
 exit 0
+

@@ -1,15 +1,15 @@
-services:
+﻿services:
   # Traefik Reverse Proxy (interne)
   traefik:
     image: traefik:v3.0
-    container_name: c2-traefik
+    container_name: jadus-traefik
     command:
       - "--configFile=/etc/traefik/traefik.yml"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./traefik.yml:/etc/traefik/traefik.yml:ro
     networks:
-      - c2-network
+      - jadus-network
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "wget", "-q", "--spider", "http://localhost:80"]
@@ -17,10 +17,10 @@ services:
       timeout: 5s
       retries: 3
 
-  # Base de données MongoDB (avec TLS)
+  # Base de donnÃ©es MongoDB (avec TLS)
   mongodb:
     image: mongo:7.0
-    container_name: c2-mongodb
+    container_name: jadus-mongodb
     command:
       - mongod
       - --auth
@@ -30,7 +30,7 @@ services:
     environment:
       MONGO_INITDB_ROOT_USERNAME: root
       MONGO_INITDB_ROOT_PASSWORD: mongodb_password_change_me
-      MONGO_INITDB_DATABASE: c2_server_db
+      MONGO_INITDB_DATABASE: jadus_server_db
     ports:
       - "27017:27017"
     volumes:
@@ -39,7 +39,7 @@ services:
       - ./certs/mongodb-combined.pem:/etc/mongodb/mongodb-combined.pem:ro
       - ./certs/ca.pem:/etc/mongodb/ca.pem:ro
     networks:
-      - c2-network
+      - jadus-network
     healthcheck:
       test: ["CMD", "mongosh", "--eval", "db.runCommand('ping').ok"]
       interval: 10s
@@ -53,11 +53,11 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.backend
-    container_name: c2-backend
+    container_name: jadus-backend
     environment:
-      # Configuration de la base de données (TLS)
+      # Configuration de la base de donnÃ©es (TLS)
       DATABASE_MODE: mongodb
-      MONGODB_URI: mongodb://root:mongodb_password_change_me@mongodb:27017/c2_server_db?authSource=admin&tls=true&tlsCAFile=/etc/mongodb/ca.pem
+      MONGODB_URI: mongodb://root:mongodb_password_change_me@mongodb:27017/jadus_server_db?authSource=admin&tls=true&tlsCAFile=/etc/mongodb/ca.pem
       MONGODB_TLS_ENABLED: "true"
       MONGODB_TLS_CA_FILE: /etc/mongodb/ca.pem
       
@@ -79,7 +79,7 @@ services:
       - ./logs:/app/logs
       - ./certs/ca.pem:/etc/mongodb/ca.pem:ro
     networks:
-      - c2-network
+      - jadus-network
     labels:
       # Configuration Traefik pour le backend
       - "traefik.enable=true"
@@ -102,7 +102,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.frontend
-    container_name: c2-frontend
+    container_name: jadus-frontend
     depends_on:
       - backend
       - traefik
@@ -114,7 +114,7 @@ services:
       - ./certs/api.pem:/etc/nginx/certs/api.pem:ro
       - ./certs/api-key.pem:/etc/nginx/certs/api-key.pem:ro
     networks:
-      - c2-network
+      - jadus-network
     labels:
       # Configuration Traefik pour le frontend
       - "traefik.enable=true"
@@ -130,7 +130,7 @@ services:
     restart: unless-stopped
 
 networks:
-  c2-network:
+  jadus-network:
     driver: bridge
 
 volumes:
@@ -138,3 +138,4 @@ volumes:
     driver: local
   mongodb_config:
     driver: local
+

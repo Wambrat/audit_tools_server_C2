@@ -1,7 +1,7 @@
-#!/usr/bin/env pwsh
+﻿#!/usr/bin/env pwsh
 <#
 .SYNOPSIS
-    Master test orchestration script for C2 Backend
+    Master test orchestration script for jadus Backend
     
 .DESCRIPTION
     Coordinates server startup and comprehensive testing in one go
@@ -21,29 +21,29 @@ $ErrorActionPreference = "Stop"
 
 Write-Host @"
 
-╔════════════════════════════════════════════════════════════╗
-║       C2 BACKEND - MASTER TEST ORCHESTRATION              ║
-║                                                            ║
-║  This script will:                                         ║
-║  1️⃣  Start the FastAPI server in background               ║
-║  2️⃣  Run comprehensive test suite                         ║
-║  3️⃣  Generate detailed report                             ║
-║                                                            ║
-╚════════════════════════════════════════════════════════════╝
+â•”â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•—
+â•‘       jadus BACKEND - MASTER TEST ORCHESTRATION              â•‘
+â•‘                                                            â•‘
+â•‘  This script will:                                         â•‘
+â•‘  1ï¸âƒ£  Start the FastAPI server in background               â•‘
+â•‘  2ï¸âƒ£  Run comprehensive test suite                         â•‘
+â•‘  3ï¸âƒ£  Generate detailed report                             â•‘
+â•‘                                                            â•‘
+â•šâ•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
 "@ -ForegroundColor Cyan
 
-$projectPath = "C:\Users\perso\OneDrive\Documents\esgi\yearly_project_5\server_C2"
+$projectPath = "C:\Users\perso\OneDrive\Documents\esgi\yearly_project_5\jadus"
 
 # ========== PHASE 1: START SERVER ==========
 Write-Host "PHASE 1: Starting Server" -ForegroundColor Yellow
-Write-Host "─" * 60 -ForegroundColor Cyan
+Write-Host "â”€" * 60 -ForegroundColor Cyan
 
 try {
     Set-Location $projectPath
     
     if ($NoBackground) {
-        Write-Host "⚠️  Running server in foreground (new terminal may open)" -ForegroundColor Yellow
+        Write-Host "âš ï¸  Running server in foreground (new terminal may open)" -ForegroundColor Yellow
         Write-Host "`nPress Ctrl+C to stop the server`n" -ForegroundColor White
         
         $env:ENCRYPTION_KEY = 'test-master-key-that-is-long-enough'
@@ -70,7 +70,7 @@ try {
             -PassThru `
             -WindowStyle Minimized
         
-        Write-Host "✅ Server started (PID: $($serverProcess.Id))" -ForegroundColor Green
+        Write-Host "âœ… Server started (PID: $($serverProcess.Id))" -ForegroundColor Green
         Write-Host "   Waiting for server to initialize..." -ForegroundColor White
         
         # Wait for server to be ready
@@ -85,7 +85,7 @@ try {
                     -TimeoutSec 2 `
                     -ErrorAction SilentlyContinue
                 $serverReady = $true
-                Write-Host "✅ Server is ready!" -ForegroundColor Green
+                Write-Host "âœ… Server is ready!" -ForegroundColor Green
             } catch {
                 $retry++
                 Write-Host "   Attempt $retry/$maxRetries..." -ForegroundColor Gray
@@ -93,21 +93,21 @@ try {
         }
         
         if (-not $serverReady) {
-            Write-Host "❌ Server failed to start" -ForegroundColor Red
+            Write-Host "âŒ Server failed to start" -ForegroundColor Red
             Stop-Process -Id $serverProcess.Id -Force -ErrorAction SilentlyContinue
             exit 1
         }
     }
     
 } catch {
-    Write-Host "❌ Error starting server: $($_.Exception.Message)" -ForegroundColor Red
+    Write-Host "âŒ Error starting server: $($_.Exception.Message)" -ForegroundColor Red
     exit 1
 }
 
 # ========== PHASE 2: RUN TESTS ==========
 if (-not $NoAutoTest) {
     Write-Host "`n`nPHASE 2: Running Test Suite" -ForegroundColor Yellow
-    Write-Host "─" * 60 -ForegroundColor Cyan
+    Write-Host "â”€" * 60 -ForegroundColor Cyan
     Write-Host "`n" -NoNewline
     
     try {
@@ -117,46 +117,46 @@ if (-not $NoAutoTest) {
             # Run tests with server already running
             & $testScriptPath -SkipTests -SkipServer
         } else {
-            Write-Host "❌ Test script not found: $testScriptPath" -ForegroundColor Red
+            Write-Host "âŒ Test script not found: $testScriptPath" -ForegroundColor Red
             exit 1
         }
     } catch {
-        Write-Host "❌ Error running tests: $($_.Exception.Message)" -ForegroundColor Red
+        Write-Host "âŒ Error running tests: $($_.Exception.Message)" -ForegroundColor Red
         exit 1
     }
 }
 
 # ========== PHASE 3: SUMMARY ==========
 Write-Host "`n`nPHASE 3: Summary" -ForegroundColor Yellow
-Write-Host "─" * 60 -ForegroundColor Cyan
+Write-Host "â”€" * 60 -ForegroundColor Cyan
 
 Write-Host @"
 
-✅ Backend Testing Complete!
+âœ… Backend Testing Complete!
 
 Next Steps:
-──────────
+â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-1. 🌐 Open Swagger UI:
+1. ðŸŒ Open Swagger UI:
    http://localhost:8000/docs
 
-2. 🧪 Test API endpoints manually in Swagger
+2. ðŸ§ª Test API endpoints manually in Swagger
 
-3. 🎨 Start frontend:
+3. ðŸŽ¨ Start frontend:
    cd .\web
    npm install
    npm start
 
-4. 🔗 Verify frontend-backend integration:
+4. ðŸ”— Verify frontend-backend integration:
    - Check CORS headers working
    - Verify auth endpoints
    - Test data flow
 
-5. 📊 Monitor logs:
+5. ðŸ“Š Monitor logs:
    Get-Content logs/*.log -Tail 20
 
 Resources:
-──────────
+â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 - API Documentation:  http://localhost:8000/redoc
 - Health Check:       http://localhost:8000/health
 - Root:               http://localhost:8000/
@@ -168,4 +168,5 @@ To stop the server:
 
 "@ -ForegroundColor Green
 
-Write-Host "═" * 60 -ForegroundColor Cyan
+Write-Host "â•" * 60 -ForegroundColor Cyan
+

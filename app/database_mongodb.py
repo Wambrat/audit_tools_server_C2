@@ -1,6 +1,6 @@
-"""
-Couche de base de données MongoDB pour le serveur C2.
-Remplace l'implémentation en mémoire par une vraie base de données persistante.
+﻿"""
+Couche de base de donnÃ©es MongoDB pour le serveur jadus.
+Remplace l'implÃ©mentation en mÃ©moire par une vraie base de donnÃ©es persistante.
 """
 
 from pymongo import MongoClient, ASCENDING, DESCENDING
@@ -16,7 +16,7 @@ logger = get_logger(__name__)
 
 # Configuration MongoDB
 MONGODB_URI = os.getenv("MONGODB_URI", "mongodb://localhost:27017")
-MONGODB_DB = os.getenv("MONGODB_DB", "c2_server")
+MONGODB_DB = os.getenv("MONGODB_DB", "jadus_server")
 MONGODB_TIMEOUT = int(os.getenv("MONGODB_TIMEOUT", 5000))  # ms
 
 # Configuration TLS (optionnel)
@@ -32,37 +32,37 @@ try:
         "connectTimeoutMS": MONGODB_TIMEOUT,
     }
     
-    # Ajouter TLS si activé
+    # Ajouter TLS si activÃ©
     if MONGODB_TLS_ENABLED:
         if os.path.exists(MONGODB_TLS_CA_FILE):
             client_kwargs["tlsCAFile"] = MONGODB_TLS_CA_FILE
             client_kwargs["tlsAllowInvalidCertificates"] = False
-            client_kwargs["tlsAllowInvalidHostnames"] = True  # Pour certificats auto-signés
-            logger.info(f"🔐 MongoDB TLS enabled with CA: {MONGODB_TLS_CA_FILE}")
+            client_kwargs["tlsAllowInvalidHostnames"] = True  # Pour certificats auto-signÃ©s
+            logger.info(f"ðŸ” MongoDB TLS enabled with CA: {MONGODB_TLS_CA_FILE}")
         else:
-            logger.warning(f"⚠️ TLS CA file not found: {MONGODB_TLS_CA_FILE}")
+            logger.warning(f"âš ï¸ TLS CA file not found: {MONGODB_TLS_CA_FILE}")
     
-    # Connexion à MongoDB
+    # Connexion Ã  MongoDB
     client = MongoClient(MONGODB_URI, **client_kwargs)
     
-    # Vérifier la connexion
+    # VÃ©rifier la connexion
     client.admin.command("ping")
-    logger.info(f"✓ Connecté à MongoDB: {MONGODB_URI.split('://')[1].split('@')[0]}@{MONGODB_URI.split('@')[1] if '@' in MONGODB_URI else 'local'}")
+    logger.info(f"âœ“ ConnectÃ© Ã  MongoDB: {MONGODB_URI.split('://')[1].split('@')[0]}@{MONGODB_URI.split('@')[1] if '@' in MONGODB_URI else 'local'}")
     
     db = client[MONGODB_DB]
     
 except (ConnectionFailure, ServerSelectionTimeoutError) as e:
-    logger.error(f"✗ Connexion MongoDB échouée: {e}")
-    logger.warning("Utilisant le mode fallback (mémoire)")
+    logger.error(f"âœ— Connexion MongoDB Ã©chouÃ©e: {e}")
+    logger.warning("Utilisant le mode fallback (mÃ©moire)")
     db = None
 except Exception as e:
-    logger.error(f"✗ Erreur MongoDB: {e}")
-    logger.warning("Utilisant le mode fallback (mémoire)")
+    logger.error(f"âœ— Erreur MongoDB: {e}")
+    logger.warning("Utilisant le mode fallback (mÃ©moire)")
     db = None
 
 
 class MongoDatabase:
-    """Interface MongoDB pour l'API C2"""
+    """Interface MongoDB pour l'API jadus"""
     
     def __init__(self):
         """Initialiser les collections et les index"""
@@ -78,10 +78,10 @@ class MongoDatabase:
         self.template_history = db.template_history
         
         self._create_indexes()
-        logger.info("✓ Collections MongoDB initialisées")
+        logger.info("âœ“ Collections MongoDB initialisÃ©es")
     
     def _create_indexes(self):
-        """Créer les index pour optimiser les requêtes"""
+        """CrÃ©er les index pour optimiser les requÃªtes"""
         try:
             # Agents
             self.agents.create_index("agent_id", unique=True)
@@ -125,14 +125,14 @@ class MongoDatabase:
             self.template_history.create_index("agent_id")
             self.template_history.create_index("applied_at")
             
-            logger.info("✓ Index MongoDB créés")
+            logger.info("âœ“ Index MongoDB crÃ©Ã©s")
         except Exception as e:
-            logger.error(f"Erreur création des index: {e}")
+            logger.error(f"Erreur crÃ©ation des index: {e}")
     
     # ===== AGENTS =====
     
     def create_agent(self, agent_name: str, os_version: str, hostname: str, username: str) -> Agent:
-        """Créer un nouvel agent"""
+        """CrÃ©er un nouvel agent"""
         agent_id = str(uuid.uuid4())
         api_key = str(uuid.uuid4())
         now = datetime.now()
@@ -150,12 +150,12 @@ class MongoDatabase:
         }
         
         self.agents.insert_one(agent_doc)
-        logger.info(f"Agent créé: {agent_id} ({agent_name})")
+        logger.info(f"Agent crÃ©Ã©: {agent_id} ({agent_name})")
         
         return Agent(**agent_doc)
     
     def get_agent(self, agent_id: str) -> Agent:
-        """Récupérer un agent par ID"""
+        """RÃ©cupÃ©rer un agent par ID"""
         doc = self.agents.find_one({"agent_id": agent_id})
         if doc:
             doc.pop("_id", None)  # Retirer l'ID MongoDB
@@ -170,7 +170,7 @@ class MongoDatabase:
         return [Agent(**doc) for doc in docs]
     
     def update_agent_beacon(self, agent_id: str) -> bool:
-        """Mettre à jour le dernier beacon d'un agent et le marquer comme actif"""
+        """Mettre Ã  jour le dernier beacon d'un agent et le marquer comme actif"""
         result = self.agents.update_one(
             {"agent_id": agent_id},
             {"$set": {"last_beacon": datetime.now(), "status": "active"}}
@@ -178,7 +178,7 @@ class MongoDatabase:
         return result.modified_count > 0
     
     def update_agent_status(self, agent_id: str, status: str) -> bool:
-        """Mettre à jour le statut d'un agent"""
+        """Mettre Ã  jour le statut d'un agent"""
         result = self.agents.update_one(
             {"agent_id": agent_id},
             {"$set": {"status": status}}
@@ -186,8 +186,8 @@ class MongoDatabase:
         return result.modified_count > 0
     
     def delete_agent(self, agent_id: str) -> bool:
-        """Supprimer un agent et toutes ses tâches et résultats associés"""
-        # Vérifier que l'agent existe
+        """Supprimer un agent et toutes ses tÃ¢ches et rÃ©sultats associÃ©s"""
+        # VÃ©rifier que l'agent existe
         agent = self.agents.find_one({"agent_id": agent_id})
         if not agent:
             return False
@@ -195,10 +195,10 @@ class MongoDatabase:
         # Supprimer l'agent
         self.agents.delete_one({"agent_id": agent_id})
         
-        # Supprimer toutes ses tâches
+        # Supprimer toutes ses tÃ¢ches
         self.tasks.delete_many({"agent_id": agent_id})
         
-        # Supprimer tous ses résultats
+        # Supprimer tous ses rÃ©sultats
         self.results.delete_many({"agent_id": agent_id})
         
         # Supprimer l'historique des beacons
@@ -210,7 +210,7 @@ class MongoDatabase:
     # ===== TASKS =====
     
     def _normalize_task_parameters(self, parameters: dict = None) -> dict:
-        """Normaliser les paramètres pour garantir un format JSON standard."""
+        """Normaliser les paramÃ¨tres pour garantir un format JSON standard."""
         if parameters is None:
             return None
 
@@ -229,7 +229,7 @@ class MongoDatabase:
         return normalized
 
     def _attach_command_script_to_parameters(self, command_name: str, parameters: dict = None) -> dict:
-        """Ajoute le script PowerShell associé à une commande enregistrée dans la tâche."""
+        """Ajoute le script PowerShell associÃ© Ã  une commande enregistrÃ©e dans la tÃ¢che."""
         normalized_parameters = self._normalize_task_parameters(parameters)
         if not normalized_parameters:
             normalized_parameters = {}
@@ -243,7 +243,7 @@ class MongoDatabase:
         return normalized_parameters
 
     def create_task(self, agent_id: str, command: str, parameters: dict = None, priority: int = 0) -> Task:
-        """Créer une nouvelle tâche"""
+        """CrÃ©er une nouvelle tÃ¢che"""
         task_id = str(uuid.uuid4())
         now = datetime.now()
         normalized_parameters = self._attach_command_script_to_parameters(command, parameters)
@@ -262,12 +262,12 @@ class MongoDatabase:
         }
         
         self.tasks.insert_one(task_doc)
-        logger.info(f"Tâche créée: {task_id} pour agent {agent_id} (commande: {command})")
+        logger.info(f"TÃ¢che crÃ©Ã©e: {task_id} pour agent {agent_id} (commande: {command})")
         
         return Task(**task_doc)
     
     def get_task(self, task_id: str) -> Task:
-        """Récupérer une tâche par ID"""
+        """RÃ©cupÃ©rer une tÃ¢che par ID"""
         doc = self.tasks.find_one({"task_id": task_id})
         if doc:
             doc.pop("_id", None)
@@ -275,14 +275,14 @@ class MongoDatabase:
         return None
     
     def list_tasks(self) -> list:
-        """Lister toutes les tâches"""
+        """Lister toutes les tÃ¢ches"""
         docs = list(self.tasks.find({}))
         for doc in docs:
             doc.pop("_id", None)
         return [Task(**doc) for doc in docs]
     
     def get_pending_tasks(self, agent_id: str) -> list:
-        """Récupérer les tâches en attente pour un agent"""
+        """RÃ©cupÃ©rer les tÃ¢ches en attente pour un agent"""
         docs = list(self.tasks.find({
             "agent_id": agent_id,
             "status": {"$in": ["pending", "assigned"]}
@@ -294,7 +294,7 @@ class MongoDatabase:
         return [Task(**doc) for doc in docs]
     
     def update_task_status(self, task_id: str, status: str, completed_at: datetime = None) -> bool:
-        """Mettre à jour le statut d'une tâche"""
+        """Mettre Ã  jour le statut d'une tÃ¢che"""
         update_data = {"$set": {"status": status}}
         if completed_at:
             update_data["$set"]["completed_at"] = completed_at
@@ -309,7 +309,7 @@ class MongoDatabase:
     
     def store_result(self, task_id: str, agent_id: str, status: str, result: dict, 
                     execution_time_ms: int, error_message: str = None) -> AuditResult:
-        """Enregistrer un résultat d'audit"""
+        """Enregistrer un rÃ©sultat d'audit"""
         result_id = str(uuid.uuid4())
         now = datetime.now()
         
@@ -326,22 +326,22 @@ class MongoDatabase:
         
         self.results.insert_one(result_doc)
         
-        # Mettre à jour le statut de la tâche
+        # Mettre Ã  jour le statut de la tÃ¢che
         self.update_task_status(task_id, "completed", now)
         
-        logger.info(f"Résultat enregistré: {result_id} pour tâche {task_id} (status: {status})")
+        logger.info(f"RÃ©sultat enregistrÃ©: {result_id} pour tÃ¢che {task_id} (status: {status})")
         
         return AuditResult(**result_doc)
     
     def get_results(self, agent_id: str) -> list:
-        """Récupérer tous les résultats d'un agent"""
+        """RÃ©cupÃ©rer tous les rÃ©sultats d'un agent"""
         docs = list(self.results.find({"agent_id": agent_id}).sort("created_at", DESCENDING))
         for doc in docs:
             doc.pop("_id", None)
         return [AuditResult(**doc) for doc in docs]
     
     def get_result(self, result_id: str) -> AuditResult:
-        """Récupérer un résultat par ID"""
+        """RÃ©cupÃ©rer un rÃ©sultat par ID"""
         doc = self.results.find_one({"result_id": result_id})
         if doc:
             doc.pop("_id", None)
@@ -362,14 +362,14 @@ class MongoDatabase:
         return builtins | custom_names
 
     def create_powershell_command(self, name: str, description: str = "", script: str = "", created_by: str = "admin") -> PowerShellCommandDefinition:
-        """Créer une commande PowerShell réutilisable."""
+        """CrÃ©er une commande PowerShell rÃ©utilisable."""
         normalized_name = self._normalize_command_name(name)
         if not normalized_name:
             raise ValueError("Le nom de la commande est obligatoire")
         if not str(script or '').strip():
-            raise ValueError("Le script PowerShell ne peut pas être vide")
+            raise ValueError("Le script PowerShell ne peut pas Ãªtre vide")
         if self.powershell_commands.find_one({"name": {"$regex": f"^{re.escape(normalized_name)}$", "$options": "i"}}):
-            raise ValueError(f"Une commande nommée '{normalized_name}' existe déjà")
+            raise ValueError(f"Une commande nommÃ©e '{normalized_name}' existe dÃ©jÃ ")
 
         command_id = str(uuid.uuid4())
         now = datetime.now()
@@ -408,10 +408,10 @@ class MongoDatabase:
         if not normalized_name:
             raise ValueError("Le nom de la commande est obligatoire")
         if not str(script or '').strip():
-            raise ValueError("Le script PowerShell ne peut pas être vide")
+            raise ValueError("Le script PowerShell ne peut pas Ãªtre vide")
         duplicate = self.powershell_commands.find_one({"command_id": {"$ne": command_id}, "name": {"$regex": f"^{re.escape(normalized_name)}$", "$options": "i"}})
         if duplicate:
-            raise ValueError(f"Une commande nommée '{normalized_name}' existe déjà")
+            raise ValueError(f"Une commande nommÃ©e '{normalized_name}' existe dÃ©jÃ ")
 
         updated_doc = {
             "name": normalized_name,
@@ -428,7 +428,7 @@ class MongoDatabase:
         return result.deleted_count > 0
 
     def seed_default_modules(self, zip_path: str = None) -> dict:
-        """Importer les modules PowerShell standards présents dans modules.zip dans la DB MongoDB."""
+        """Importer les modules PowerShell standards prÃ©sents dans modules.zip dans la DB MongoDB."""
         import os
         import zipfile
         from pathlib import Path
@@ -462,7 +462,7 @@ class MongoDatabase:
                                 self.powershell_commands.insert_one({
                                     "command_id": str(uuid.uuid4()),
                                     "name": command_name,
-                                    "description": f"Module importé depuis {relative_name}",
+                                    "description": f"Module importÃ© depuis {relative_name}",
                                     "script": script_content,
                                     "created_by": "system",
                                     "created_at": datetime.now(),
@@ -487,7 +487,7 @@ class MongoDatabase:
                             self.audit_templates.insert_one({
                                 "template_id": str(uuid.uuid4()),
                                 "name": f"{folder_name} Audit",
-                                "description": f"Template initialisé depuis les modules {folder_name}",
+                                "description": f"Template initialisÃ© depuis les modules {folder_name}",
                                 "commands": names[:8],
                                 "created_by": "system",
                                 "created_at": datetime.now(),
@@ -497,16 +497,16 @@ class MongoDatabase:
                         except Exception:
                             continue
 
-            logger.info(f"Modules importés en MongoDB: {command_count} commandes, {template_count} templates")
+            logger.info(f"Modules importÃ©s en MongoDB: {command_count} commandes, {template_count} templates")
             return {"commands": command_count, "templates": template_count}
         except Exception as exc:
-            logger.error(f"Erreur lors de l'import des modules par défaut MongoDB: {exc}")
+            logger.error(f"Erreur lors de l'import des modules par dÃ©faut MongoDB: {exc}")
             return {"commands": 0, "templates": 0}
 
     # ===== AUDIT TEMPLATES =====
 
     def create_audit_template(self, name: str, description: str, commands: list, created_by: str = "admin") -> AuditTemplate:
-        """Créer une configuration d'audit mongo"""
+        """CrÃ©er une configuration d'audit mongo"""
         cleaned_commands = []
         allowed_commands = self._get_valid_command_names()
 
@@ -515,7 +515,7 @@ class MongoDatabase:
             if not normalized:
                 continue
             if normalized not in allowed_commands:
-                raise ValueError(f"Commande non autorisée: {normalized}")
+                raise ValueError(f"Commande non autorisÃ©e: {normalized}")
             if normalized not in cleaned_commands:
                 cleaned_commands.append(normalized)
 
@@ -546,7 +546,7 @@ class MongoDatabase:
         return [AuditTemplate(**doc) for doc in docs]
 
     def get_audit_template(self, template_id: str) -> AuditTemplate:
-        """Récupérer un template d'audit"""
+        """RÃ©cupÃ©rer un template d'audit"""
         doc = self.audit_templates.find_one({"template_id": template_id})
         if doc:
             doc.pop("_id", None)
@@ -554,7 +554,7 @@ class MongoDatabase:
         return None
 
     def update_audit_template(self, template_id: str, name: str, description: str, commands: list, created_by: str = "admin") -> AuditTemplate:
-        """Mettre à jour un template d'audit existant"""
+        """Mettre Ã  jour un template d'audit existant"""
         template = self.get_audit_template(template_id)
         if not template:
             raise ValueError("Template d'audit introuvable")
@@ -567,7 +567,7 @@ class MongoDatabase:
             if not normalized:
                 continue
             if normalized not in allowed_commands:
-                raise ValueError(f"Commande non autorisée: {normalized}")
+                raise ValueError(f"Commande non autorisÃ©e: {normalized}")
             if normalized not in cleaned_commands:
                 cleaned_commands.append(normalized)
 
@@ -607,7 +607,7 @@ class MongoDatabase:
         return result.deleted_count > 0
 
     def export_audit_template(self, template_id: str) -> dict:
-        """Exporter les données d'un template au format JSON"""
+        """Exporter les donnÃ©es d'un template au format JSON"""
         template = self.get_audit_template(template_id)
         if not template:
             raise ValueError("Template d'audit introuvable")
@@ -623,7 +623,7 @@ class MongoDatabase:
         }
 
     def record_template_application(self, template_id: str, agent_id: str, task_count: int = 0) -> dict:
-        """Historiser l'application d'un template à un agent"""
+        """Historiser l'application d'un template Ã  un agent"""
         entry = {
             "template_id": template_id,
             "agent_id": agent_id,
@@ -639,7 +639,7 @@ class MongoDatabase:
         }
 
     def get_template_history(self, limit: int = 50) -> list:
-        """Récupérer l'historique d'application des templates"""
+        """RÃ©cupÃ©rer l'historique d'application des templates"""
         docs = list(self.template_history.find({}).sort("applied_at", -1).limit(limit))
         for doc in docs:
             doc.pop("_id", None)
@@ -648,7 +648,7 @@ class MongoDatabase:
         return docs
 
     def build_tasks_from_template(self, template_id: str, agent_id: str):
-        """Créer des tâches standardisées pour un agent à partir d'un template."""
+        """CrÃ©er des tÃ¢ches standardisÃ©es pour un agent Ã  partir d'un template."""
         template = self.get_audit_template(template_id)
         if not template:
             raise ValueError("Template d'audit introuvable")
@@ -673,7 +673,7 @@ class MongoDatabase:
         return created_tasks
 
     def apply_template_to_all_agents(self, template_id: str) -> dict:
-        """Appliquer un template à tous les agents connectés"""
+        """Appliquer un template Ã  tous les agents connectÃ©s"""
         template = self.get_audit_template(template_id)
         if not template:
             raise ValueError("Template d'audit introuvable")
@@ -693,7 +693,7 @@ class MongoDatabase:
             "agents_total": len(agents),
             "applied_agents": applied_agents,
             "task_count": total_tasks,
-            "message": f"Template appliqué à {len(agents)} agent(s)"
+            "message": f"Template appliquÃ© Ã  {len(agents)} agent(s)"
         }
     
     # ===== BEACON HISTORY =====
@@ -716,13 +716,13 @@ class MongoDatabase:
         
         self.beacons.insert_one(beacon_doc)
         
-        # Mettre à jour last_beacon de l'agent
+        # Mettre Ã  jour last_beacon de l'agent
         self.update_agent_beacon(agent_id)
         
         return BeaconHistory(**beacon_doc)
     
     def get_beacon_history(self, agent_id: str, limit: int = 100) -> list:
-        """Récupérer l'historique des beacons d'un agent"""
+        """RÃ©cupÃ©rer l'historique des beacons d'un agent"""
         docs = list(
             self.beacons.find({"agent_id": agent_id})
             .sort("created_at", DESCENDING)
@@ -761,7 +761,7 @@ class MongoDatabase:
     # ===== UTILITAIRES =====
     
     def get_stats(self) -> dict:
-        """Récupérer les statistiques globales"""
+        """RÃ©cupÃ©rer les statistiques globales"""
         return {
             "agents_count": self.agents.count_documents({}),
             "tasks_count": self.tasks.count_documents({}),
@@ -770,23 +770,24 @@ class MongoDatabase:
         }
     
     def clear_all(self):
-        """⚠️ Vider toutes les collections (DANGER!)"""
-        logger.warning("⚠️ Suppression de TOUTES les collections MongoDB!")
+        """âš ï¸ Vider toutes les collections (DANGER!)"""
+        logger.warning("âš ï¸ Suppression de TOUTES les collections MongoDB!")
         self.agents.drop()
         self.tasks.drop()
         self.results.drop()
         self.beacons.drop()
-        logger.warning("✓ Toutes les collections supprimées")
+        logger.warning("âœ“ Toutes les collections supprimÃ©es")
 
 
 # Instance globale
 try:
     if db is not None:
         db_instance = MongoDatabase()
-        logger.info("✓ MongoDB activé et prêt")
+        logger.info("âœ“ MongoDB activÃ© et prÃªt")
     else:
         db_instance = None
         logger.warning("MongoDB non disponible - Mode fallback")
 except Exception as e:
     logger.error(f"Erreur initialisation MongoDB: {e}")
     db_instance = None
+

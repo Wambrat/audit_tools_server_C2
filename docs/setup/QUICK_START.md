@@ -1,36 +1,36 @@
-# 🚀 Guide Rapide de Démarrage
+﻿# ðŸš€ Guide Rapide de DÃ©marrage
 
-Bienvenue dans votre interface de gestion du parc informatique C2!
+Bienvenue dans votre interface de gestion du parc informatique jadus!
 
-## ⏱️ Démarrage en 5 minutes
+## â±ï¸ DÃ©marrage en 5 minutes
 
-### 1. Préparer l'environnement
+### 1. PrÃ©parer l'environnement
 
 **Windows (PowerShell):**
 ```powershell
-cd server_C2
-python -m venv venv                    # Créer l'env si nécessaire
+cd jadus
+python -m venv venv                    # CrÃ©er l'env si nÃ©cessaire
 .\venv\Scripts\Activate.ps1            # Activer l'environnement virtuel
-pip install -r requirements.txt        # Installer les dépendances
+pip install -r requirements.txt        # Installer les dÃ©pendances
 ```
 
 **Linux/macOS (Bash):**
 ```bash
-cd server_C2
-python -m venv venv              # Créer l'env si nécessaire
+cd jadus
+python -m venv venv              # CrÃ©er l'env si nÃ©cessaire
 source venv/bin/activate         # Activer l'environnement virtuel
-pip install -r requirements.txt  # Installer les dépendances
+pip install -r requirements.txt  # Installer les dÃ©pendances
 ```
 
-### 2. Configurer la base de données
+### 2. Configurer la base de donnÃ©es
 
-#### 📊 Mode In-Memory (Développement - par défaut)
+#### ðŸ“Š Mode In-Memory (DÃ©veloppement - par dÃ©faut)
 
-C'est déjà configuré! Les données sont stockées en mémoire. Parfait pour tester.
+C'est dÃ©jÃ  configurÃ©! Les donnÃ©es sont stockÃ©es en mÃ©moire. Parfait pour tester.
 
-#### 🔧 Mode MongoDB (Production)
+#### ðŸ”§ Mode MongoDB (Production)
 
-Voir [MONGODB.md](MONGODB.md) pour une configuration complète.
+Voir [MONGODB.md](MONGODB.md) pour une configuration complÃ¨te.
 
 Rapidement:
 ```bash
@@ -40,100 +40,100 @@ docker run -d --name mongodb -p 27017:27017 mongo:latest
 # Configurer .env
 DATABASE_MODE=mongodb
 MONGODB_URL=mongodb://localhost:27017
-MONGODB_DB=c2_server
+MONGODB_DB=jadus_server
 ```
 
-### 3. Démarrer l'API (Terminal 1)
+### 3. DÃ©marrer l'API (Terminal 1)
 
 ```powershell
 python main.py
 ```
 
-**Résultat attendu:**
+**RÃ©sultat attendu:**
 ```
-🟢 Database mode: In-Memory (development)
-✅ In-Memory database initialized
+ðŸŸ¢ Database mode: In-Memory (development)
+âœ… In-Memory database initialized
 Routes registered successfully
 INFO:     Uvicorn running on http://0.0.0.0:8000
 ```
 
-L'API démarre sur **http://localhost:8000**
+L'API dÃ©marre sur **http://localhost:8000**
 
-### 4. Accéder au Dashboard
+### 4. AccÃ©der au Dashboard
 
 Vous avez 2 options:
 
 **Option A: Serveur Web Local**
 ```bash
 # Terminal 2
-cd server_C2/web
+cd jadus/web
 python -m http.server 8080
 ```
-Accédez à: **http://localhost:8080**
+AccÃ©dez Ã : **http://localhost:8080**
 
 **Option B: Swagger UI**
-Accédez directement à: **http://localhost:8000/docs**
+AccÃ©dez directement Ã : **http://localhost:8000/docs**
 
-### 5. C'est parti! 🎉
+### 5. C'est parti! ðŸŽ‰
 
 Le dashboard s'affiche avec:
-- ✅ Vue d'ensemble de la conformité
-- ✅ Liste des agents
-- ✅ Alertes du système
-- ✅ Boutons pour lancer des audits
+- âœ… Vue d'ensemble de la conformitÃ©
+- âœ… Liste des agents
+- âœ… Alertes du systÃ¨me
+- âœ… Boutons pour lancer des audits
 
 ---
 
-## 📊 Dashboard - Guide Rapide
+## ðŸ“Š Dashboard - Guide Rapide
 
-### 🟢 Santé Globale (En haut)
+### ðŸŸ¢ SantÃ© Globale (En haut)
 
 ```
-Agents Actifs: 10/12      Taux de Succès: 93.5%
+Agents Actifs: 10/12      Taux de SuccÃ¨s: 93.5%
 Agents Inactifs: 2        Beacons: 5,234
 ```
 
-**Si vous voyez du rouge**: Problèmes détectés → Consultez les "Alertes"
+**Si vous voyez du rouge**: ProblÃ¨mes dÃ©tectÃ©s â†’ Consultez les "Alertes"
 
-### 🟡 Alertes (Section Alertes)
+### ðŸŸ¡ Alertes (Section Alertes)
 
 ```
-❌ CRITICAL: Agent "PC-AUDIT-05" inactif depuis 3h
-⚠️ WARNING: Agent "PC-AUDIT-08" lent (pas de réponse depuis 45min)
+âŒ CRITICAL: Agent "PC-AUDIT-05" inactif depuis 3h
+âš ï¸ WARNING: Agent "PC-AUDIT-08" lent (pas de rÃ©ponse depuis 45min)
 ```
 
-**Action requise**: Enquêter sur les agents problématiques
+**Action requise**: EnquÃªter sur les agents problÃ©matiques
 
-### 👥 État des Agents (Section Agents)
+### ðŸ‘¥ Ã‰tat des Agents (Section Agents)
 
 Tableau avec chaque machine:
 - **Statut**: active/inactive/compromised
 - **Hostname**: Serveur/PC
-- **Succès**: Pourcentage de tâches réussies (barre verte)
-- **Bouton 🚀 Audit**: Lancer un audit maintenant
+- **SuccÃ¨s**: Pourcentage de tÃ¢ches rÃ©ussies (barre verte)
+- **Bouton ðŸš€ Audit**: Lancer un audit maintenant
 
-### ❌ Agents Hors Ligne (Section Offline)
+### âŒ Agents Hors Ligne (Section Offline)
 
-Machines inaccessibles avec durée d'inactivité.
+Machines inaccessibles avec durÃ©e d'inactivitÃ©.
 
 ---
 
-## 🚀 Lancer un Audit
+## ðŸš€ Lancer un Audit
 
 ### Cas 1: Audit Simple
 
-1. Trouvez l'agent dans **"État des Agents"**
-2. Cliquez sur **🚀 Audit**
-3. Sélectionnez une commande (ex: `Get-AuditPolicy`)
-4. Cliquez **✓ Lancer l'Audit**
+1. Trouvez l'agent dans **"Ã‰tat des Agents"**
+2. Cliquez sur **ðŸš€ Audit**
+3. SÃ©lectionnez une commande (ex: `Get-AuditPolicy`)
+4. Cliquez **âœ“ Lancer l'Audit**
 
-✅ L'audit est envoyé à l'agent!
+âœ… L'audit est envoyÃ© Ã  l'agent!
 
-### Cas 2: Audit Personnalisé
+### Cas 2: Audit PersonnalisÃ©
 
-1. Cliquez **🚀 Audit** → Sélectionnez "Personnalisée"
+1. Cliquez **ðŸš€ Audit** â†’ SÃ©lectionnez "PersonnalisÃ©e"
 2. Entrez votre commande PowerShell
-3. Cliquez **✓ Lancer l'Audit**
+3. Cliquez **âœ“ Lancer l'Audit**
 
 **Exemples de commandes:**
 ```powershell
@@ -144,46 +144,46 @@ Get-LocalGroupMember -Group "Administrators" | ConvertTo-Json
 
 ---
 
-## 🔗 Documentation Complète
+## ðŸ”— Documentation ComplÃ¨te
 
-Pour plus de détails, consultez:
+Pour plus de dÃ©tails, consultez:
 
-- 🏗️ [Architecture](../architecture/ARCHITECTURE.md) - Design global du système
-- 🔐 [Sécurité](../architecture/SECURITY.md) - Système de sécurité Phase 5
-- 📡 [API](../api/API.md) - Documentation des endpoints
-- 🧪 [Tests](../testing/TESTING.md) - Guides de test
-- 💾 [MongoDB](./MONGODB.md) - Configuration production
+- ðŸ—ï¸ [Architecture](../architecture/ARCHITECTURE.md) - Design global du systÃ¨me
+- ðŸ” [SÃ©curitÃ©](../architecture/SECURITY.md) - SystÃ¨me de sÃ©curitÃ© Phase 5
+- ðŸ“¡ [API](../api/API.md) - Documentation des endpoints
+- ðŸ§ª [Tests](../testing/TESTING.md) - Guides de test
+- ðŸ’¾ [MongoDB](./MONGODB.md) - Configuration production
 
 ---
 
-## ✅ Checklist Startup
+## âœ… Checklist Startup
 
-- [ ] Python 3.8+ installé
-- [ ] Dépendances installées (`pip install -r requirements.txt`)
-- [ ] API lancée (`python main.py`)
+- [ ] Python 3.8+ installÃ©
+- [ ] DÃ©pendances installÃ©es (`pip install -r requirements.txt`)
+- [ ] API lancÃ©e (`python main.py`)
 - [ ] Dashboard accessible (`http://localhost:8000/docs` ou web)
-- [ ] Au moins 1 agent enregistré
+- [ ] Au moins 1 agent enregistrÃ©
 
 ---
 
-## 🐛 Troubleshooting
+## ðŸ› Troubleshooting
 
-### API ne démarre pas
+### API ne dÃ©marre pas
 
 ```bash
-# Vérifier l'erreur
+# VÃ©rifier l'erreur
 python main.py
 
-# Créer l'env virtuel si besoin
+# CrÃ©er l'env virtuel si besoin
 python -m venv venv
 .\venv\Scripts\Activate.ps1  # Windows
 source venv/bin/activate     # Linux/macOS
 
-# Réinstaller les dépendances
+# RÃ©installer les dÃ©pendances
 pip install -r requirements.txt
 ```
 
-### Port 8000 déjà utilisé
+### Port 8000 dÃ©jÃ  utilisÃ©
 
 ```bash
 # Windows: Trouver le processus
@@ -208,7 +208,7 @@ Voir le script dans `/scripts/agent/agent_real.ps1`
 
 ---
 
-## 📱 Tester les APIs avec PowerShell
+## ðŸ“± Tester les APIs avec PowerShell
 
 ```powershell
 # Enregistrer un agent
@@ -229,4 +229,5 @@ $response
 
 ---
 
-**🎯 Vous êtes prêt!** Explorez le dashboard et lancez vos premiers audits.
+**ðŸŽ¯ Vous Ãªtes prÃªt!** Explorez le dashboard et lancez vos premiers audits.
+

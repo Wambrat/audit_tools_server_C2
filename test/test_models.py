@@ -1,6 +1,6 @@
-"""
+﻿"""
 Tests unitaires pour app/models.py
-Teste la validation des modèles Pydantic
+Teste la validation des modÃ¨les Pydantic
 """
 import pytest
 from datetime import datetime
@@ -16,7 +16,7 @@ from app.database import Database
 
 
 class TestEnrollRequest:
-    """Tests pour le modèle EnrollRequest"""
+    """Tests pour le modÃ¨le EnrollRequest"""
     
     def test_valid_enroll_request(self):
         """Test: EnrollRequest valide"""
@@ -44,7 +44,7 @@ class TestEnrollRequest:
             EnrollRequest(**data)
     
     def test_extra_fields_ignored(self):
-        """Test: Les champs extra sont ignorés"""
+        """Test: Les champs extra sont ignorÃ©s"""
         data = {
             "agent_name": "test-agent",
             "os_version": "Windows 10",
@@ -58,7 +58,7 @@ class TestEnrollRequest:
 
 
 class TestBeaconRequest:
-    """Tests pour le modèle BeaconRequest"""
+    """Tests pour le modÃ¨le BeaconRequest"""
     
     def test_valid_beacon_request(self):
         """Test: BeaconRequest valide"""
@@ -89,7 +89,7 @@ class TestBeaconRequest:
 
 
 class TestTaskCreateRequest:
-    """Tests pour le modèle TaskCreateRequest"""
+    """Tests pour le modÃ¨le TaskCreateRequest"""
     
     def test_valid_task_request(self):
         """Test: TaskCreateRequest valide"""
@@ -104,7 +104,7 @@ class TestTaskCreateRequest:
         assert req.priority == 1
     
     def test_default_priority(self):
-        """Test: Priority par défaut à 0"""
+        """Test: Priority par dÃ©faut Ã  0"""
         data = {
             "command": "Get-Service"
         }
@@ -115,16 +115,16 @@ class TestTaskCreateRequest:
 
 
 class TestAuditResultRequest:
-    """Tests pour le modèle AuditResultRequest"""
+    """Tests pour le modÃ¨le AuditResultRequest"""
     
     def test_valid_result_request_dict(self):
-        """Test: AuditResultRequest avec résultat dict"""
+        """Test: AuditResultRequest avec rÃ©sultat dict"""
         data = {
             "agent_id": "agent-1",
             "api_key": "key-1",
             "task_id": "task-1",
             "status": "success",
-            "result": {"services": ["svc1", "svc2"]},
+            "result": {"services": ["svc1", "svjadus"]},
             "execution_time_ms": 1250
         }
         req = AuditResultRequest(**data)
@@ -133,7 +133,7 @@ class TestAuditResultRequest:
         assert isinstance(req.result, dict)
     
     def test_valid_result_request_string(self):
-        """Test: AuditResultRequest avec résultat string (PowerShell output)"""
+        """Test: AuditResultRequest avec rÃ©sultat string (PowerShell output)"""
         data = {
             "agent_id": "agent-1",
             "api_key": "key-1",
@@ -165,10 +165,10 @@ class TestAuditResultRequest:
 
 
 class TestAgent:
-    """Tests pour le modèle Agent"""
+    """Tests pour le modÃ¨le Agent"""
     
     def test_valid_agent(self):
-        """Test: Créer un Agent valide"""
+        """Test: CrÃ©er un Agent valide"""
         agent = Agent(
             agent_id="agent-1",
             api_key="key-1",
@@ -205,23 +205,23 @@ class TestAuditTemplate:
     def test_valid_audit_template_request(self):
         """Test: une configuration d'audit accepte plusieurs commandes PowerShell"""
         data = {
-            "name": "Audit système",
-            "description": "Vérification de base du système",
+            "name": "Audit systÃ¨me",
+            "description": "VÃ©rification de base du systÃ¨me",
             "commands": ["Get-Service", "Get-Process", "Get-LocalUser"],
             "created_by": "admin"
         }
         req = AuditTemplateCreateRequest(**data)
 
-        assert req.name == "Audit système"
+        assert req.name == "Audit systÃ¨me"
         assert len(req.commands) == 3
         assert req.commands[0] == "Get-Service"
 
     def test_valid_audit_template_response(self):
-        """Test: la réponse stockée contient un identifiant et la liste de commandes"""
+        """Test: la rÃ©ponse stockÃ©e contient un identifiant et la liste de commandes"""
         template = AuditTemplate(
             template_id="tpl-1",
-            name="Audit réseau",
-            description="Vérification réseau",
+            name="Audit rÃ©seau",
+            description="VÃ©rification rÃ©seau",
             commands=["Get-NetAdapter", "Get-Process"],
             created_by="admin",
             created_at=datetime.now(),
@@ -234,10 +234,10 @@ class TestAuditTemplate:
 
 
 class TestPowerShellCommand:
-    """Tests pour la bibliothèque de commandes PowerShell"""
+    """Tests pour la bibliothÃ¨que de commandes PowerShell"""
 
     def test_valid_custom_command(self):
-        """Test: une commande PowerShell custom peut être créée"""
+        """Test: une commande PowerShell custom peut Ãªtre crÃ©Ã©e"""
         data = {
             "name": "Get-ADUserCustom",
             "description": "Retourne les utilisateurs AD",
@@ -250,7 +250,7 @@ class TestPowerShellCommand:
         assert req.script.startswith("Get-ADUser")
 
     def test_custom_command_definition(self):
-        """Test: le modèle de persistence stocke le code et le nom"""
+        """Test: le modÃ¨le de persistence stocke le code et le nom"""
         command = PowerShellCommandDefinition(
             command_id="cmd-1",
             name="Get-ADUserCustom",
@@ -267,10 +267,10 @@ class TestPowerShellCommand:
 
 
 class TestTask:
-    """Tests pour le modèle Task"""
+    """Tests pour le modÃ¨le Task"""
     
     def test_valid_task(self):
-        """Test: Créer une Task valide"""
+        """Test: CrÃ©er une Task valide"""
         task = Task(
             task_id="task-1",
             agent_id="agent-1",
@@ -282,7 +282,7 @@ class TestTask:
         
         assert task.task_id == "task-1"
         assert task.status == TaskStatus.PENDING
-        assert task.timeout_seconds == 300  # valeur par défaut
+        assert task.timeout_seconds == 300  # valeur par dÃ©faut
     
     def test_task_status_transitions(self):
         """Test: Les transitions de status sont valides"""
@@ -294,7 +294,7 @@ class TestTask:
             created_at=datetime.now()
         )
         
-        # Vérifier que tous les status existent
+        # VÃ©rifier que tous les status existent
         assert TaskStatus.PENDING.value == "pending"
         assert TaskStatus.ASSIGNED.value == "assigned"
         assert TaskStatus.COMPLETED.value == "completed"
@@ -302,10 +302,10 @@ class TestTask:
 
 
 class TestAuditResult:
-    """Tests pour le modèle AuditResult"""
+    """Tests pour le modÃ¨le AuditResult"""
     
     def test_valid_audit_result(self):
-        """Test: Créer un AuditResult valide"""
+        """Test: CrÃ©er un AuditResult valide"""
         result = AuditResult(
             result_id="result-1",
             task_id="task-1",
@@ -338,14 +338,14 @@ class TestAuditResult:
 
 
 class TestAuditTemplateDatabase:
-    """Tests pour les opérations d'administration des templates"""
+    """Tests pour les opÃ©rations d'administration des templates"""
 
     def test_template_update_duplicate_and_history(self):
-        """Test: mise à jour, duplication et historique de template"""
+        """Test: mise Ã  jour, duplication et historique de template"""
         db = Database()
 
         template = db.create_audit_template(
-            name="Audit réseau",
+            name="Audit rÃ©seau",
             description="Base",
             commands=["Get-Service", "Get-Process"],
             created_by="admin"
@@ -353,14 +353,14 @@ class TestAuditTemplateDatabase:
 
         updated = db.update_audit_template(
             template.template_id,
-            name="Audit réseau renforcé",
-            description="Version mise à jour",
+            name="Audit rÃ©seau renforcÃ©",
+            description="Version mise Ã  jour",
             commands=["Get-Service", "Get-Process", "Get-IPConfig"],
             created_by="admin"
         )
 
         duplicate = db.duplicate_audit_template(template.template_id)
-        assert updated.name == "Audit réseau renforcé"
+        assert updated.name == "Audit rÃ©seau renforcÃ©"
         assert duplicate.template_id != template.template_id
         assert duplicate.commands == ["Get-Service", "Get-Process", "Get-IPConfig"]
 
@@ -373,7 +373,7 @@ class TestAuditTemplateDatabase:
         assert deleted is True
 
     def test_apply_template_to_all_agents(self):
-        """Test: un template peut être appliqué à tous les agents"""
+        """Test: un template peut Ãªtre appliquÃ© Ã  tous les agents"""
         db = Database()
 
         db.create_agent("agent-a", "Windows 11", "A", "admin")
@@ -393,7 +393,7 @@ class TestAuditTemplateDatabase:
 
 
 class TestEnumValues:
-    """Tests pour les énums"""
+    """Tests pour les Ã©nums"""
     
     def test_agent_status_values(self):
         """Test: Toutes les valeurs de AgentStatus"""
@@ -407,3 +407,4 @@ class TestEnumValues:
         assert TaskStatus.ASSIGNED.value == "assigned"
         assert TaskStatus.COMPLETED.value == "completed"
         assert TaskStatus.FAILED.value == "failed"
+

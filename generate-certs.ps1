@@ -1,4 +1,4 @@
-#!/usr/bin/env powershell
+﻿#!/usr/bin/env powershell
 # Script PowerShell pour generer certificats auto-signes pour developpement TLS
 
 param(
@@ -7,7 +7,7 @@ param(
 
 $ErrorActionPreference = "Stop"
 
-# Pour OpenSSL, on ignore les non-zéros à cause des avertissements
+# Pour OpenSSL, on ignore les non-zÃ©ros Ã  cause des avertissements
 $ErrorActionPreference = "Continue"
 
 Write-Host ""
@@ -21,7 +21,7 @@ if (-not (Test-Path $CERT_DIR)) {
 $COUNTRY = "FR"
 $STATE = "Ile-de-France"
 $CITY = "Paris"
-$ORG = "C2 Server Dev"
+$ORG = "jadus Server Dev"
 
 $openssl = 'C:\Program Files\Git\usr\bin\openssl.exe'
 if (-not (Test-Path $openssl)) {
@@ -37,7 +37,7 @@ Write-Host "[2/10] Generating CA certificate..." -ForegroundColor Yellow
 & $openssl req -new -x509 -days $Days `
   -key "$CERT_DIR\ca-key.pem" `
   -out "$CERT_DIR\ca.pem" `
-  -subj "/C=$COUNTRY/ST=$STATE/L=$CITY/O=$ORG/CN=C2-CA" 2>&1 | Out-Null
+  -subj "/C=$COUNTRY/ST=$STATE/L=$CITY/O=$ORG/CN=jadus-CA" 2>&1 | Out-Null
 
 Write-Host "[3/10] Generating MongoDB server key..." -ForegroundColor Yellow
 & $openssl genrsa -out "$CERT_DIR\mongodb-key.pem" 2048 2>&1 | Where-Object { $_ -notmatch "^[0-9]+\sB" } | Out-Null
@@ -80,7 +80,7 @@ O = $ORG
 CN = localhost
 
 [v3_req]
-subjectAltName = DNS:localhost,DNS:api,DNS:frontend,DNS:127.0.0.1,DNS:*.c2-network
+subjectAltName = DNS:localhost,DNS:api,DNS:frontend,DNS:127.0.0.1,DNS:*.jadus-network
 "@
 
 Set-Content -Path "$CERT_DIR\api-san.conf" -Value $sanConfig
@@ -128,3 +128,4 @@ Write-Host "To trust the CA locally on Windows:" -ForegroundColor Yellow
 Write-Host "  certutil -addstore -f 'Root' $CERT_DIR\ca.pem"
 Write-Host ""
 Write-Host "Next step: docker-compose up -d --build" -ForegroundColor Green
+

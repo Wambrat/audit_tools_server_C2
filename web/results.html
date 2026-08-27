@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>C2 Server - Résultats des Audits</title>
+    <title>jadus Server - RÃ©sultats des Audits</title>
     
     <!-- Authentication Guard -->
     <script src="js/auth-guard.js"></script>
@@ -163,7 +163,7 @@
 
         .status-badge.failed {
             background: #f8d7da;
-            color: #721c24;
+            color: #721jadus4;
         }
 
         .result-meta {
@@ -302,7 +302,7 @@
         }
 
         .error-message {
-            color: #721c24;
+            color: #721jadus4;
             background: #f8d7da;
             padding: 10px;
             border-radius: 5px;
@@ -321,14 +321,14 @@
 <body>
     <div class="container">
         <header>
-            <h1>📊 Résultats des Audits</h1>
-            <a href="index.html" class="back-link">← Retour au Dashboard</a>
+            <h1>ðŸ“Š RÃ©sultats des Audits</h1>
+            <a href="index.html" class="back-link">â† Retour au Dashboard</a>
         </header>
 
         <div class="content">
-            <!-- Liste des résultats -->
+            <!-- Liste des rÃ©sultats -->
             <div class="card">
-                <h2>📋 Résultats</h2>
+                <h2>ðŸ“‹ RÃ©sultats</h2>
                 
                 <div class="filters">
                     <select id="agentFilter">
@@ -336,28 +336,28 @@
                     </select>
                     <select id="statusFilter">
                         <option value="">Tous les statuts</option>
-                        <option value="success">✅ Succès</option>
-                        <option value="failed">❌ Échec</option>
+                        <option value="success">âœ… SuccÃ¨s</option>
+                        <option value="failed">âŒ Ã‰chec</option>
                     </select>
-                    <button onclick="loadResults()">🔄 Rafraîchir</button>
+                    <button onclick="loadResults()">ðŸ”„ RafraÃ®chir</button>
                 </div>
 
                 <div class="results-list" id="resultsList">
                     <div class="empty-state">
-                        <div class="empty-state-icon">📭</div>
-                        <p>Aucun résultat</p>
+                        <div class="empty-state-icon">ðŸ“­</div>
+                        <p>Aucun rÃ©sultat</p>
                     </div>
                 </div>
             </div>
 
-            <!-- Détails du résultat -->
+            <!-- DÃ©tails du rÃ©sultat -->
             <div class="card">
-                <h2>🔍 Détails du Résultat</h2>
+                <h2>ðŸ” DÃ©tails du RÃ©sultat</h2>
                 
                 <div id="detailContainer">
                     <div class="empty-state">
-                        <div class="empty-state-icon">👈</div>
-                        <p>Sélectionnez un résultat pour voir les détails</p>
+                        <div class="empty-state-icon">ðŸ‘ˆ</div>
+                        <p>SÃ©lectionnez un rÃ©sultat pour voir les dÃ©tails</p>
                     </div>
                 </div>
             </div>
@@ -377,7 +377,7 @@
             };
         }
 
-        // Charger tous les agents au démarrage
+        // Charger tous les agents au dÃ©marrage
         async function loadAgents() {
             try {
                 const response = await fetch(`${API_BASE_URL}/monitoring/agents`, {
@@ -412,7 +412,7 @@
             }
         }
 
-        // Charger tous les résultats
+        // Charger tous les rÃ©sultats
         async function loadResults() {
             const resultsList = document.getElementById('resultsList');
             resultsList.innerHTML = '<div class="loading"><div class="spinner"></div> Chargement...</div>';
@@ -435,7 +435,7 @@
 
                 const data = await response.json();
                 
-                // Utiliser le tableau results s'il existe, sinon construire à partir de results_by_agent
+                // Utiliser le tableau results s'il existe, sinon construire Ã  partir de results_by_agent
                 if (data.results && Array.isArray(data.results)) {
                     allResults = data.results;
                 } else if (data.results_by_agent) {
@@ -451,7 +451,7 @@
 
                 applyFilters();
             } catch (error) {
-                console.error('Erreur lors du chargement des résultats:', error);
+                console.error('Erreur lors du chargement des rÃ©sultats:', error);
                 resultsList.innerHTML = `<div class="error-message">Erreur: ${error.message}</div>`;
             }
         }
@@ -487,18 +487,18 @@
             });
 
             if (filtered.length === 0) {
-                resultsList.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📭</div><p>Aucun résultat correspondant</p></div>';
+                resultsList.innerHTML = '<div class="empty-state"><div class="empty-state-icon">ðŸ“­</div><p>Aucun rÃ©sultat correspondant</p></div>';
                 return;
             }
 
             resultsList.innerHTML = filtered.map(result => {
                 if (!result || !result.result_id) {
-                    console.warn('Résultat invalide:', result);
+                    console.warn('RÃ©sultat invalide:', result);
                     return '';
                 }
                 const auditId = result.audit_id || result.result_id || 'N/A';
                 const compliance = result.compliance || {};
-                const complianceStatus = compliance.status === 'non_compliant' ? '⚠️ Non conforme' : '✅ Conforme';
+                const complianceStatus = compliance.status === 'non_compliant' ? 'âš ï¸ Non conforme' : 'âœ… Conforme';
                 return `
                     <div class="result-item" onclick="showResultDetail('${result.result_id}')">
                         <div class="result-item-header">
@@ -510,25 +510,25 @@
                         <div class="result-meta">
                             <strong>Agent:</strong> ${(result.agent_name || result.agent_id || 'Unknown').substring(0, 20)}<br>
                             <strong>ID Audit:</strong> ${escapeHtml(String(auditId))}<br>
-                            <strong>Recommandation:</strong> ${escapeHtml((result.recommendation || compliance.recommendation || '—').substring(0, 80))}<br>
+                            <strong>Recommandation:</strong> ${escapeHtml((result.recommendation || compliance.recommendation || 'â€”').substring(0, 80))}<br>
                             <strong>Date:</strong> ${new Date(result.created_at).toLocaleString('fr-FR')}<br>
-                            <strong>Durée:</strong> ${result.execution_time_ms || 0}ms
+                            <strong>DurÃ©e:</strong> ${result.execution_time_ms || 0}ms
                         </div>
                     </div>
                 `;
             }).filter(html => html).join('');
         }
 
-        // Afficher les détails d'un résultat
+        // Afficher les dÃ©tails d'un rÃ©sultat
         async function showResultDetail(resultId) {
             const detailContainer = document.getElementById('detailContainer');
             
             if (!resultId) {
-                detailContainer.innerHTML = '<div class="error-message">ID de résultat invalide</div>';
+                detailContainer.innerHTML = '<div class="error-message">ID de rÃ©sultat invalide</div>';
                 return;
             }
             
-            detailContainer.innerHTML = '<div class="loading"><div class="spinner"></div> Chargement des détails...</div>';
+            detailContainer.innerHTML = '<div class="loading"><div class="spinner"></div> Chargement des dÃ©tails...</div>';
 
             try {
                 const response = await fetch(`${API_BASE_URL}/results/detail/${resultId}`, {
@@ -543,27 +543,27 @@
                 }
 
                 if (!response.ok) {
-                    throw new Error('Résultat non trouvé');
+                    throw new Error('RÃ©sultat non trouvÃ©');
                 }
 
                 const result = await response.json();
                 
                 if (!result) {
-                    throw new Error('Données de résultat vides');
+                    throw new Error('DonnÃ©es de rÃ©sultat vides');
                 }
 
                 const createdAt = new Date(result.created_at);
                 const compliance = result.compliance || {};
                 const recommendation = result.recommendation || compliance.recommendation || 'Aucune recommandation';
                 const auditId = result.audit_id || result.result_id || 'N/A';
-                const complianceLabel = compliance.status === 'non_compliant' ? '⚠️ Non conforme' : '✅ Conforme';
+                const complianceLabel = compliance.status === 'non_compliant' ? 'âš ï¸ Non conforme' : 'âœ… Conforme';
 
                 let html = `
                     <div class="detail-section">
-                        <h3>📊 Informations Générales</h3>
+                        <h3>ðŸ“Š Informations GÃ©nÃ©rales</h3>
                         <div class="detail-grid">
                             <div class="detail-field">
-                                <label>ID Résultat:</label>
+                                <label>ID RÃ©sultat:</label>
                                 <value>${escapeHtml(result.result_id || 'N/A')}</value>
                             </div>
                             <div class="detail-field">
@@ -571,7 +571,7 @@
                                 <value>${escapeHtml(String(auditId))}</value>
                             </div>
                             <div class="detail-field">
-                                <label>ID Tâche:</label>
+                                <label>ID TÃ¢che:</label>
                                 <value>${escapeHtml(result.task_id || 'N/A')}</value>
                             </div>
                             <div class="detail-field">
@@ -587,11 +587,11 @@
                                 </value>
                             </div>
                             <div class="detail-field">
-                                <label>Date d'exécution:</label>
+                                <label>Date d'exÃ©cution:</label>
                                 <value>${createdAt.toLocaleString('fr-FR')}</value>
                             </div>
                             <div class="detail-field">
-                                <label>Durée d'exécution:</label>
+                                <label>DurÃ©e d'exÃ©cution:</label>
                                 <value>${result.execution_time_ms || 0}ms</value>
                             </div>
                             <div class="detail-field" style="grid-column: 1 / -1;">
@@ -605,7 +605,7 @@
                 if (result.result && result.result.trim && result.result.trim()) {
                     html += `
                         <div class="detail-section">
-                            <h3>📝 Résultat de Commande</h3>
+                            <h3>ðŸ“ RÃ©sultat de Commande</h3>
                             <div class="detail-content">${escapeHtml(result.result)}</div>
                         </div>
                     `;
@@ -614,15 +614,15 @@
                 if (result.error_message && result.error_message.trim && result.error_message.trim()) {
                     html += `
                         <div class="detail-section">
-                            <h3>❌ Message d'Erreur</h3>
-                            <div class="detail-content" style="color: #721c24; background: #f8d7da;">${escapeHtml(result.error_message)}</div>
+                            <h3>âŒ Message d'Erreur</h3>
+                            <div class="detail-content" style="color: #721jadus4; background: #f8d7da;">${escapeHtml(result.error_message)}</div>
                         </div>
                     `;
                 }
 
                 detailContainer.innerHTML = html;
 
-                // Marquer l'élément comme actif dans la liste
+                // Marquer l'Ã©lÃ©ment comme actif dans la liste
                 document.querySelectorAll('.result-item').forEach(item => item.classList.remove('active'));
                 if (event && event.currentTarget) {
                     event.currentTarget.classList.add('active');
@@ -634,7 +634,7 @@
             }
         }
 
-        // Échapper le HTML pour l'affichage sécurisé
+        // Ã‰chapper le HTML pour l'affichage sÃ©curisÃ©
         function escapeHtml(text) {
             const map = {
                 '&': '&amp;',
@@ -646,18 +646,19 @@
             return text.replace(/[&<>"']/g, m => map[m]);
         }
 
-        // Charger les données au démarrage
+        // Charger les donnÃ©es au dÃ©marrage
         document.addEventListener('DOMContentLoaded', () => {
             loadAgents();
             loadResults();
 
-            // Rafraîchir automatiquement toutes les 10 secondes
+            // RafraÃ®chir automatiquement toutes les 10 secondes
             setInterval(loadResults, 10000);
 
-            // Écouteurs pour les filtres
+            // Ã‰couteurs pour les filtres
             document.getElementById('agentFilter').addEventListener('change', applyFilters);
             document.getElementById('statusFilter').addEventListener('change', applyFilters);
         });
     </script>
 </body>
 </html>
+

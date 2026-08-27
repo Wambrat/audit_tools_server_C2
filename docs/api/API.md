@@ -1,10 +1,10 @@
-# 📡 API Documentation
+﻿# ðŸ“¡ API Documentation
 
-Documentation complète des endpoints de l'API C2 Server.
+Documentation complÃ¨te des endpoints de l'API jadus Server.
 
 ---
 
-## 🚀 Accès Rapide
+## ðŸš€ AccÃ¨s Rapide
 
 **API accessible sur:** `http://localhost:8000`
 
@@ -16,7 +16,7 @@ Documentation complète des endpoints de l'API C2 Server.
 
 ---
 
-## 🔑 Authentification
+## ðŸ”‘ Authentification
 
 ### Agent Authentication (API Key)
 
@@ -32,7 +32,7 @@ curl -X POST http://localhost:8000/api/enroll \
     "username": "admin"
   }'
 
-# Réponse
+# RÃ©ponse
 {
   "agent_id": "a1b2c3d4-...",
   "api_key": "sk_xxxxxxxxxxxxxxxx",
@@ -55,7 +55,7 @@ curl -X POST http://localhost:8000/api/beacon \
 
 ### Admin Authentication (JWT)
 
-Les administrateurs s'authentifient avec JWT pour accéder au monitoring:
+Les administrateurs s'authentifient avec JWT pour accÃ©der au monitoring:
 
 ```bash
 # 1. Connexion
@@ -66,7 +66,7 @@ curl -X POST http://localhost:8000/api/admin/login \
     "password": "changeme"
   }'
 
-# Réponse
+# RÃ©ponse
 {
   "access_token": "eyJhbGciOiJIUzI1NiIs...",
   "token_type": "bearer",
@@ -80,45 +80,45 @@ curl http://localhost:8000/api/monitoring/overview \
 
 ---
 
-## 📋 Endpoints par Catégorie
+## ðŸ“‹ Endpoints par CatÃ©gorie
 
-### 👥 Agents (6 endpoints)
+### ðŸ‘¥ Agents (6 endpoints)
 
 | Method | Endpoint | Description | Auth |
 |--------|----------|-------------|------|
 | **POST** | `/api/enroll` | Enregistrer un nouvel agent | Aucune (rate limited) |
 | **GET** | `/api/agents` | Lister tous les agents | Agent |
-| **GET** | `/api/agents/{agent_id}` | Détails d'un agent | Agent |
+| **GET** | `/api/agents/{agent_id}` | DÃ©tails d'un agent | Agent |
 | **GET** | `/api/beacon-history/{agent_id}` | Historique des beacons | Agent |
 | **GET** | `/api/beacon-stats/{agent_id}` | Statistiques des beacons | Agent |
 
-### 🎯 Tâches (2 endpoints)
+### ðŸŽ¯ TÃ¢ches (2 endpoints)
 
 | Method | Endpoint | Description | Auth |
 |--------|----------|-------------|------|
-| **GET** | `/api/tasks/{agent_id}` | Lister les tâches en attente | Agent |
-| **POST** | `/api/tasks/{agent_id}` | Créer une nouvelle tâche | Agent |
+| **GET** | `/api/tasks/{agent_id}` | Lister les tÃ¢ches en attente | Agent |
+| **POST** | `/api/tasks/{agent_id}` | CrÃ©er une nouvelle tÃ¢che | Agent |
 
-### 📊 Résultats (3 endpoints)
-
-| Method | Endpoint | Description | Auth |
-|--------|----------|-------------|------|
-| **POST** | `/api/results` | Soumettre un résultat d'audit | Agent |
-| **GET** | `/api/results/{agent_id}` | Lister les résultats d'un agent | Agent |
-| **GET** | `/api/results/{agent_id}/{result_id}` | Détails d'un résultat | Agent |
-
-### 📈 Monitoring (6 endpoints)
+### ðŸ“Š RÃ©sultats (3 endpoints)
 
 | Method | Endpoint | Description | Auth |
 |--------|----------|-------------|------|
-| **GET** | `/api/monitoring/overview` | Vue d'ensemble du système | JWT Admin |
+| **POST** | `/api/results` | Soumettre un rÃ©sultat d'audit | Agent |
+| **GET** | `/api/results/{agent_id}` | Lister les rÃ©sultats d'un agent | Agent |
+| **GET** | `/api/results/{agent_id}/{result_id}` | DÃ©tails d'un rÃ©sultat | Agent |
+
+### ðŸ“ˆ Monitoring (6 endpoints)
+
+| Method | Endpoint | Description | Auth |
+|--------|----------|-------------|------|
+| **GET** | `/api/monitoring/overview` | Vue d'ensemble du systÃ¨me | JWT Admin |
 | **GET** | `/api/monitoring/agents` | Dashboard des agents | JWT Admin |
-| **GET** | `/api/monitoring/tasks` | Dashboard des tâches | JWT Admin |
-| **GET** | `/api/monitoring/results` | Dashboard des résultats | JWT Admin |
-| **GET** | `/api/monitoring/alerts` | Alertes système | JWT Admin |
-| **GET** | `/api/monitoring/dashboard` | Tout combiné | JWT Admin |
+| **GET** | `/api/monitoring/tasks` | Dashboard des tÃ¢ches | JWT Admin |
+| **GET** | `/api/monitoring/results` | Dashboard des rÃ©sultats | JWT Admin |
+| **GET** | `/api/monitoring/alerts` | Alertes systÃ¨me | JWT Admin |
+| **GET** | `/api/monitoring/dashboard` | Tout combinÃ© | JWT Admin |
 
-### 🔧 Utilitaires
+### ðŸ”§ Utilitaires
 
 | Method | Endpoint | Description | Auth |
 |--------|----------|-------------|------|
@@ -127,13 +127,13 @@ curl http://localhost:8000/api/monitoring/overview \
 
 ---
 
-## 📌 Détails des Endpoints
+## ðŸ“Œ DÃ©tails des Endpoints
 
-### 1️⃣ POST /api/enroll
+### 1ï¸âƒ£ POST /api/enroll
 
 Enregistrer un nouvel agent.
 
-**Requête:**
+**RequÃªte:**
 ```json
 {
   "agent_name": "AGENT-01",
@@ -143,7 +143,7 @@ Enregistrer un nouvel agent.
 }
 ```
 
-**Réponse (200 OK):**
+**RÃ©ponse (200 OK):**
 ```json
 {
   "agent_id": "a1b2c3d4-5e6f-7g8h-9i0j-1k2l3m4n5o6p",
@@ -153,20 +153,20 @@ Enregistrer un nouvel agent.
 ```
 
 **Codes Possibles:**
-- `200 OK` - Agent enregistré avec succès
-- `409 Conflict` - Agent déjà enregistré (même hostname:username)
-- `429 Too Many Requests` - Rate limit dépassé (5 requêtes/heure)
-- `422 Unprocessable Entity` - Données manquantes ou invalides
+- `200 OK` - Agent enregistrÃ© avec succÃ¨s
+- `409 Conflict` - Agent dÃ©jÃ  enregistrÃ© (mÃªme hostname:username)
+- `429 Too Many Requests` - Rate limit dÃ©passÃ© (5 requÃªtes/heure)
+- `422 Unprocessable Entity` - DonnÃ©es manquantes ou invalides
 
-**Rate Limit:** 5 requêtes/heure par adresse IP
+**Rate Limit:** 5 requÃªtes/heure par adresse IP
 
 ---
 
-### 2️⃣ POST /api/beacon
+### 2ï¸âƒ£ POST /api/beacon
 
 Envoyer un heartbeat (signal de vie).
 
-**Requête:**
+**RequÃªte:**
 ```json
 {
   "agent_id": "a1b2c3d4-...",
@@ -176,7 +176,7 @@ Envoyer un heartbeat (signal de vie).
 }
 ```
 
-**Réponse (200 OK):**
+**RÃ©ponse (200 OK):**
 ```json
 {
   "message": "Beacon received",
@@ -193,20 +193,20 @@ Envoyer un heartbeat (signal de vie).
 ```
 
 **Codes Possibles:**
-- `200 OK` - Beacon accepté
+- `200 OK` - Beacon acceptÃ©
 - `401 Unauthorized` - agent_id ou api_key invalide
-- `429 Too Many Requests` - Rate limit dépassé (100 requêtes/heure)
-- `422 Unprocessable Entity` - Données manquantes
+- `429 Too Many Requests` - Rate limit dÃ©passÃ© (100 requÃªtes/heure)
+- `422 Unprocessable Entity` - DonnÃ©es manquantes
 
-**Rate Limit:** 100 requêtes/heure par agent
+**Rate Limit:** 100 requÃªtes/heure par agent
 
 ---
 
-### 3️⃣ POST /api/results
+### 3ï¸âƒ£ POST /api/results
 
-Soumettre les résultats d'une tâche.
+Soumettre les rÃ©sultats d'une tÃ¢che.
 
-**Requête:**
+**RequÃªte:**
 ```json
 {
   "agent_id": "a1b2c3d4-...",
@@ -223,7 +223,7 @@ Soumettre les résultats d'une tâche.
 }
 ```
 
-**Réponse (200 OK):**
+**RÃ©ponse (200 OK):**
 ```json
 {
   "result_id": "result-...",
@@ -233,23 +233,23 @@ Soumettre les résultats d'une tâche.
 ```
 
 **Codes Possibles:**
-- `200 OK` - Résultat stocké
-- `401 Unauthorized` - Authentification échouée
+- `200 OK` - RÃ©sultat stockÃ©
+- `401 Unauthorized` - Authentification Ã©chouÃ©e
 - `404 Not Found` - Task ID invalide
-- `413 Payload Too Large` - Résultat trop volumineux
-- `429 Too Many Requests` - Rate limit (50 requêtes/heure)
+- `413 Payload Too Large` - RÃ©sultat trop volumineux
+- `429 Too Many Requests` - Rate limit (50 requÃªtes/heure)
 
-**Rate Limit:** 50 requêtes/heure par agent
+**Rate Limit:** 50 requÃªtes/heure par agent
 
 ---
 
-### 4️⃣ GET /api/monitoring/overview
+### 4ï¸âƒ£ GET /api/monitoring/overview
 
-Vue d'ensemble du système (Admin uniquement).
+Vue d'ensemble du systÃ¨me (Admin uniquement).
 
 **Authentification:** JWT Bearer token requis
 
-**Réponse (200 OK):**
+**RÃ©ponse (200 OK):**
 ```json
 {
   "agents": {
@@ -276,13 +276,13 @@ Vue d'ensemble du système (Admin uniquement).
 
 ---
 
-### 5️⃣ GET /api/monitoring/alerts
+### 5ï¸âƒ£ GET /api/monitoring/alerts
 
-Alertes système (Admin uniquement).
+Alertes systÃ¨me (Admin uniquement).
 
 **Authentification:** JWT Bearer token requis
 
-**Réponse (200 OK):**
+**RÃ©ponse (200 OK):**
 ```json
 {
   "overall_level": "warning",
@@ -310,18 +310,18 @@ Alertes système (Admin uniquement).
 
 ---
 
-## 🔐 Sécurité
+## ðŸ” SÃ©curitÃ©
 
 ### Rate Limiting
 
-L'API implémente un rate limiting par agent:
+L'API implÃ©mente un rate limiting par agent:
 
-- **Enroll:** 5 requêtes/heure
-- **Beacon:** 100 requêtes/heure
-- **Results:** 50 requêtes/heure
+- **Enroll:** 5 requÃªtes/heure
+- **Beacon:** 100 requÃªtes/heure
+- **Results:** 50 requÃªtes/heure
 - **Admin Login:** 5 tentatives/heure
 
-**Réponse rate limit (429):**
+**RÃ©ponse rate limit (429):**
 ```json
 {
   "detail": "Too many requests. Max 5 per 3600s"
@@ -330,10 +330,10 @@ L'API implémente un rate limiting par agent:
 
 ### SQL Injection Prevention
 
-L'API détecte et bloque les tentatives d'injection SQL:
+L'API dÃ©tecte et bloque les tentatives d'injection SQL:
 
 ```
-❌ GET /api/agents?name=' OR '1'='1
+âŒ GET /api/agents?name=' OR '1'='1
 HTTP 400 Bad Request
 {
   "detail": "Injection pattern detected: UNION_BASED"
@@ -342,22 +342,22 @@ HTTP 400 Bad Request
 
 ### CORS Security
 
-Requêtes autorisées depuis:
+RequÃªtes autorisÃ©es depuis:
 - `http://localhost:3000` (dev frontend)
 - `http://localhost:5500` (Live Server)
 - `http://127.0.0.1:8000` (API self)
 
 ### Security Headers
 
-Toutes les réponses incluent:
+Toutes les rÃ©ponses incluent:
 - `Strict-Transport-Security`: Force HTTPS
 - `Content-Security-Policy`: Restreint les ressources
-- `X-Frame-Options`: DENY (prévient le clickjacking)
+- `X-Frame-Options`: DENY (prÃ©vient le clickjacking)
 - `X-Content-Type-Options`: nosniff (MIME sniffing)
 
 ---
 
-## 📚 Modèles de Données
+## ðŸ“š ModÃ¨les de DonnÃ©es
 
 ### Agent
 ```json
@@ -402,7 +402,7 @@ Toutes les réponses incluent:
 
 ---
 
-## 🧪 Exemples PowerShell
+## ðŸ§ª Exemples PowerShell
 
 ### Enregistrer un Agent
 
@@ -444,15 +444,16 @@ $beacon | ConvertTo-Json
 
 ---
 
-## 📖 Documentation Complète
+## ðŸ“– Documentation ComplÃ¨te
 
-- 📚 [Architecture](../architecture/ARCHITECTURE.md)
-- 🔐 [Sécurité](../architecture/SECURITY.md)
-- 🧪 [Tests](../testing/TESTING.md)
-- 🚀 [Quick Start](../setup/QUICK_START.md)
+- ðŸ“š [Architecture](../architecture/ARCHITECTURE.md)
+- ðŸ” [SÃ©curitÃ©](../architecture/SECURITY.md)
+- ðŸ§ª [Tests](../testing/TESTING.md)
+- ðŸš€ [Quick Start](../setup/QUICK_START.md)
 
 ---
 
 **Last Updated:** 2026-06-16
 
-Pour plus de détails, accédez à la documentation interactive Swagger UI: `http://localhost:8000/docs`
+Pour plus de dÃ©tails, accÃ©dez Ã  la documentation interactive Swagger UI: `http://localhost:8000/docs`
+

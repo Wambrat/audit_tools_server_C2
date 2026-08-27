@@ -1,14 +1,14 @@
-/**
+﻿/**
  * Tests unitaires pour app.js
- * Teste l'application Vue.js du Dashboard C2
+ * Teste l'application Vue.js du Dashboard jadus
  */
 
 describe('Dashboard Vue App', () => {
   let app;
 
   beforeEach(() => {
-    // Mock du C2ApiClient
-    global.C2ApiClient = {
+    // Mock du jadusApiClient
+    global.jadusApiClient = {
       getSystemOverview: jest.fn(),
       getAgentsDashboard: jest.fn(),
       getTasksDashboard: jest.fn(),
@@ -22,9 +22,9 @@ describe('Dashboard Vue App', () => {
     };
   });
 
-  describe('État initial (data)', () => {
-    it('devrait initialiser l\'overview avec des valeurs par défaut', () => {
-      // Simulation de l'état initial
+  describe('Ã‰tat initial (data)', () => {
+    it('devrait initialiser l\'overview avec des valeurs par dÃ©faut', () => {
+      // Simulation de l'Ã©tat initial
       const initialState = {
         overview: {
           timestamp: new Date().toISOString(),
@@ -39,17 +39,17 @@ describe('Dashboard Vue App', () => {
       expect(initialState.overview.results.total).toBe(0);
     });
 
-    it('devrait initialiser le loading à true', () => {
+    it('devrait initialiser le loading Ã  true', () => {
       const state = { loading: true };
       expect(state.loading).toBe(true);
     });
 
-    it('devrait initialiser apiError à null', () => {
+    it('devrait initialiser apiError Ã  null', () => {
       const state = { apiError: null };
       expect(state.apiError).toBeNull();
     });
 
-    it('devrait initialiser la modal d\'audit comme fermée', () => {
+    it('devrait initialiser la modal d\'audit comme fermÃ©e', () => {
       const state = { showAuditModal: false };
       expect(state.showAuditModal).toBe(false);
     });
@@ -64,7 +64,7 @@ describe('Dashboard Vue App', () => {
   });
 
   describe('Computed Properties', () => {
-    it('devrait calculer le taux de succès correctement', () => {
+    it('devrait calculer le taux de succÃ¨s correctement', () => {
       const overview = {
         results: {
           total: 100,
@@ -76,7 +76,7 @@ describe('Dashboard Vue App', () => {
       expect(successRate).toBe(80);
     });
 
-    it('devrait retourner 0 si pas de résultats', () => {
+    it('devrait retourner 0 si pas de rÃ©sultats', () => {
       const overview = {
         results: {
           total: 0,
@@ -101,17 +101,17 @@ describe('Dashboard Vue App', () => {
     });
   });
 
-  describe('Méthode loadDashboardData', () => {
-    it('devrait charger toutes les données en parallèle', async () => {
+  describe('MÃ©thode loadDashboardData', () => {
+    it('devrait charger toutes les donnÃ©es en parallÃ¨le', async () => {
       const mockOverview = { agents: { total: 1 } };
       const mockAgents = { total_agents: 1 };
       const mockTasks = { total_tasks: 0 };
       const mockAlerts = { overall_level: 'ok' };
 
-      global.C2ApiClient.getSystemOverview.mockResolvedValue(mockOverview);
-      global.C2ApiClient.getAgentsDashboard.mockResolvedValue(mockAgents);
-      global.C2ApiClient.getTasksDashboard.mockResolvedValue(mockTasks);
-      global.C2ApiClient.getAlerts.mockResolvedValue(mockAlerts);
+      global.jadusApiClient.getSystemOverview.mockResolvedValue(mockOverview);
+      global.jadusApiClient.getAgentsDashboard.mockResolvedValue(mockAgents);
+      global.jadusApiClient.getTasksDashboard.mockResolvedValue(mockTasks);
+      global.jadusApiClient.getAlerts.mockResolvedValue(mockAlerts);
 
       const data = {
         loading: true,
@@ -132,11 +132,11 @@ describe('Dashboard Vue App', () => {
       expect(data.alerts).toEqual(mockAlerts);
     });
 
-    it('devrait définir loading à false après le chargement', async () => {
-      global.C2ApiClient.getSystemOverview.mockResolvedValue({});
-      global.C2ApiClient.getAgentsDashboard.mockResolvedValue({});
-      global.C2ApiClient.getTasksDashboard.mockResolvedValue({});
-      global.C2ApiClient.getAlerts.mockResolvedValue({});
+    it('devrait dÃ©finir loading Ã  false aprÃ¨s le chargement', async () => {
+      global.jadusApiClient.getSystemOverview.mockResolvedValue({});
+      global.jadusApiClient.getAgentsDashboard.mockResolvedValue({});
+      global.jadusApiClient.getTasksDashboard.mockResolvedValue({});
+      global.jadusApiClient.getAlerts.mockResolvedValue({});
 
       let loading = true;
       
@@ -149,28 +149,28 @@ describe('Dashboard Vue App', () => {
       expect(loading).toBe(false);
     });
 
-    it('devrait gérer les erreurs API', async () => {
+    it('devrait gÃ©rer les erreurs API', async () => {
       const errorMessage = 'Connection refused';
-      global.C2ApiClient.getSystemOverview.mockRejectedValue(new Error(errorMessage));
+      global.jadusApiClient.getSystemOverview.mockRejectedValue(new Error(errorMessage));
 
       let apiError = null;
       
       try {
-        await global.C2ApiClient.getSystemOverview();
+        await global.jadusApiClient.getSystemOverview();
       } catch (error) {
-        apiError = `Impossible de charger les données: ${error.message}`;
+        apiError = `Impossible de charger les donnÃ©es: ${error.message}`;
       }
 
       expect(apiError).toContain(errorMessage);
     });
 
-    it('devrait définir apiError si une requête échoue', async () => {
+    it('devrait dÃ©finir apiError si une requÃªte Ã©choue', async () => {
       const errorMessage = 'Network error';
-      global.C2ApiClient.getSystemOverview.mockRejectedValue(new Error(errorMessage));
+      global.jadusApiClient.getSystemOverview.mockRejectedValue(new Error(errorMessage));
 
       let error = null;
       try {
-        await global.C2ApiClient.getSystemOverview();
+        await global.jadusApiClient.getSystemOverview();
       } catch (e) {
         error = e;
       }
@@ -180,12 +180,12 @@ describe('Dashboard Vue App', () => {
     });
   });
 
-  describe('Méthode refreshData', () => {
+  describe('MÃ©thode refreshData', () => {
     it('devrait appeler loadDashboardData', async () => {
-      global.C2ApiClient.getSystemOverview.mockResolvedValue({});
-      global.C2ApiClient.getAgentsDashboard.mockResolvedValue({});
-      global.C2ApiClient.getTasksDashboard.mockResolvedValue({});
-      global.C2ApiClient.getAlerts.mockResolvedValue({});
+      global.jadusApiClient.getSystemOverview.mockResolvedValue({});
+      global.jadusApiClient.getAgentsDashboard.mockResolvedValue({});
+      global.jadusApiClient.getTasksDashboard.mockResolvedValue({});
+      global.jadusApiClient.getAlerts.mockResolvedValue({});
 
       let called = false;
       const refreshData = () => {
@@ -197,7 +197,7 @@ describe('Dashboard Vue App', () => {
     });
   });
 
-  describe('Méthode formatDate', () => {
+  describe('MÃ©thode formatDate', () => {
     it('devrait formater une date ISO', () => {
       const isoString = '2026-06-16T10:00:00Z';
       global.formatters.formatDate.mockReturnValue('16/06/2026');
@@ -208,8 +208,8 @@ describe('Dashboard Vue App', () => {
     });
   });
 
-  describe('Méthode formatDuration', () => {
-    it('devrait formater une durée en secondes', () => {
+  describe('MÃ©thode formatDuration', () => {
+    it('devrait formater une durÃ©e en secondes', () => {
       global.formatters.formatDuration.mockReturnValue('5m 30s');
 
       const result = global.formatters.formatDuration(330);
@@ -247,7 +247,7 @@ describe('Dashboard Vue App', () => {
   });
 
   describe('Interaction avec les agents', () => {
-    it('devrait pouvoir sélectionner un agent', () => {
+    it('devrait pouvoir sÃ©lectionner un agent', () => {
       const selectedAgent = {
         id: 'agent-1',
         name: 'Agent-1'
@@ -257,7 +257,7 @@ describe('Dashboard Vue App', () => {
       expect(selectedAgent.name).toBe('Agent-1');
     });
 
-    it('devrait afficher la modal d\'audit quand un agent est sélectionné', () => {
+    it('devrait afficher la modal d\'audit quand un agent est sÃ©lectionnÃ©', () => {
       const showAuditModal = true;
       const selectedAgent = { id: 'agent-1', name: 'Agent-1' };
 
@@ -266,7 +266,7 @@ describe('Dashboard Vue App', () => {
     });
   });
 
-  describe('Validation des données reçues', () => {
+  describe('Validation des donnÃ©es reÃ§ues', () => {
     it('devrait valider la structure de l\'overview', () => {
       const overview = {
         timestamp: '2026-06-16T10:00:00Z',
@@ -288,7 +288,7 @@ describe('Dashboard Vue App', () => {
       expect(validStatus).toContain(agentStatus);
     });
 
-    it('devrait valider les statuts des tâches', () => {
+    it('devrait valider les statuts des tÃ¢ches', () => {
       const validStatus = ['pending', 'assigned', 'completed', 'failed'];
       const taskStatus = 'completed';
 
@@ -296,3 +296,4 @@ describe('Dashboard Vue App', () => {
     });
   });
 });
+

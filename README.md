@@ -1,45 +1,45 @@
-# C2 Server API - Python FastAPI
+﻿# jadus Server API - Python FastAPI
 
-API REST pour gérer et coordonner les agents PowerShell d'audit de sécurité.
+API REST pour gÃ©rer et coordonner les agents PowerShell d'audit de sÃ©curitÃ©.
 
 ## Architecture
 
 ```
-server_C2/
-├── app/
-│   ├── __init__.py
-│   ├── models.py          # Modèles Pydantic (requêtes/réponses)
-│   ├── database.py        # Gestion de la base de données
-│   ├── auth.py            # Authentification des agents
-│   ├── routes.py          # Endpoints (routes)
-│   ├── logger.py          # Système de logging structuré
-│   ├── rate_limiter.py    # Rate limiting par agent/endpoint
-│   └── monitoring.py      # Monitoring et dashboards
-├── web/                   # Application Vue.js (frontend)
-│   ├── index.html         # Interface principale
-│   ├── js/
-│   │   ├── api.js        # Client API
-│   │   └── app.js        # Application Vue
-│   ├── css/
-│   │   └── style.css     # Styles
-│   └── README.md         # Documentation web
-├── main.py                # Point d'entrée FastAPI
-├── requirements.txt       # Dépendances Python
-├── .env                   # Variables d'environnement
-├── .gitignore
-└── README.md             # Ce fichier
+jadus/
+â”œâ”€â”€ app/
+â”‚   â”œâ”€â”€ __init__.py
+â”‚   â”œâ”€â”€ models.py          # ModÃ¨les Pydantic (requÃªtes/rÃ©ponses)
+â”‚   â”œâ”€â”€ database.py        # Gestion de la base de donnÃ©es
+â”‚   â”œâ”€â”€ auth.py            # Authentification des agents
+â”‚   â”œâ”€â”€ routes.py          # Endpoints (routes)
+â”‚   â”œâ”€â”€ logger.py          # SystÃ¨me de logging structurÃ©
+â”‚   â”œâ”€â”€ rate_limiter.py    # Rate limiting par agent/endpoint
+â”‚   â””â”€â”€ monitoring.py      # Monitoring et dashboards
+â”œâ”€â”€ web/                   # Application Vue.js (frontend)
+â”‚   â”œâ”€â”€ index.html         # Interface principale
+â”‚   â”œâ”€â”€ js/
+â”‚   â”‚   â”œâ”€â”€ api.js        # Client API
+â”‚   â”‚   â””â”€â”€ app.js        # Application Vue
+â”‚   â”œâ”€â”€ css/
+â”‚   â”‚   â””â”€â”€ style.css     # Styles
+â”‚   â””â”€â”€ README.md         # Documentation web
+â”œâ”€â”€ main.py                # Point d'entrÃ©e FastAPI
+â”œâ”€â”€ requirements.txt       # DÃ©pendances Python
+â”œâ”€â”€ .env                   # Variables d'environnement
+â”œâ”€â”€ .gitignore
+â””â”€â”€ README.md             # Ce fichier
 ```
 
 ## Installation
 
-### 1. Créer un environnement virtuel Python
+### 1. CrÃ©er un environnement virtuel Python
 
 ```bash
 python -m venv venv
 source venv/bin/activate  # Sur Windows: venv\Scripts\activate
 ```
 
-### 2. Installer les dépendances
+### 2. Installer les dÃ©pendances
 
 ```bash
 pip install -r requirements.txt
@@ -53,7 +53,7 @@ python main.py
 # uvicorn main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-Le serveur démarre sur `http://localhost:8000`
+Le serveur dÃ©marre sur `http://localhost:8000`
 
 ### Documentation interactive
 
@@ -64,9 +64,9 @@ Le serveur démarre sur `http://localhost:8000`
 
 ### 1. **POST /api/enroll** - Enregistrement d'un agent
 
-Première connexion de l'agent pour recevoir son ID unique et sa clé API.
+PremiÃ¨re connexion de l'agent pour recevoir son ID unique et sa clÃ© API.
 
-**Requête:**
+**RequÃªte:**
 ```json
 {
   "agent_name": "AUDIT-AGENT-01",
@@ -76,7 +76,7 @@ Première connexion de l'agent pour recevoir son ID unique et sa clé API.
 }
 ```
 
-**Réponse (200):**
+**RÃ©ponse (200):**
 ```json
 {
   "agent_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
@@ -87,11 +87,11 @@ Première connexion de l'agent pour recevoir son ID unique et sa clé API.
 
 ---
 
-### 2. **POST /api/beacon** - Heartbeat + Récupération des tâches
+### 2. **POST /api/beacon** - Heartbeat + RÃ©cupÃ©ration des tÃ¢ches
 
-L'agent envoie son état et reçoit les tâches en attente.
+L'agent envoie son Ã©tat et reÃ§oit les tÃ¢ches en attente.
 
-**Requête:**
+**RequÃªte:**
 ```json
 {
   "agent_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
@@ -102,7 +102,7 @@ L'agent envoie son état et reçoit les tâches en attente.
 }
 ```
 
-**Réponse (200):**
+**RÃ©ponse (200):**
 ```json
 {
   "tasks": [
@@ -120,11 +120,11 @@ L'agent envoie son état et reçoit les tâches en attente.
 
 ---
 
-### 3. **POST /api/results** - Envoi des résultats d'audit
+### 3. **POST /api/results** - Envoi des rÃ©sultats d'audit
 
-L'agent envoie le compte-rendu d'une tâche complétée.
+L'agent envoie le compte-rendu d'une tÃ¢che complÃ©tÃ©e.
 
-**Requête:**
+**RequÃªte:**
 ```json
 {
   "agent_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
@@ -142,7 +142,7 @@ L'agent envoie le compte-rendu d'une tâche complétée.
 }
 ```
 
-**Réponse (200):**
+**RÃ©ponse (200):**
 ```json
 {
   "message": "Result for task task-001 acknowledged",
@@ -155,61 +155,61 @@ L'agent envoie le compte-rendu d'une tâche complétée.
 ## Endpoints de gestion (pour les tests/debug)
 
 ### GET /api/agents
-Lister tous les agents enregistrés.
+Lister tous les agents enregistrÃ©s.
 
 ### GET /api/tasks/{agent_id}
-Lister les tâches d'un agent.
+Lister les tÃ¢ches d'un agent.
 
 ### POST /api/tasks/{agent_id}
-Créer une nouvelle tâche pour un agent.
+CrÃ©er une nouvelle tÃ¢che pour un agent.
 
-**Paramètres:**
-- `command`: Commande à exécuter
-- `parameters`: Paramètres optionnels
-- `priority`: Priorité de la tâche (0 = normal)
+**ParamÃ¨tres:**
+- `command`: Commande Ã  exÃ©cuter
+- `parameters`: ParamÃ¨tres optionnels
+- `priority`: PrioritÃ© de la tÃ¢che (0 = normal)
 
 ### GET /api/results/{agent_id}
-Récupérer tous les résultats d'un agent.
+RÃ©cupÃ©rer tous les rÃ©sultats d'un agent.
 
 ---
 
 ## Flux de fonctionnement
 
 ```
-1. ENROLL (première connexion)
-   Agent → POST /api/enroll → Reçoit agent_id + api_key
+1. ENROLL (premiÃ¨re connexion)
+   Agent â†’ POST /api/enroll â†’ ReÃ§oit agent_id + api_key
 
-2. BEACON (heartbeat + récupération des tâches)
-   Agent → POST /api/beacon (toutes les 30s) → Reçoit les tâches
+2. BEACON (heartbeat + rÃ©cupÃ©ration des tÃ¢ches)
+   Agent â†’ POST /api/beacon (toutes les 30s) â†’ ReÃ§oit les tÃ¢ches
    
-3. EXECUTE (agent exécute les tâches)
-   Agent exécute localement (PowerShell)
+3. EXECUTE (agent exÃ©cute les tÃ¢ches)
+   Agent exÃ©cute localement (PowerShell)
    
-4. RESULTS (envoi des résultats)
-   Agent → POST /api/results → Serveur enregistre le résultat
+4. RESULTS (envoi des rÃ©sultats)
+   Agent â†’ POST /api/results â†’ Serveur enregistre le rÃ©sultat
 ```
 
 ---
 
 ## Authentification
 
-Chaque requête (sauf `/api/enroll`) doit incluire:
+Chaque requÃªte (sauf `/api/enroll`) doit incluire:
 - `agent_id`: Identifiant unique de l'agent
-- `api_key`: Clé API fournie lors de l'enregistrement
+- `api_key`: ClÃ© API fournie lors de l'enregistrement
 
 ---
 
-## Base de données
+## Base de donnÃ©es
 
 ### Configuration Actuelle: MongoDB (Persistant)
 
-L'API utilise **MongoDB** pour stocker les données de manière persistante.
+L'API utilise **MongoDB** pour stocker les donnÃ©es de maniÃ¨re persistante.
 
 **Avantages de MongoDB pour un EDR:**
-- ✅ Schéma flexible (résultats d'audit avec structures variées)
-- ✅ JSON natif (PowerShell retourne du JSON)
-- ✅ Scalabilité (100+ agents sans problème)
-- ✅ Index automatiques (performant)
+- âœ… SchÃ©ma flexible (rÃ©sultats d'audit avec structures variÃ©es)
+- âœ… JSON natif (PowerShell retourne du JSON)
+- âœ… ScalabilitÃ© (100+ agents sans problÃ¨me)
+- âœ… Index automatiques (performant)
 
 **Fichiers:**
 - [app/database_mongodb.py](app/database_mongodb.py) - Couche MongoDB
@@ -218,51 +218,51 @@ L'API utilise **MongoDB** pour stocker les données de manière persistante.
 
 **Installation rapide:**
 ```bash
-# Avec Docker (recommandé)
+# Avec Docker (recommandÃ©)
 docker run -d -p 27017:27017 --name mongodb mongo:latest
 
-# Puis installer les dépendances
+# Puis installer les dÃ©pendances
 pip install -r requirements.txt  # Contient pymongo
 
-# Mettre à jour .env
+# Mettre Ã  jour .env
 DATABASE_MODE=mongodb
 MONGODB_URL=mongodb://localhost:27017
 ```
 
-📖 **Guide complet:** [MONGODB_SETUP.md](MONGODB_SETUP.md)
+ðŸ“– **Guide complet:** [MONGODB_SETUP.md](MONGODB_SETUP.md)
 
 ---
 
-## Structure des modèles de données
+## Structure des modÃ¨les de donnÃ©es
 
 ### Agent
 - `agent_id`: UUID unique
-- `api_key`: Clé d'authentification
+- `api_key`: ClÃ© d'authentification
 - `agent_name`: Nom de l'agent
 - `os_version`: Version de l'OS
 - `hostname`: Hostname du serveur
-- `username`: Utilisateur connecté
+- `username`: Utilisateur connectÃ©
 - `status`: ACTIVE/INACTIVE/COMPROMISED
 - `created_at`: Date d'enregistrement
-- `last_beacon`: Dernier beacon reçu
+- `last_beacon`: Dernier beacon reÃ§u
 
 ### Task
 - `task_id`: UUID unique
 - `agent_id`: Agent destinataire
-- `command`: Commande à exécuter
-- `parameters`: Paramètres JSON
-- `priority`: Priorité (0 = normal)
+- `command`: Commande Ã  exÃ©cuter
+- `parameters`: ParamÃ¨tres JSON
+- `priority`: PrioritÃ© (0 = normal)
 - `status`: PENDING/ASSIGNED/COMPLETED/FAILED
-- `timeout_seconds`: Timeout d'exécution
+- `timeout_seconds`: Timeout d'exÃ©cution
 - `created_at`, `assigned_at`, `completed_at`: Timestamps
 
 ### AuditResult
 - `result_id`: UUID unique
-- `task_id`: Tâche associée
+- `task_id`: TÃ¢che associÃ©e
 - `agent_id`: Agent source
 - `status`: "success" ou "failed"
-- `result`: Données du résultat (JSON)
-- `execution_time_ms`: Temps d'exécution
+- `result`: DonnÃ©es du rÃ©sultat (JSON)
+- `execution_time_ms`: Temps d'exÃ©cution
 - `error_message`: Message d'erreur (si applicable)
 - `created_at`: Timestamp
 
@@ -271,10 +271,10 @@ MONGODB_URL=mongodb://localhost:27017
 ## Variables d'environnement
 
 ```env
-HOST=0.0.0.0              # Interface d'écoute
+HOST=0.0.0.0              # Interface d'Ã©coute
 PORT=8000                 # Port du serveur
 ENV=development           # Mode (development/production)
-ALLOWED_ORIGINS=...       # Domaines CORS autorisés
+ALLOWED_ORIGINS=...       # Domaines CORS autorisÃ©s
 LOG_LEVEL=INFO            # Niveau de log (DEBUG, INFO, WARNING, ERROR, CRITICAL)
 
 # Rate Limiting
@@ -284,7 +284,7 @@ ENROLL_WINDOW_SECONDS=3600  # Par heure
 BEACON_RATE_LIMIT=100     # Max 100 beacons
 BEACON_WINDOW_SECONDS=3600  # Par heure
 
-RESULTS_RATE_LIMIT=50     # Max 50 soumissions de résultats
+RESULTS_RATE_LIMIT=50     # Max 50 soumissions de rÃ©sultats
 RESULTS_WINDOW_SECONDS=3600  # Par heure
 ```
 
@@ -292,24 +292,24 @@ RESULTS_WINDOW_SECONDS=3600  # Par heure
 
 ## Rate Limiting
 
-L'API implémente un système de **rate limiting par agent et par endpoint** pour prévenir les abus et les attaques par débordement.
+L'API implÃ©mente un systÃ¨me de **rate limiting par agent et par endpoint** pour prÃ©venir les abus et les attaques par dÃ©bordement.
 
 ### Fonctionnement
 
-- **Sliding Window**: Les requêtes sont comptées dans une fenêtre de temps glissante
-- **Par endpoint**: Limites différentes pour enroll, beacon, et results
-- **Par agent**: Chaque agent a un compteur indépendant
-- **Réponse 429**: Retournée si le limit est dépassé
+- **Sliding Window**: Les requÃªtes sont comptÃ©es dans une fenÃªtre de temps glissante
+- **Par endpoint**: Limites diffÃ©rentes pour enroll, beacon, et results
+- **Par agent**: Chaque agent a un compteur indÃ©pendant
+- **RÃ©ponse 429**: RetournÃ©e si le limit est dÃ©passÃ©
 
-### Limites par défaut
+### Limites par dÃ©faut
 
-| Endpoint | Limite | Fenêtre |
+| Endpoint | Limite | FenÃªtre |
 |----------|--------|---------|
-| `/api/enroll` | 5 requêtes | 1 heure |
-| `/api/beacon` | 100 requêtes | 1 heure |
-| `/api/results` | 50 requêtes | 1 heure |
+| `/api/enroll` | 5 requÃªtes | 1 heure |
+| `/api/beacon` | 100 requÃªtes | 1 heure |
+| `/api/results` | 50 requÃªtes | 1 heure |
 
-### Réponse lors du dépassement
+### RÃ©ponse lors du dÃ©passement
 
 ```json
 {
@@ -327,7 +327,7 @@ Endpoint pour consulter les stats de rate limiting:
 GET /api/rate-limit/stats/{agent_id}/{endpoint}
 ```
 
-**Exemple de réponse:**
+**Exemple de rÃ©ponse:**
 ```json
 {
   "agent_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
@@ -394,15 +394,15 @@ tasks = response.json()
 
 ## Historique des Beacons
 
-L'API enregistre automatiquement chaque **beacon** (connexion/heartbeat) d'un agent pour tracer son activité au fil du temps.
+L'API enregistre automatiquement chaque **beacon** (connexion/heartbeat) d'un agent pour tracer son activitÃ© au fil du temps.
 
-### Données enregistrées par beacon
+### DonnÃ©es enregistrÃ©es par beacon
 
 - `beacon_id`: Identifiant unique du beacon
 - `agent_id`: Agent source
-- `beacon_status`: État signalé par l'agent (online, offline, etc.)
+- `beacon_status`: Ã‰tat signalÃ© par l'agent (online, offline, etc.)
 - `uptime_seconds`: Uptime de l'agent
-- `tasks_count`: Nombre de tâches assignées
+- `tasks_count`: Nombre de tÃ¢ches assignÃ©es
 - `ip_address`: IP source (optionnel)
 - `created_at`: Timestamp du beacon
 
@@ -410,18 +410,18 @@ L'API enregistre automatiquement chaque **beacon** (connexion/heartbeat) d'un ag
 
 #### GET /api/beacon-history/{agent_id}
 
-Récupérer les derniers beacons d'un agent.
+RÃ©cupÃ©rer les derniers beacons d'un agent.
 
-**Paramètres:**
+**ParamÃ¨tres:**
 - `agent_id`: ID de l'agent
-- `limit`: Nombre de beacons à retourner (défaut: 100, max: 1000)
+- `limit`: Nombre de beacons Ã  retourner (dÃ©faut: 100, max: 1000)
 
 **Exemple:**
 ```bash
 curl http://localhost:8000/api/beacon-history/a1b2c3d4-... -G -d "limit=50"
 ```
 
-**Réponse:**
+**RÃ©ponse:**
 ```json
 {
   "agent_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
@@ -449,12 +449,12 @@ curl http://localhost:8000/api/beacon-history/a1b2c3d4-... -G -d "limit=50"
 
 #### GET /api/beacon-stats/{agent_id}
 
-Récupérer les statistiques globales de beacon pour un agent.
+RÃ©cupÃ©rer les statistiques globales de beacon pour un agent.
 
-**Paramètres:**
+**ParamÃ¨tres:**
 - `agent_id`: ID de l'agent
 
-**Réponse:**
+**RÃ©ponse:**
 ```json
 {
   "agent_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
@@ -468,23 +468,23 @@ Récupérer les statistiques globales de beacon pour un agent.
 
 ### Cas d'usage
 
-**Tracer l'activité d'un agent:**
+**Tracer l'activitÃ© d'un agent:**
 ```python
 import requests
 
 agent_id = "a1b2c3d4-..."
 
-# Récupérer les 10 derniers beacons
+# RÃ©cupÃ©rer les 10 derniers beacons
 response = requests.get(f"http://localhost:8000/api/beacon-history/{agent_id}", 
                        params={"limit": 10})
 beacons = response.json()["beacons"]
 
-# Analyser la disponibilité
-print(f"Dernière connexion: {beacons[0]['created_at']}")
+# Analyser la disponibilitÃ©
+print(f"DerniÃ¨re connexion: {beacons[0]['created_at']}")
 print(f"Uptime moyen: {beacons[0]['uptime_seconds'] / 3600:.1f} heures")
 ```
 
-**Détecter les agents inactifs:**
+**DÃ©tecter les agents inactifs:**
 ```python
 import requests
 from datetime import datetime, timedelta
@@ -506,15 +506,15 @@ if time_since > timedelta(hours=1):
 
 ## Monitoring et Dashboard
 
-L'API fournit des **endpoints de monitoring et de dashboard** pour surveiller l'état global du système, les agents, tâches et résultats en temps réel.
+L'API fournit des **endpoints de monitoring et de dashboard** pour surveiller l'Ã©tat global du systÃ¨me, les agents, tÃ¢ches et rÃ©sultats en temps rÃ©el.
 
-### Vue d'ensemble du système
+### Vue d'ensemble du systÃ¨me
 
 #### GET /api/monitoring/overview
 
-Récupérer une vue d'ensemble des statistiques globales.
+RÃ©cupÃ©rer une vue d'ensemble des statistiques globales.
 
-**Réponse:**
+**RÃ©ponse:**
 ```json
 {
   "timestamp": "2026-05-28T14:35:00.000000",
@@ -550,9 +550,9 @@ Récupérer une vue d'ensemble des statistiques globales.
 
 #### GET /api/monitoring/agents
 
-Récupérer le dashboard détaillé de tous les agents.
+RÃ©cupÃ©rer le dashboard dÃ©taillÃ© de tous les agents.
 
-**Réponse:**
+**RÃ©ponse:**
 ```json
 {
   "timestamp": "2026-05-28T14:35:00.000000",
@@ -588,17 +588,17 @@ Récupérer le dashboard détaillé de tous les agents.
 }
 ```
 
-**Détection d'inactivité:**
+**DÃ©tection d'inactivitÃ©:**
 - `is_inactive = true` si dernier beacon > 1 heure
-- Utile pour identifier les agents en problème
+- Utile pour identifier les agents en problÃ¨me
 
-### Dashboard des tâches
+### Dashboard des tÃ¢ches
 
 #### GET /api/monitoring/tasks
 
-Récupérer le dashboard des tâches avec détection de problèmes.
+RÃ©cupÃ©rer le dashboard des tÃ¢ches avec dÃ©tection de problÃ¨mes.
 
-**Réponse:**
+**RÃ©ponse:**
 ```json
 {
   "timestamp": "2026-05-28T14:35:00.000000",
@@ -621,17 +621,17 @@ Récupérer le dashboard des tâches avec détection de problèmes.
 }
 ```
 
-**Détection des tâches en retard:**
-- Tâches assignées depuis plus longtemps que leur timeout
+**DÃ©tection des tÃ¢ches en retard:**
+- TÃ¢ches assignÃ©es depuis plus longtemps que leur timeout
 - Identifie les blocages potentiels
 
-### Dashboard des résultats
+### Dashboard des rÃ©sultats
 
 #### GET /api/monitoring/results
 
-Récupérer le dashboard des résultats et taux de succès.
+RÃ©cupÃ©rer le dashboard des rÃ©sultats et taux de succÃ¨s.
 
-**Réponse:**
+**RÃ©ponse:**
 ```json
 {
   "timestamp": "2026-05-28T14:35:00.000000",
@@ -664,19 +664,19 @@ Récupérer le dashboard des résultats et taux de succès.
 }
 ```
 
-### Alertes du système
+### Alertes du systÃ¨me
 
 #### GET /api/monitoring/alerts
 
-Récupérer les alertes détectées automatiquement.
+RÃ©cupÃ©rer les alertes dÃ©tectÃ©es automatiquement.
 
 **Types d'alertes:**
 - **agent_inactive**: Aucun beacon depuis 2+ heures (CRITICAL)
 - **agent_slow**: Aucun beacon depuis 30+ minutes (WARNING)
-- **agent_never_beaconed**: Agent créé mais jamais connecté (CRITICAL)
-- **task_timeout**: Tâche assignée au-delà du timeout (WARNING)
+- **agent_never_beaconed**: Agent crÃ©Ã© mais jamais connectÃ© (CRITICAL)
+- **task_timeout**: TÃ¢che assignÃ©e au-delÃ  du timeout (WARNING)
 
-**Réponse:**
+**RÃ©ponse:**
 ```json
 {
   "timestamp": "2026-05-28T14:35:00.000000",
@@ -708,9 +708,9 @@ Récupérer les alertes détectées automatiquement.
 
 #### GET /api/monitoring/dashboard
 
-**⚠️ ATTENTION**: Endpoint lourd - combine tous les dashboards
+**âš ï¸ ATTENTION**: Endpoint lourd - combine tous les dashboards
 
-Récupérer le dashboard complet (overview + agents + tasks + results + alerts).
+RÃ©cupÃ©rer le dashboard complet (overview + agents + tasks + results + alerts).
 
 ```bash
 curl http://localhost:8000/api/monitoring/dashboard
@@ -718,7 +718,7 @@ curl http://localhost:8000/api/monitoring/dashboard
 
 ### Cas d'usage - Monitoring
 
-**Vérifier la santé globale du système:**
+**VÃ©rifier la santÃ© globale du systÃ¨me:**
 ```python
 import requests
 
@@ -726,10 +726,10 @@ response = requests.get("http://localhost:8000/api/monitoring/overview")
 overview = response.json()
 
 print(f"Agents actifs: {overview['agents']['by_status']['active']}/{overview['agents']['total']}")
-print(f"Taux de succès: {overview['results']['by_status']['success']}/{overview['results']['total']}")
+print(f"Taux de succÃ¨s: {overview['results']['by_status']['success']}/{overview['results']['total']}")
 ```
 
-**Détecter les problèmes:**
+**DÃ©tecter les problÃ¨mes:**
 ```python
 response = requests.get("http://localhost:8000/api/monitoring/alerts")
 alerts = response.json()
@@ -737,7 +737,7 @@ alerts = response.json()
 if alerts["overall_level"] == "critical":
     for alert in alerts["alerts"]:
         if alert["level"] == "critical":
-            print(f"⚠️ {alert['message']}")
+            print(f"âš ï¸ {alert['message']}")
 ```
 
 **Analyser les performances:**
@@ -745,39 +745,39 @@ if alerts["overall_level"] == "critical":
 response = requests.get("http://localhost:8000/api/monitoring/results")
 results = response.json()
 
-print(f"Temps d'exécution moyen: {results['avg_execution_time_ms']}ms")
-print(f"Taux de succès: {results['success']['rate_percent']}%")
+print(f"Temps d'exÃ©cution moyen: {results['avg_execution_time_ms']}ms")
+print(f"Taux de succÃ¨s: {results['success']['rate_percent']}%")
 ```
 
 ---
 
 ## Application Web - Dashboard Vue.js
 
-L'API est complétée par une **application web Vue.js** pour que l'administrateur système puisse visualiser et gérer le parc informatique sans accéder directement à la base de données.
+L'API est complÃ©tÃ©e par une **application web Vue.js** pour que l'administrateur systÃ¨me puisse visualiser et gÃ©rer le parc informatique sans accÃ©der directement Ã  la base de donnÃ©es.
 
-### 🎯 Fonctionnalités
+### ðŸŽ¯ FonctionnalitÃ©s
 
-- **Dashboard global**: Vue d'ensemble de la conformité du parc
-- **Surveillance des agents**: État en temps réel de chaque machine
-- **Alertes**: Détection automatique des problèmes (agents inactifs, tâches en retard, etc.)
-- **Lancement d'audits**: Bouton pour créer des tâches audit par agent
-- **Machines hors-ligne**: Tableau dédié aux agents inaccessibles
-- **Auto-rafraîchissement**: Mise à jour automatique toutes les 30 secondes
+- **Dashboard global**: Vue d'ensemble de la conformitÃ© du parc
+- **Surveillance des agents**: Ã‰tat en temps rÃ©el de chaque machine
+- **Alertes**: DÃ©tection automatique des problÃ¨mes (agents inactifs, tÃ¢ches en retard, etc.)
+- **Lancement d'audits**: Bouton pour crÃ©er des tÃ¢ches audit par agent
+- **Machines hors-ligne**: Tableau dÃ©diÃ© aux agents inaccessibles
+- **Auto-rafraÃ®chissement**: Mise Ã  jour automatique toutes les 30 secondes
 
-### 📂 Fichiers
+### ðŸ“‚ Fichiers
 
 ```
 web/
-├── index.html          # Interface principale
-├── js/
-│   ├── api.js         # Client API (communication avec FastAPI)
-│   └── app.js         # Application Vue.js
-├── css/
-│   └── style.css      # Styles CSS
-└── README.md          # Documentation complète
+â”œâ”€â”€ index.html          # Interface principale
+â”œâ”€â”€ js/
+â”‚   â”œâ”€â”€ api.js         # Client API (communication avec FastAPI)
+â”‚   â””â”€â”€ app.js         # Application Vue.js
+â”œâ”€â”€ css/
+â”‚   â””â”€â”€ style.css      # Styles CSS
+â””â”€â”€ README.md          # Documentation complÃ¨te
 ```
 
-### 🚀 Lancement
+### ðŸš€ Lancement
 
 #### Option 1: Avec Python (Simple)
 
@@ -786,7 +786,7 @@ cd web
 python -m http.server 8080
 ```
 
-Accédez à: **http://localhost:8080**
+AccÃ©dez Ã : **http://localhost:8080**
 
 #### Option 2: Avec Node.js
 
@@ -800,85 +800,86 @@ http-server -p 8080
 
 Double-cliquez sur `web/index.html` (fonctionne avec le CDN Vue.js)
 
-### ⚙️ Configuration API
+### âš™ï¸ Configuration API
 
-Par défaut, l'application se connecte à `http://localhost:8000/api`.
+Par dÃ©faut, l'application se connecte Ã  `http://localhost:8000/api`.
 
-Pour modifier l'URL, éditez `web/js/api.js`:
+Pour modifier l'URL, Ã©ditez `web/js/api.js`:
 ```javascript
 const API_BASE_URL = 'http://your-server:8000/api';
 ```
 
-### 📊 Dashboard - Sections principales
+### ðŸ“Š Dashboard - Sections principales
 
-#### 1. Santé Globale
+#### 1. SantÃ© Globale
 - Agents actifs/inactifs
-- Taux de succès global
-- Tâches par statut
+- Taux de succÃ¨s global
+- TÃ¢ches par statut
 
 #### 2. Alertes
 - Agents inactifs (2+ heures) - **CRITICAL**
 - Agents lents (30+ minutes) - **WARNING**
-- Tâches en retard
+- TÃ¢ches en retard
 
-#### 3. État des Agents
-Tableau avec statut, beacons, tâches, taux de succès pour chaque agent.
+#### 3. Ã‰tat des Agents
+Tableau avec statut, beacons, tÃ¢ches, taux de succÃ¨s pour chaque agent.
 
 #### 4. Agents Hors Ligne
-Liste spécifique des machines inaccessibles avec durée d'inactivité.
+Liste spÃ©cifique des machines inaccessibles avec durÃ©e d'inactivitÃ©.
 
 #### 5. Statistiques
-- Tâches (en attente, assignées, complétées, échouées)
-- Temps d'exécution moyen
+- TÃ¢ches (en attente, assignÃ©es, complÃ©tÃ©es, Ã©chouÃ©es)
+- Temps d'exÃ©cution moyen
 
-### 🎯 Lancer un Audit
+### ðŸŽ¯ Lancer un Audit
 
-1. Cliquez sur le bouton **"🚀 Audit"** d'un agent
-2. Sélectionnez la commande:
+1. Cliquez sur le bouton **"ðŸš€ Audit"** d'un agent
+2. SÃ©lectionnez la commande:
    - `Get-AuditPolicy` - Politiques d'audit Windows
-   - `Get-EventLog` - Logs d'événements
+   - `Get-EventLog` - Logs d'Ã©vÃ©nements
    - `Get-LocalUser` - Utilisateurs locaux
    - `Get-Service` - Services
    - `Get-Process` - Processus
-   - Personnalisée - Entrez une commande PowerShell
+   - PersonnalisÃ©e - Entrez une commande PowerShell
 
-3. Sélectionnez la priorité (Normal / Haute / Critique)
-4. Cliquez **"✓ Lancer l'Audit"**
+3. SÃ©lectionnez la prioritÃ© (Normal / Haute / Critique)
+4. Cliquez **"âœ“ Lancer l'Audit"**
 
-L'audit est créé et envoyé à l'agent pour exécution.
+L'audit est crÃ©Ã© et envoyÃ© Ã  l'agent pour exÃ©cution.
 
-### 🔑 Points clés d'architecture
+### ðŸ”‘ Points clÃ©s d'architecture
 
-**Séparation des responsabilités:**
-- ❌ L'agent PowerShell ne parle **JAMAIS** à la BD directement (risque de sécurité)
-- ✅ L'agent communique **TOUJOURS** via l'API
-- ✅ L'API valide, sécurise et insère les données
+**SÃ©paration des responsabilitÃ©s:**
+- âŒ L'agent PowerShell ne parle **JAMAIS** Ã  la BD directement (risque de sÃ©curitÃ©)
+- âœ… L'agent communique **TOUJOURS** via l'API
+- âœ… L'API valide, sÃ©curise et insÃ¨re les donnÃ©es
 
 **Communication:**
 ```
-PowerShell Agent  →  API REST  →  Base de Données
-     (sécurisée)      (validée)     (protégée)
+PowerShell Agent  â†’  API REST  â†’  Base de DonnÃ©es
+     (sÃ©curisÃ©e)      (validÃ©e)     (protÃ©gÃ©e)
 ```
 
-### 📚 Documentation Web
+### ðŸ“š Documentation Web
 
-Pour plus de détails sur l'application web, consultez [web/README.md](web/README.md).
+Pour plus de dÃ©tails sur l'application web, consultez [web/README.md](web/README.md).
 
 ---
 
-## Prochaines étapes
+## Prochaines Ã©tapes
 
-1. ✅ **Base de données persistante**: Intégrer MongoDB
-2. ✅ **Logging amélioré**: Ajouter logging structuré (ex: Python logging)
-3. ✅ **Rate limiting**: Limiter les requêtes par agent
-4. ✅ **Historique**: Conserver l'historique des beacons
-5. ✅ **Monitoring**: Dashboard pour surveiller les agents et tâches
-6. ✅ **Interface Web**: Dashboard Vue.js pour l'administrateur
-7. **WebSocket**: Notifications en temps réel (push au lieu de polling)
-8. **Chiffrement**: Chiffrer les résultats sensibles
+1. âœ… **Base de donnÃ©es persistante**: IntÃ©grer MongoDB
+2. âœ… **Logging amÃ©liorÃ©**: Ajouter logging structurÃ© (ex: Python logging)
+3. âœ… **Rate limiting**: Limiter les requÃªtes par agent
+4. âœ… **Historique**: Conserver l'historique des beacons
+5. âœ… **Monitoring**: Dashboard pour surveiller les agents et tÃ¢ches
+6. âœ… **Interface Web**: Dashboard Vue.js pour l'administrateur
+7. **WebSocket**: Notifications en temps rÃ©el (push au lieu de polling)
+8. **Chiffrement**: Chiffrer les rÃ©sultats sensibles
 
 ---
 
 ## Licence
 
-À définir selon votre projet.
+Ã€ dÃ©finir selon votre projet.
+

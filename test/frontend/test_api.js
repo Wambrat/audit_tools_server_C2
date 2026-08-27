@@ -1,9 +1,9 @@
-/**
+﻿/**
  * Tests unitaires pour api.js
- * Teste le client API C2 et les appels aux endpoints
+ * Teste le client API jadus et les appels aux endpoints
  */
 
-describe('C2ApiClient', () => {
+describe('jadusApiClient', () => {
   
   // Mock de fetch
   beforeEach(() => {
@@ -15,7 +15,7 @@ describe('C2ApiClient', () => {
   });
 
   describe('getSystemOverview', () => {
-    it('devrait retourner l\'aperçu du système', async () => {
+    it('devrait retourner l\'aperÃ§u du systÃ¨me', async () => {
       const mockData = {
         timestamp: '2026-06-16T10:00:00Z',
         agents: { total: 5, by_status: { active: 4, inactive: 1, compromised: 0 } },
@@ -28,25 +28,25 @@ describe('C2ApiClient', () => {
         json: async () => mockData
       });
 
-      const result = await C2ApiClient.getSystemOverview();
+      const result = await jadusApiClient.getSystemOverview();
 
       expect(result).toEqual(mockData);
       expect(global.fetch).toHaveBeenCalledWith('http://localhost:8000/api/monitoring/overview');
     });
 
-    it('devrait lever une erreur en cas de réponse non-OK', async () => {
+    it('devrait lever une erreur en cas de rÃ©ponse non-OK', async () => {
       global.fetch.mockResolvedValueOnce({
         ok: false,
         status: 500
       });
 
-      await expect(C2ApiClient.getSystemOverview()).rejects.toThrow();
+      await expect(jadusApiClient.getSystemOverview()).rejects.toThrow();
     });
 
-    it('devrait gérer les erreurs réseau', async () => {
+    it('devrait gÃ©rer les erreurs rÃ©seau', async () => {
       global.fetch.mockRejectedValueOnce(new Error('Network error'));
 
-      await expect(C2ApiClient.getSystemOverview()).rejects.toThrow('Network error');
+      await expect(jadusApiClient.getSystemOverview()).rejects.toThrow('Network error');
     });
   });
 
@@ -65,7 +65,7 @@ describe('C2ApiClient', () => {
         json: async () => mockData
       });
 
-      const result = await C2ApiClient.getAgentsDashboard();
+      const result = await jadusApiClient.getAgentsDashboard();
 
       expect(result).toEqual(mockData);
       expect(global.fetch).toHaveBeenCalledWith('http://localhost:8000/api/monitoring/agents');
@@ -73,7 +73,7 @@ describe('C2ApiClient', () => {
   });
 
   describe('getTasksDashboard', () => {
-    it('devrait retourner le dashboard des tâches', async () => {
+    it('devrait retourner le dashboard des tÃ¢ches', async () => {
       const mockData = {
         total_tasks: 10,
         by_status: { pending: 2, assigned: 3, completed: 4, failed: 1 }
@@ -84,7 +84,7 @@ describe('C2ApiClient', () => {
         json: async () => mockData
       });
 
-      const result = await C2ApiClient.getTasksDashboard();
+      const result = await jadusApiClient.getTasksDashboard();
 
       expect(result).toEqual(mockData);
       expect(global.fetch).toHaveBeenCalledWith('http://localhost:8000/api/monitoring/tasks');
@@ -92,7 +92,7 @@ describe('C2ApiClient', () => {
   });
 
   describe('getResultsDashboard', () => {
-    it('devrait retourner le dashboard des résultats', async () => {
+    it('devrait retourner le dashboard des rÃ©sultats', async () => {
       const mockData = {
         total_results: 20,
         by_status: { success: 18, failed: 2 },
@@ -104,7 +104,7 @@ describe('C2ApiClient', () => {
         json: async () => mockData
       });
 
-      const result = await C2ApiClient.getResultsDashboard();
+      const result = await jadusApiClient.getResultsDashboard();
 
       expect(result).toEqual(mockData);
       expect(global.fetch).toHaveBeenCalledWith('http://localhost:8000/api/monitoring/results');
@@ -112,7 +112,7 @@ describe('C2ApiClient', () => {
   });
 
   describe('getAlerts', () => {
-    it('devrait retourner les alertes système', async () => {
+    it('devrait retourner les alertes systÃ¨me', async () => {
       const mockData = {
         overall_level: 'warning',
         critical_alerts: 1,
@@ -125,7 +125,7 @@ describe('C2ApiClient', () => {
         json: async () => mockData
       });
 
-      const result = await C2ApiClient.getAlerts();
+      const result = await jadusApiClient.getAlerts();
 
       expect(result).toEqual(mockData);
       expect(global.fetch).toHaveBeenCalledWith('http://localhost:8000/api/monitoring/alerts');
@@ -144,7 +144,7 @@ describe('C2ApiClient', () => {
         json: async () => mockData
       });
 
-      const result = await C2ApiClient.getAgents();
+      const result = await jadusApiClient.getAgents();
 
       expect(result).toEqual(mockData);
       expect(global.fetch).toHaveBeenCalledWith('http://localhost:8000/api/agents');
@@ -152,7 +152,7 @@ describe('C2ApiClient', () => {
   });
 
   describe('createTask', () => {
-    it('devrait créer une tâche avec succès', async () => {
+    it('devrait crÃ©er une tÃ¢che avec succÃ¨s', async () => {
       const mockData = { task_id: 'task-1', status: 'pending' };
 
       global.fetch.mockResolvedValueOnce({
@@ -160,7 +160,7 @@ describe('C2ApiClient', () => {
         json: async () => mockData
       });
 
-      const result = await C2ApiClient.createTask('agent-1', 'Get-Service');
+      const result = await jadusApiClient.createTask('agent-1', 'Get-Service');
 
       expect(result).toEqual(mockData);
       expect(global.fetch).toHaveBeenCalledWith(
@@ -172,7 +172,7 @@ describe('C2ApiClient', () => {
       );
     });
 
-    it('devrait inclure les paramètres dans la tâche', async () => {
+    it('devrait inclure les paramÃ¨tres dans la tÃ¢che', async () => {
       const mockData = { task_id: 'task-1', status: 'pending' };
 
       global.fetch.mockResolvedValueOnce({
@@ -180,7 +180,7 @@ describe('C2ApiClient', () => {
         json: async () => mockData
       });
 
-      await C2ApiClient.createTask('agent-1', 'Get-Service', { name: 'svchost' }, 1);
+      await jadusApiClient.createTask('agent-1', 'Get-Service', { name: 'svchost' }, 1);
 
       const callArgs = global.fetch.mock.calls[0][1];
       const body = JSON.parse(callArgs.body);
@@ -197,7 +197,7 @@ describe('C2ApiClient', () => {
       global.fetch.mockRejectedValueOnce(new Error('API Error'));
 
       try {
-        await C2ApiClient.getSystemOverview();
+        await jadusApiClient.getSystemOverview();
       } catch (e) {
         // Erreur attendue
       }
@@ -206,22 +206,23 @@ describe('C2ApiClient', () => {
       consoleSpy.mockRestore();
     });
 
-    it('devrait gérer les réponses HTTP 404', async () => {
+    it('devrait gÃ©rer les rÃ©ponses HTTP 404', async () => {
       global.fetch.mockResolvedValueOnce({
         ok: false,
         status: 404
       });
 
-      await expect(C2ApiClient.getAgents()).rejects.toThrow('HTTP 404');
+      await expect(jadusApiClient.getAgents()).rejects.toThrow('HTTP 404');
     });
 
-    it('devrait gérer les réponses HTTP 500', async () => {
+    it('devrait gÃ©rer les rÃ©ponses HTTP 500', async () => {
       global.fetch.mockResolvedValueOnce({
         ok: false,
         status: 500
       });
 
-      await expect(C2ApiClient.getSystemOverview()).rejects.toThrow('HTTP 500');
+      await expect(jadusApiClient.getSystemOverview()).rejects.toThrow('HTTP 500');
     });
   });
 });
+

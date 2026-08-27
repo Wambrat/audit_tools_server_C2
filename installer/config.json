@@ -1,12 +1,12 @@
-{
+﻿{
   "agent": {
     "serverUrl": "http://localhost:8000/api",
     "beaconInterval": 30,
-    "logFile": "%PROGRAMFILES%\\C2Agent\\logs\\agent.log",
+    "logFile": "%PROGRAMFILES%\\jadusAgent\\logs\\agent.log",
     "logLevel": "INFO"
   },
   "scheduled_task": {
-    "taskName": "C2AgentBeacon",
+    "taskName": "jadusAgentBeacon",
     "triggerInterval": 30,
     "runWithHighestPrivileges": true,
     "runUser": "SYSTEM"
@@ -17,3 +17,4 @@
     "autoStart": true
   }
 }
+

@@ -1,10 +1,10 @@
-<?xml version="1.0" encoding="UTF-8"?>
+﻿<?xml version="1.0" encoding="UTF-8"?>
 <!-- Schema WiX v3 (compile avec wixl sur Linux).                              -->
 <!-- Aucune custom action : wixl ne les execute pas. La tache planifiee est    -->
 <!-- creee au 1er login via l'entree HKLM\...\Run -> bootstrap.ps1.            -->
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
     <Product Id="*"
-             Name="C2 Autonomous Agent"
+             Name="jadus Autonomous Agent"
              Language="1033"
              Version="1.0.0.0"
              Manufacturer="Security Team"
@@ -14,10 +14,10 @@
                  Compressed="yes"
                  InstallScope="perMachine" />
 
-        <Media Id="1" Cabinet="C2Agent.cab" EmbedCab="yes" />
+        <Media Id="1" Cabinet="jadusAgent.cab" EmbedCab="yes" />
 
         <!-- Feature principale -->
-        <Feature Id="ProductFeature" Title="C2 Autonomous Agent" Level="1">
+        <Feature Id="ProductFeature" Title="jadus Autonomous Agent" Level="1">
             <ComponentRef Id="InstallFolder" />
             <ComponentRef Id="AgentExecutable" />
             <ComponentRef Id="LauncherScript" />
@@ -30,7 +30,7 @@
         <!-- Repertoires -->
         <Directory Id="TARGETDIR" Name="SourceDir">
             <Directory Id="ProgramFilesFolder">
-                <Directory Id="INSTALLFOLDER" Name="C2Agent" />
+                <Directory Id="INSTALLFOLDER" Name="jadusAgent" />
             </Directory>
             <Directory Id="ProgramMenuFolder" />
         </Directory>
@@ -40,7 +40,7 @@
             <!-- Dossier + cle registre du chemin d'install -->
             <Component Id="InstallFolder" Guid="22222222-2222-2222-2222-222222222222">
                 <CreateFolder />
-                <RegistryValue Root="HKLM" Key="Software\C2Agent" Name="InstallPath" Value="[INSTALLFOLDER]" Type="string" KeyPath="yes" />
+                <RegistryValue Root="HKLM" Key="Software\jadusAgent" Name="InstallPath" Value="[INSTALLFOLDER]" Type="string" KeyPath="yes" />
             </Component>
 
             <!-- Agent principal -->
@@ -67,7 +67,7 @@
             <Component Id="AutoStartBootstrap" Guid="77777777-7777-7777-7777-777777777777">
                 <RegistryValue Root="HKLM"
                                Key="Software\Microsoft\Windows\CurrentVersion\Run"
-                               Name="C2AgentBootstrap"
+                               Name="jadusAgentBootstrap"
                                Value="powershell.exe -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File &quot;[INSTALLFOLDER]bootstrap.ps1&quot;"
                                Type="string"
                                KeyPath="yes" />
@@ -78,12 +78,13 @@
         <DirectoryRef Id="ProgramMenuFolder">
             <Component Id="ApplicationShortcuts" Guid="55555555-5555-5555-5555-555555555555">
                 <Shortcut Id="UninstallProduct"
-                          Name="Uninstall C2 Agent"
+                          Name="Uninstall jadus Agent"
                           Target="[SystemFolder]msiexec.exe"
                           Arguments="/x [ProductCode]" />
                 <RemoveFolder Id="ProgramMenuFolder" On="uninstall" />
-                <RegistryValue Root="HKCU" Key="Software\C2Agent" Name="Installed" Value="1" Type="integer" KeyPath="yes" />
+                <RegistryValue Root="HKCU" Key="Software\jadusAgent" Name="Installed" Value="1" Type="integer" KeyPath="yes" />
             </Component>
         </DirectoryRef>
     </Product>
 </Wix>
+

@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin Dashboard - C2</title>
+  <title>Admin Dashboard - jadus</title>
   
   <!-- Vue 3 -->
   <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
@@ -1151,49 +1151,49 @@
       <!-- Sidebar -->
       <aside class="sidebar">
         <div class="sidebar-header">
-          <span class="sidebar-logo">🛡️</span>
+          <span class="sidebar-logo">ðŸ›¡ï¸</span>
           <span>Admin Panel</span>
         </div>
 
         <ul class="sidebar-nav">
           <li>
             <a @click="currentPage = 'overview'" :class="{ active: currentPage === 'overview' }">
-              📊 Vue d'ensemble
+              ðŸ“Š Vue d'ensemble
             </a>
           </li>
           <li>
             <a @click="currentPage = 'agents'" :class="{ active: currentPage === 'agents' }">
-              👥 Agents
+              ðŸ‘¥ Agents
             </a>
           </li>
           <li>
             <a @click="currentPage = 'tasks'" :class="{ active: currentPage === 'tasks' }">
-              ✓ Gestion des commandes
+              âœ“ Gestion des commandes
             </a>
           </li>
           <li>
             <a @click="currentPage = 'templates'" :class="{ active: currentPage === 'templates' }">
-              🧩 Templates
+              ðŸ§© Templates
             </a>
           </li>
           <li>
             <a @click="currentPage = 'results'" :class="{ active: currentPage === 'results' }">
-              📋 Résultats
+              ðŸ“‹ RÃ©sultats
             </a>
           </li>
           <li>
             <a @click="currentPage = 'alerts'" :class="{ active: currentPage === 'alerts' }">
-              🚨 Alertes
+              ðŸš¨ Alertes
             </a>
           </li>
           <li>
             <a @click="currentPage = 'settings'" :class="{ active: currentPage === 'settings' }">
-              ⚙️ Paramètres
+              âš™ï¸ ParamÃ¨tres
             </a>
           </li>
           <li>
             <a href="build-msi.html" target="_self">
-              🔨 Build MSI
+              ðŸ”¨ Build MSI
             </a>
           </li>
         </ul>
@@ -1204,11 +1204,11 @@
               <div class="user-avatar">A</div>
               <div class="user-details">
                 <span class="user-name">Administrateur</span>
-                <span class="user-role">Connecté</span>
+                <span class="user-role">ConnectÃ©</span>
               </div>
             </div>
-            <button type="button" class="logout-btn" @click="logout" aria-label="Déconnexion" title="Déconnexion">
-              <span class="logout-icon">⏻</span>
+            <button type="button" class="logout-btn" @click="logout" aria-label="DÃ©connexion" title="DÃ©connexion">
+              <span class="logout-icon">â»</span>
             </button>
           </div>
         </div>
@@ -1221,7 +1221,7 @@
           <div class="header-left"></div>
           <div class="header-actions">
             <button class="btn-secondary" @click="refreshData">
-              🔄 Actualiser
+              ðŸ”„ Actualiser
             </button>
           </div>
         </header>
@@ -1236,10 +1236,10 @@
             </div>
             <div v-else>
               <div class="alert alert-info">
-                ℹ️ Bienvenue dans le panneau d'administration. Vous pouvez surveiller tous les agents et les tâches d'audit.
+                â„¹ï¸ Bienvenue dans le panneau d'administration. Vous pouvez surveiller tous les agents et les tÃ¢ches d'audit.
               </div>
 
-              <h2 class="section-title">Statistiques Système</h2>
+              <h2 class="section-title">Statistiques SystÃ¨me</h2>
               <div class="dashboard-grid">
                 <div class="card">
                   <div class="card-title">Agents Totaux</div>
@@ -1250,23 +1250,23 @@
                 </div>
 
                 <div class="card">
-                  <div class="card-title">Résultats</div>
+                  <div class="card-title">RÃ©sultats</div>
                   <div class="card-value">{{ overview.results?.total || 0 }}</div>
                   <div class="card-subtitle">
-                    Taux de succès: <strong>{{ ((overview.results?.by_status?.success / overview.results?.total || 0) * 100).toFixed(1) }}%</strong>
+                    Taux de succÃ¨s: <strong>{{ ((overview.results?.by_status?.success / overview.results?.total || 0) * 100).toFixed(1) }}%</strong>
                   </div>
                 </div>
 
                 <div class="card">
                   <div class="card-title">Temps Moyen</div>
                   <div class="card-value">{{ overview?.results?.avg_execution_time_ms || 0 }}ms</div>
-                  <div class="card-subtitle">Exécution moyenne des audits</div>
+                  <div class="card-subtitle">ExÃ©cution moyenne des audits</div>
                 </div>
 
                 <div class="card">
-                  <div class="card-title">Santé Système</div>
-                  <div class="card-value" style="color: var(--color-success);">✓</div>
-                  <div class="card-subtitle">Tous les systèmes opérationnels</div>
+                  <div class="card-title">SantÃ© SystÃ¨me</div>
+                  <div class="card-value" style="color: var(--color-success);">âœ“</div>
+                  <div class="card-subtitle">Tous les systÃ¨mes opÃ©rationnels</div>
                 </div>
               </div>
             </div>
@@ -1283,19 +1283,19 @@
 
               <div style="display:flex; flex-wrap:wrap; justify-content:space-between; align-items:flex-end; gap:12px; margin-bottom:18px;">
                 <p style="color: var(--color-muted); margin:0;">
-                  Total: <strong>{{ agentsList.length }}</strong> agents enregistrés
+                  Total: <strong>{{ agentsList.length }}</strong> agents enregistrÃ©s
                 </p>
 
                 <div style="display:flex; flex-direction:row; align-items:center; justify-content:flex-end; gap:10px; margin-bottom: 12px;">
                   <select v-model="auditTemplateSelection" class="premium-select" style="min-width:240px; height: 42px; border-radius: 10px;">
-                    <option value="">Choisir un template d’audit...</option>
+                    <option value="">Choisir un template dâ€™audit...</option>
                     <option v-for="template in templatesList" :key="template.template_id" :value="template.template_id">
                       {{ template.name }}
                     </option>
                   </select>
 
-                  <button class="btn-primary" @click="applyTemplateToSelectedAgents" :disabled="!auditTemplateSelection || !agentTableSelection.length || isLoading" title="Envoyer aux agents cochés" style="padding: 10px 12px; width: 46px; height: 42px; display:inline-flex; align-items:center; justify-content:center; border-radius: 10px;">
-                    ✉️
+                  <button class="btn-primary" @click="applyTemplateToSelectedAgents" :disabled="!auditTemplateSelection || !agentTableSelection.length || isLoading" title="Envoyer aux agents cochÃ©s" style="padding: 10px 12px; width: 46px; height: 42px; display:inline-flex; align-items:center; justify-content:center; border-radius: 10px;">
+                    âœ‰ï¸
                   </button>
                 </div>
               </div>
@@ -1310,8 +1310,8 @@
                     <th>Hostname</th>
                     <th>Utilisateur</th>
                     <th>Statut</th>
-                    <th>Succès</th>
-                    <th>Tâches</th>
+                    <th>SuccÃ¨s</th>
+                    <th>TÃ¢ches</th>
                     <th>Actions</th>
                   </tr>
                 </thead>
@@ -1325,7 +1325,7 @@
                     <td>{{ agent.username }}</td>
                     <td>
                       <span :style="{ color: agent.status === 'active' ? 'var(--color-success)' : 'var(--color-muted)' }">
-                        {{ agent.status === 'active' ? '● Actif' : '○ Inactif' }}
+                        {{ agent.status === 'active' ? 'â— Actif' : 'â—‹ Inactif' }}
                       </span>
                       <div v-if="agent.status !== 'active'" style="font-size:12px; color: var(--color-muted); margin-top:4px;">
                         il y a {{ getInactivityDuration(agent.last_beacon) }}
@@ -1333,7 +1333,7 @@
                     </td>
                     <td>{{ agent.success_rate || 0 }}%</td>
                     <td>
-                      <span v-if="agentDispatchStats[agent.agent_id] !== undefined" style="font-weight:700; color: var(--color-primary);">{{ agentDispatchStats[agent.agent_id] }} tâches</span>
+                      <span v-if="agentDispatchStats[agent.agent_id] !== undefined" style="font-weight:700; color: var(--color-primary);">{{ agentDispatchStats[agent.agent_id] }} tÃ¢ches</span>
                       <span v-else style="color: var(--color-muted);">-</span>
                     </td>
                     <td>
@@ -1343,7 +1343,7 @@
                           style="padding: 6px 12px; font-size: 12px; cursor: pointer;"
                           @click="deleteAgent(agent.agent_id, agent.agent_name)"
                           :disabled="isLoading">
-                          🗑️ Supprimer
+                          ðŸ—‘ï¸ Supprimer
                         </button>
                       </div>
                     </td>
@@ -1351,7 +1351,7 @@
                 </tbody>
               </table>
               <p v-else style="text-align: center; color: var(--color-muted); padding: 40px;">
-                Aucun agent enregistré
+                Aucun agent enregistrÃ©
               </p>
             </div>
           </div>
@@ -1366,7 +1366,7 @@
               <div class="command-toolbar">
                 <div class="command-toolbar-title">
                   <h2>Gestion des commandes</h2>
-                  <span class="command-toolbar-subtitle">{{ powershellCommandList.length }} commandes enregistrées</span>
+                  <span class="command-toolbar-subtitle">{{ powershellCommandList.length }} commandes enregistrÃ©es</span>
                 </div>
 
                 <div class="command-actions">
@@ -1384,7 +1384,7 @@
                       </th>
                       <th>Nom</th>
                       <th>Description</th>
-                      <th>Créé par</th>
+                      <th>CrÃ©Ã© par</th>
                       <th style="width: 180px;">Actions</th>
                     </tr>
                   </thead>
@@ -1398,22 +1398,22 @@
                       <td>{{ command.created_by || 'admin' }}</td>
                       <td>
                         <div class="command-cell-actions">
-                          <button class="btn-secondary" @click="openCommandForm('edit', command)" title="Modifier" style="padding:8px 10px; cursor:pointer; font-size:14px; width:36px; height:36px; display:inline-flex; align-items:center; justify-content:center;">✏️</button>
-                          <button class="btn-danger" @click="deleteCommand(command.command_id)" title="Supprimer" style="padding:8px 10px; cursor:pointer; font-size:14px; width:36px; height:36px; display:inline-flex; align-items:center; justify-content:center;">🗑️</button>
+                          <button class="btn-secondary" @click="openCommandForm('edit', command)" title="Modifier" style="padding:8px 10px; cursor:pointer; font-size:14px; width:36px; height:36px; display:inline-flex; align-items:center; justify-content:center;">âœï¸</button>
+                          <button class="btn-danger" @click="deleteCommand(command.command_id)" title="Supprimer" style="padding:8px 10px; cursor:pointer; font-size:14px; width:36px; height:36px; display:inline-flex; align-items:center; justify-content:center;">ðŸ—‘ï¸</button>
                         </div>
                       </td>
                     </tr>
                   </tbody>
                 </table>
-                <p v-else style="text-align:center; color:var(--color-muted); padding: 40px; margin: 0;">Aucune commande enregistrée pour le moment.</p>
+                <p v-else style="text-align:center; color:var(--color-muted); padding: 40px; margin: 0;">Aucune commande enregistrÃ©e pour le moment.</p>
               </div>
 
-              <button class="fab" @click="openCommandForm('create')" title="Nouvelle commande">＋</button>
+              <button class="fab" @click="openCommandForm('create')" title="Nouvelle commande">ï¼‹</button>
 
               <div v-if="showCommandForm" class="drawer-backdrop" @click="resetCommandForm"></div>
               <aside v-if="showCommandForm" class="command-drawer">
                 <div class="command-drawer-header">
-                  <h3>{{ commandFormMode === 'edit' ? 'Modifier la commande' : 'Créer une commande' }}</h3>
+                  <h3>{{ commandFormMode === 'edit' ? 'Modifier la commande' : 'CrÃ©er une commande' }}</h3>
                   <button class="btn-secondary" @click="resetCommandForm" style="padding: 8px 12px; cursor:pointer;">Fermer</button>
                 </div>
 
@@ -1424,7 +1424,7 @@
                   </div>
 
                   <div class="drawer-field">
-                    <label>Créé par</label>
+                    <label>CrÃ©Ã© par</label>
                     <input v-model="newCommand.created_by" type="text" placeholder="admin">
                   </div>
 
@@ -1440,18 +1440,18 @@
 
                   <div class="drawer-upload-row">
                     <label class="btn-secondary" style="padding: 10px 14px; cursor:pointer; display:inline-block; font-weight:700;">
-                      ⤴️ Importer un script
+                      â¤´ï¸ Importer un script
                       <input type="file" accept=".ps1,.txt,.psm1" @change="uploadCommandScript" style="display:none;">
                     </label>
-                    <button class="btn-secondary" @click="pasteSampleCustomCommand" style="padding: 10px 14px; cursor:pointer; font-weight:700;">🧩 Exemple</button>
+                    <button class="btn-secondary" @click="pasteSampleCustomCommand" style="padding: 10px 14px; cursor:pointer; font-weight:700;">ðŸ§© Exemple</button>
                   </div>
 
                   <div class="drawer-actions">
                     <button class="btn-primary" @click="saveCommand" :disabled="isLoading || !newCommand.name || !newCommand.script" style="padding: 12px 18px; cursor:pointer; font-weight:700;">
-                      {{ commandFormMode === 'edit' ? 'Mettre à jour' : 'Enregistrer' }}
+                      {{ commandFormMode === 'edit' ? 'Mettre Ã  jour' : 'Enregistrer' }}
                     </button>
                     <button class="btn-secondary" @click="resetCommandForm" style="padding: 12px 18px; cursor:pointer; font-weight:700;">
-                      Réinitialiser
+                      RÃ©initialiser
                     </button>
                   </div>
                 </div>
@@ -1469,7 +1469,7 @@
               <div class="command-toolbar">
                 <div class="command-toolbar-title">
                   <h2>Gestion des templates</h2>
-                  <span class="command-toolbar-subtitle">{{ templatesList.length }} templates enregistrés</span>
+                  <span class="command-toolbar-subtitle">{{ templatesList.length }} templates enregistrÃ©s</span>
                 </div>
 
                 <div class="command-actions">
@@ -1493,7 +1493,7 @@
                       <th>Nom</th>
                       <th>Description</th>
                       <th>Commandes</th>
-                      <th>Créé par</th>
+                      <th>CrÃ©Ã© par</th>
                       <th style="width: 180px;">Actions</th>
                     </tr>
                   </thead>
@@ -1508,34 +1508,34 @@
                       <td>{{ template.created_by || 'admin' }}</td>
                       <td>
                         <div class="command-cell-actions">
-                          <button class="btn-secondary" @click="openTemplateForm('edit', template)" title="Modifier" style="padding:8px 10px; cursor:pointer; font-size:14px; width:36px; height:36px; display:inline-flex; align-items:center; justify-content:center;">✏️</button>
-                          <button class="btn-secondary" @click="duplicateTemplate(template.template_id)" title="Dupliquer" style="padding:8px 10px; cursor:pointer; font-size:14px; width:36px; height:36px; display:inline-flex; align-items:center; justify-content:center;">⧉</button>
-                          <button class="btn-danger" @click="deleteTemplate(template.template_id)" title="Supprimer" style="padding:8px 10px; cursor:pointer; font-size:14px; width:36px; height:36px; display:inline-flex; align-items:center; justify-content:center;">🗑️</button>
+                          <button class="btn-secondary" @click="openTemplateForm('edit', template)" title="Modifier" style="padding:8px 10px; cursor:pointer; font-size:14px; width:36px; height:36px; display:inline-flex; align-items:center; justify-content:center;">âœï¸</button>
+                          <button class="btn-secondary" @click="duplicateTemplate(template.template_id)" title="Dupliquer" style="padding:8px 10px; cursor:pointer; font-size:14px; width:36px; height:36px; display:inline-flex; align-items:center; justify-content:center;">â§‰</button>
+                          <button class="btn-danger" @click="deleteTemplate(template.template_id)" title="Supprimer" style="padding:8px 10px; cursor:pointer; font-size:14px; width:36px; height:36px; display:inline-flex; align-items:center; justify-content:center;">ðŸ—‘ï¸</button>
                         </div>
                       </td>
                     </tr>
                   </tbody>
                 </table>
-                <p v-else style="text-align:center; color:var(--color-muted); padding: 40px; margin: 0;">Aucun template enregistré pour le moment.</p>
+                <p v-else style="text-align:center; color:var(--color-muted); padding: 40px; margin: 0;">Aucun template enregistrÃ© pour le moment.</p>
               </div>
 
-              <button class="fab" @click="openTemplateForm('create')" title="Nouveau template">＋</button>
+              <button class="fab" @click="openTemplateForm('create')" title="Nouveau template">ï¼‹</button>
 
               <div v-if="showTemplateForm" class="drawer-backdrop" @click="resetTemplateForm"></div>
               <aside v-if="showTemplateForm" class="command-drawer">
                 <div class="command-drawer-header">
-                  <h3>{{ templateFormMode === 'edit' ? 'Modifier le template' : 'Créer un template' }}</h3>
+                  <h3>{{ templateFormMode === 'edit' ? 'Modifier le template' : 'CrÃ©er un template' }}</h3>
                   <button class="btn-secondary" @click="resetTemplateForm" style="padding: 8px 12px; cursor:pointer;">Fermer</button>
                 </div>
 
                 <div class="command-drawer-body">
                   <div class="drawer-field">
                     <label>Nom du template</label>
-                    <input v-model="auditTemplate.name" type="text" placeholder="Audit système standard">
+                    <input v-model="auditTemplate.name" type="text" placeholder="Audit systÃ¨me standard">
                   </div>
 
                   <div class="drawer-field">
-                    <label>Créé par</label>
+                    <label>CrÃ©Ã© par</label>
                     <input v-model="auditTemplate.created_by" type="text" placeholder="admin">
                   </div>
 
@@ -1548,7 +1548,7 @@
                     <label>Commandes du template</label>
                     <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
                       <select v-model="templateCommandSelection" class="premium-select" style="flex:1; min-width:220px;">
-                        <option value="">Sélectionner une commande...</option>
+                        <option value="">SÃ©lectionner une commande...</option>
                         <option v-for="command in availableTemplateCommands()" :key="command" :value="command">
                           {{ command }}
                         </option>
@@ -1561,17 +1561,17 @@
                     <div v-if="(auditTemplate?.commands || []).length" class="selected-command-list" style="margin-top: 12px;">
                       <span v-for="(command, index) in (auditTemplate?.commands || [])" :key="command + '-' + index" class="command-chip">
                         {{ command }}
-                        <button @click.prevent="removeTemplateCommand(index)">×</button>
+                        <button @click.prevent="removeTemplateCommand(index)">Ã—</button>
                       </span>
                     </div>
                   </div>
 
                   <div class="drawer-upload-row">
                     <label class="btn-secondary" style="padding: 10px 14px; cursor:pointer; display:inline-block; font-weight:700;">
-                      ⤴️ Importer JSON
+                      â¤´ï¸ Importer JSON
                       <input type="file" accept="application/json" @change="importTemplateFile" style="display:none;">
                     </label>
-                    <button class="btn-secondary" @click="loadDemoTemplate" style="padding: 10px 14px; cursor:pointer; font-weight:700;">🧩 Exemple</button>
+                    <button class="btn-secondary" @click="loadDemoTemplate" style="padding: 10px 14px; cursor:pointer; font-weight:700;">ðŸ§© Exemple</button>
                   </div>
 
                   <div class="drawer-field">
@@ -1581,10 +1581,10 @@
 
                   <div class="drawer-actions">
                     <button class="btn-primary" @click="templateFormMode === 'edit' ? updateSelectedTemplate() : createAuditTemplate(); resetTemplateForm();" :disabled="isLoading || !auditTemplate.name.trim() || !auditTemplate.commands.length" style="padding: 12px 18px; cursor:pointer; font-weight:700;">
-                      {{ templateFormMode === 'edit' ? 'Mettre à jour' : 'Enregistrer' }}
+                      {{ templateFormMode === 'edit' ? 'Mettre Ã  jour' : 'Enregistrer' }}
                     </button>
                     <button class="btn-secondary" @click="importTemplateFromJsonText" style="padding: 12px 18px; cursor:pointer; font-weight:700;">
-                      Précharger JSON
+                      PrÃ©charger JSON
                     </button>
                   </div>
                 </div>
@@ -1596,13 +1596,13 @@
           <div v-else-if="currentPage === 'results'">
             <div v-if="isLoading" class="loading">
               <div class="spinner"></div>
-              <p>Chargement des résultats...</p>
+              <p>Chargement des rÃ©sultats...</p>
             </div>
             <div v-else class="section command-manager">
               <div class="command-toolbar">
                 <div class="command-toolbar-title">
-                  <h2>Résultats d'audit</h2>
-                  <span class="command-toolbar-subtitle">{{ filteredResults.length }} résultats affichés sur {{ resultsList.length }}</span>
+                  <h2>RÃ©sultats d'audit</h2>
+                  <span class="command-toolbar-subtitle">{{ filteredResults.length }} rÃ©sultats affichÃ©s sur {{ resultsList.length }}</span>
                 </div>
               </div>
 
@@ -1610,22 +1610,22 @@
                 <div class="results-stat-card">
                   <div class="label">Total</div>
                   <div class="value">{{ resultsList.length }}</div>
-                  <div class="trend">Audit exécutés</div>
+                  <div class="trend">Audit exÃ©cutÃ©s</div>
                 </div>
                 <div class="results-stat-card">
-                  <div class="label">Succès</div>
+                  <div class="label">SuccÃ¨s</div>
                   <div class="value" style="color: var(--color-success);">{{ resultStats.success }}</div>
-                  <div class="trend">{{ resultStats.successRate }}% de réussite</div>
+                  <div class="trend">{{ resultStats.successRate }}% de rÃ©ussite</div>
                 </div>
                 <div class="results-stat-card">
                   <div class="label">Non conformes</div>
                   <div class="value" style="color: var(--color-danger);">{{ resultStats.nonCompliant }}</div>
-                  <div class="trend">À traiter</div>
+                  <div class="trend">Ã€ traiter</div>
                 </div>
                 <div class="results-stat-card">
                   <div class="label">Temps moyen</div>
                   <div class="value" style="font-size:26px;">{{ resultStats.avgTime }} ms</div>
-                  <div class="trend">Exécution moyenne</div>
+                  <div class="trend">ExÃ©cution moyenne</div>
                 </div>
               </div>
 
@@ -1642,8 +1642,8 @@
                     <option value="">Tous les statuts</option>
                     <option value="compliant">Conforme</option>
                     <option value="non_compliant">Non conforme</option>
-                    <option value="success">Succès technique</option>
-                    <option value="failed">Échec technique</option>
+                    <option value="success">SuccÃ¨s technique</option>
+                    <option value="failed">Ã‰chec technique</option>
                   </select>
                 </div>
               </div>
@@ -1655,21 +1655,21 @@
                       <tr>
                         <th>Agent</th>
                         <th>ID Audit</th>
-                        <th>Tâche</th>
+                        <th>TÃ¢che</th>
                         <th>Commande</th>
-                        <th>Conformité</th>
+                        <th>ConformitÃ©</th>
                         <th>Date</th>
-                        <th>Durée</th>
+                        <th>DurÃ©e</th>
                       </tr>
                     </thead>
                     <tbody>
                       <tr v-for="result in filteredResults" :key="result.result_id" @click="selectResult(result)" :class="{ 'active-row': selectedResultId === result.result_id }">
                         <td>{{ result.agent_name || result.agent_id || 'Inconnu' }}</td>
-                        <td>{{ result.audit_id || result.result_id || '—' }}</td>
-                        <td>{{ result.task_id || '—' }}</td>
+                        <td>{{ result.audit_id || result.result_id || 'â€”' }}</td>
+                        <td>{{ result.task_id || 'â€”' }}</td>
                         <td>
                           <div class="result-rule-cell">
-                            <span class="result-command-name">{{ result.command_name || '—' }}</span>
+                            <span class="result-command-name">{{ result.command_name || 'â€”' }}</span>
                           </div>
                         </td>
                         <td>
@@ -1686,13 +1686,13 @@
               </div>
 
               <div v-else class="results-empty">
-                Aucun résultat correspondant aux filtres sélectionnés.
+                Aucun rÃ©sultat correspondant aux filtres sÃ©lectionnÃ©s.
               </div>
 
               <div v-if="showResultModal && selectedResultData" class="drawer-backdrop" @click="closeResultModal"></div>
               <aside v-if="showResultModal && selectedResultData" class="command-drawer" @click.stop>
                 <div class="command-drawer-header">
-                  <h3>Détail du résultat</h3>
+                  <h3>DÃ©tail du rÃ©sultat</h3>
                   <button class="btn-secondary" @click="closeResultModal" style="padding: 8px 12px; cursor:pointer;">Fermer</button>
                 </div>
 
@@ -1710,18 +1710,18 @@
                     </div>
                     <div class="detail-field">
                       <label>ID Audit</label>
-                      <span class="detail-value">{{ selectedResultData.audit_id || selectedResultData.result_id || '—' }}</span>
+                      <span class="detail-value">{{ selectedResultData.audit_id || selectedResultData.result_id || 'â€”' }}</span>
                     </div>
                     <div class="detail-field">
-                      <label>Tâche</label>
-                      <span class="detail-value">{{ selectedResultData.task_id || '—' }}</span>
+                      <label>TÃ¢che</label>
+                      <span class="detail-value">{{ selectedResultData.task_id || 'â€”' }}</span>
                     </div>
                     <div class="detail-field">
                       <label>Date</label>
                       <span class="detail-value">{{ formatDate(selectedResultData.created_at) }}</span>
                     </div>
                     <div class="detail-field">
-                      <label>Durée</label>
+                      <label>DurÃ©e</label>
                       <span class="detail-value">{{ selectedResultData.execution_time_ms || 0 }} ms</span>
                     </div>
                   </div>
@@ -1729,23 +1729,23 @@
                   <div v-if="selectedResultData.recommendation || (selectedResultData.compliance && selectedResultData.compliance.recommendation) || (selectedResultData.compliance && selectedResultData.compliance.controls && selectedResultData.compliance.controls.length)" class="detail-field" style="margin-bottom: 14px;">
                     <label>Recommandation</label>
                     <div class="detail-output">
-                      {{ selectedResultData.recommendation || selectedResultData.compliance.recommendation || 'Aucune recommandation nécessaire : les contrôles sont conformes.' }}
+                      {{ selectedResultData.recommendation || selectedResultData.compliance.recommendation || 'Aucune recommandation nÃ©cessaire : les contrÃ´les sont conformes.' }}
                     </div>
                   </div>
 
                   <div v-if="selectedResultData.compliance" class="detail-field" style="margin-bottom: 14px;">
-                    <label>Conformité</label>
+                    <label>ConformitÃ©</label>
                     <div class="detail-output">
                       <div style="font-weight:700; margin-bottom:8px;">{{ selectedResultData.compliance.summary || (selectedResultData.compliance.status === 'non_compliant' ? 'Non conforme' : 'Conforme') }}</div>
                       <ul v-if="selectedResultData.compliance.issues && selectedResultData.compliance.issues.length" style="margin:0; padding-left:18px;">
                         <li v-for="issue in selectedResultData.compliance.issues" :key="issue">{{ issue }}</li>
                       </ul>
-                      <div v-else-if="selectedResultData.compliance.status === 'compliant'" style="margin-top: 6px;">Aucune anomalie détectée sur les contrôles de l’audit.</div>
+                      <div v-else-if="selectedResultData.compliance.status === 'compliant'" style="margin-top: 6px;">Aucune anomalie dÃ©tectÃ©e sur les contrÃ´les de lâ€™audit.</div>
                     </div>
                   </div>
 
                   <div v-if="selectedResultData.compliance && selectedResultData.compliance.controls && selectedResultData.compliance.controls.length" class="detail-field" style="margin-bottom: 14px;">
-                    <label>Contrôles détaillés</label>
+                    <label>ContrÃ´les dÃ©taillÃ©s</label>
                     <div class="detail-output">
                       <ul style="margin:0; padding-left:18px;">
                         <li v-for="control in selectedResultData.compliance.controls" :key="`${control.section}-${control.control}`">
@@ -1758,8 +1758,8 @@
                   </div>
 
                   <div class="detail-field" style="margin-bottom: 14px;">
-                    <label>Résultat</label>
-                    <div class="detail-output">{{ selectedResultData.result || selectedResultData.result_preview || 'Aucun contenu retourné.' }}</div>
+                    <label>RÃ©sultat</label>
+                    <div class="detail-output">{{ selectedResultData.result || selectedResultData.result_preview || 'Aucun contenu retournÃ©.' }}</div>
                   </div>
 
                   <div v-if="selectedResultData.error_message" class="detail-field">
@@ -1780,8 +1780,8 @@
             <div v-else class="section command-manager">
               <div class="command-toolbar">
                 <div class="command-toolbar-title">
-                  <h2>Alertes système</h2>
-                  <span class="command-toolbar-subtitle">{{ filteredAlerts.length }} alertes affichées</span>
+                  <h2>Alertes systÃ¨me</h2>
+                  <span class="command-toolbar-subtitle">{{ filteredAlerts.length }} alertes affichÃ©es</span>
                 </div>
               </div>
 
@@ -1789,12 +1789,12 @@
                 <div class="results-stat-card">
                   <div class="label">Critiques</div>
                   <div class="value" style="color: var(--color-danger);">{{ alertSummary?.critical || 0 }}</div>
-                  <div class="trend">À traiter immédiatement</div>
+                  <div class="trend">Ã€ traiter immÃ©diatement</div>
                 </div>
                 <div class="results-stat-card">
                   <div class="label">Warnings</div>
                   <div class="value" style="color: var(--color-warning);">{{ alertSummary?.warning || 0 }}</div>
-                  <div class="trend">À surveiller</div>
+                  <div class="trend">Ã€ surveiller</div>
                 </div>
                 <div class="results-stat-card">
                   <div class="label">Global</div>
@@ -1835,11 +1835,11 @@
                             {{ alert.level.toUpperCase() }}
                           </span>
                         </td>
-                        <td>{{ alert.agent_name || alert.agent_id || 'Système' }}</td>
-                        <td>{{ alert.audit_id || '—' }}</td>
+                        <td>{{ alert.agent_name || alert.agent_id || 'SystÃ¨me' }}</td>
+                        <td>{{ alert.audit_id || 'â€”' }}</td>
                         <td>{{ alert.type }}</td>
                         <td>{{ alert.message }}</td>
-                        <td>{{ alert.recommendation || '—' }}</td>
+                        <td>{{ alert.recommendation || 'â€”' }}</td>
                         <td>{{ formatDate(alert.timestamp) }}</td>
                       </tr>
                     </tbody>
@@ -1848,7 +1848,7 @@
               </div>
 
               <div v-else class="results-empty">
-                Aucune alerte détectée pour le moment.
+                Aucune alerte dÃ©tectÃ©e pour le moment.
               </div>
             </div>
           </div>
@@ -1861,3 +1861,4 @@
   <script src="js/admin-dashboard.js?v=20260820-3"></script>
 </body>
 </html>
+

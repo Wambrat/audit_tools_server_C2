@@ -1,62 +1,62 @@
-# C2 Dashboard - Application Web Vue.js
+﻿# jadus Dashboard - Application Web Vue.js
 
-Interface web pour surveiller la conformité du parc informatique et lancer des audits de sécurité.
+Interface web pour surveiller la conformitÃ© du parc informatique et lancer des audits de sÃ©curitÃ©.
 
-## 🎯 Fonctionnalités
+## ðŸŽ¯ FonctionnalitÃ©s
 
-- **Dashboard global**: Vue d'ensemble de la santé du système
+- **Dashboard global**: Vue d'ensemble de la santÃ© du systÃ¨me
 - **Surveillance des agents**: Liste de tous les agents avec leur statut
-- **Agents hors-ligne**: Tableau dédié aux machines non disponibles
-- **Alertes**: Détection automatique des problèmes (agents inactifs, tâches en retard, etc.)
-- **Lancement d'audits**: Bouton pour créer des tâches d'audit par agent
-- **Statistiques**: Taux de succès, temps d'exécution, performance
-- **Auto-rafraîchissement**: Les données se mettent à jour toutes les 30 secondes
-- **🔐 Admin Panel**: Dashboard d'administration avec accès JWT protégé
-- **Admin Login**: Authentification sécurisée pour les administrateurs
+- **Agents hors-ligne**: Tableau dÃ©diÃ© aux machines non disponibles
+- **Alertes**: DÃ©tection automatique des problÃ¨mes (agents inactifs, tÃ¢ches en retard, etc.)
+- **Lancement d'audits**: Bouton pour crÃ©er des tÃ¢ches d'audit par agent
+- **Statistiques**: Taux de succÃ¨s, temps d'exÃ©cution, performance
+- **Auto-rafraÃ®chissement**: Les donnÃ©es se mettent Ã  jour toutes les 30 secondes
+- **ðŸ” Admin Panel**: Dashboard d'administration avec accÃ¨s JWT protÃ©gÃ©
+- **Admin Login**: Authentification sÃ©curisÃ©e pour les administrateurs
 
-## 📁 Structure du Projet
+## ðŸ“ Structure du Projet
 
 ```
 web/
-├── index.html            # Point d'entrée HTML - Dashboard principal
-├── admin-login.html      # Page de connexion administrateur
-├── admin.html            # Dashboard d'administration
-├── results.html          # Page des résultats détaillés
-├── js/
-│   ├── api.js            # Client API pour communiquer avec FastAPI
-│   ├── app.js            # Application Vue.js principale
-│   ├── admin-login.js    # Logic Vue pour authentification admin
-│   └── admin-dashboard.js # Logic Vue pour dashboard admin
-├── css/
-│   └── style.css         # Styles CSS (dashboard principal)
-└── README.md             # Ce fichier
+â”œâ”€â”€ index.html            # Point d'entrÃ©e HTML - Dashboard principal
+â”œâ”€â”€ admin-login.html      # Page de connexion administrateur
+â”œâ”€â”€ admin.html            # Dashboard d'administration
+â”œâ”€â”€ results.html          # Page des rÃ©sultats dÃ©taillÃ©s
+â”œâ”€â”€ js/
+â”‚   â”œâ”€â”€ api.js            # Client API pour communiquer avec FastAPI
+â”‚   â”œâ”€â”€ app.js            # Application Vue.js principale
+â”‚   â”œâ”€â”€ admin-login.js    # Logic Vue pour authentification admin
+â”‚   â””â”€â”€ admin-dashboard.js # Logic Vue pour dashboard admin
+â”œâ”€â”€ css/
+â”‚   â””â”€â”€ style.css         # Styles CSS (dashboard principal)
+â””â”€â”€ README.md             # Ce fichier
 ```
 
-## 📄 Pages Disponibles
+## ðŸ“„ Pages Disponibles
 
 ### 1. `index.html` - Dashboard Principal
-Le point d'entrée du système. Affiche:
-- Vue d'ensemble de la santé globale
-- Statistiques en temps réel
+Le point d'entrÃ©e du systÃ¨me. Affiche:
+- Vue d'ensemble de la santÃ© globale
+- Statistiques en temps rÃ©el
 - Liste des agents actifs
-- Alertes du système
-- Lien d'accès au dashboard admin
+- Alertes du systÃ¨me
+- Lien d'accÃ¨s au dashboard admin
 
-**Accès:** `http://localhost:8080/index.html`
+**AccÃ¨s:** `http://localhost:8080/index.html`
 
 ### 2. `admin-login.html` - Connexion Administrateur
-Page sécurisée de connexion pour les administrateurs.
+Page sÃ©curisÃ©e de connexion pour les administrateurs.
 
 **Features:**
 - Formulaire d'authentification moderne
-- Validation côté client
+- Validation cÃ´tÃ© client
 - Gestion des erreurs (401, 429, etc.)
 - Option "Se souvenir de moi"
-- Redirection automatique après connexion
+- Redirection automatique aprÃ¨s connexion
 
-**Accès:** `http://localhost:8080/admin-login.html`
+**AccÃ¨s:** `http://localhost:8080/admin-login.html`
 
-**Identifiants par défaut:**
+**Identifiants par dÃ©faut:**
 ```
 Username: admin
 Password: changeme
@@ -66,33 +66,33 @@ Password: changeme
 Panneau complet d'administration avec authentification JWT.
 
 **Sections:**
-- 📊 Vue d'ensemble: Statistiques système
-- 👥 Agents: Gestion et surveillance des agents
-- ✓ Tâches: Gestion des tâches d'audit
-- 📋 Résultats: Visualisation des résultats d'audit
-- 🚨 Alertes: Alertes système et santé
-- ⚙️ Paramètres: Configuration et actions admin
+- ðŸ“Š Vue d'ensemble: Statistiques systÃ¨me
+- ðŸ‘¥ Agents: Gestion et surveillance des agents
+- âœ“ TÃ¢ches: Gestion des tÃ¢ches d'audit
+- ðŸ“‹ RÃ©sultats: Visualisation des rÃ©sultats d'audit
+- ðŸš¨ Alertes: Alertes systÃ¨me et santÃ©
+- âš™ï¸ ParamÃ¨tres: Configuration et actions admin
 
-**Accès:** `http://localhost:8080/admin.html` (authentification requise)
+**AccÃ¨s:** `http://localhost:8080/admin.html` (authentification requise)
 
-### 4. `results.html` - Résultats Détaillés
-Page de visualisation détaillée des résultats d'audit.
+### 4. `results.html` - RÃ©sultats DÃ©taillÃ©s
+Page de visualisation dÃ©taillÃ©e des rÃ©sultats d'audit.
 
-**Accès:** `http://localhost:8080/results.html`
+**AccÃ¨s:** `http://localhost:8080/results.html`
 
-## 🚀 Lancement
+## ðŸš€ Lancement
 
-- Le serveur FastAPI doit être en cours d'exécution sur `http://localhost:8000`
-- Un serveur HTTP local (optionnel pour le développement)
+- Le serveur FastAPI doit Ãªtre en cours d'exÃ©cution sur `http://localhost:8000`
+- Un serveur HTTP local (optionnel pour le dÃ©veloppement)
 
 ### Option 1: Lancer avec Python (Simple)
 
 ```bash
-# Du répertoire web/
+# Du rÃ©pertoire web/
 python -m http.server 8080
 ```
 
-Puis accédez à: `http://localhost:8080`
+Puis accÃ©dez Ã : `http://localhost:8080`
 
 ### Option 2: Lancer avec Node.js (si disponible)
 
@@ -100,7 +100,7 @@ Puis accédez à: `http://localhost:8080`
 # Installer http-server globalement
 npm install -g http-server
 
-# Lancer le serveur depuis le répertoire web/
+# Lancer le serveur depuis le rÃ©pertoire web/
 http-server -p 8080
 ```
 
@@ -110,108 +110,108 @@ Double-cliquez sur `index.html` pour l'ouvrir directement (fonctionne sur les fi
 
 ### Configuration API
 
-Par défaut, l'application se connecte à `http://localhost:8000/api`.
+Par dÃ©faut, l'application se connecte Ã  `http://localhost:8000/api`.
 
-Pour modifier l'URL de l'API, éditez le fichier `js/api.js`:
+Pour modifier l'URL de l'API, Ã©ditez le fichier `js/api.js`:
 
 ```javascript
 const API_BASE_URL = 'http://votre-serveur:8000/api';
 ```
 
-## 📊 Dashboard - Sections
+## ðŸ“Š Dashboard - Sections
 
-### 1. Santé Globale du Système
+### 1. SantÃ© Globale du SystÃ¨me
 
-Affiche les statistiques clés:
+Affiche les statistiques clÃ©s:
 - **Agents Actifs**: Nombre d'agents en ligne
 - **Agents Inactifs**: Nombre d'agents hors-ligne
-- **Taux de Succès**: Pourcentage de tâches réussies
-- **Tâches**: Répartition par statut (en attente, assignées, complétées, échouées)
-- **Temps Moyen**: Temps d'exécution moyen des tâches
+- **Taux de SuccÃ¨s**: Pourcentage de tÃ¢ches rÃ©ussies
+- **TÃ¢ches**: RÃ©partition par statut (en attente, assignÃ©es, complÃ©tÃ©es, Ã©chouÃ©es)
+- **Temps Moyen**: Temps d'exÃ©cution moyen des tÃ¢ches
 
-### 2. Alertes du Système
+### 2. Alertes du SystÃ¨me
 
-Liste des problèmes détectés automatiquement:
-- **🔴 CRITICAL**: Agents inactifs depuis 2+ heures, agents jamais connectés
-- **🟡 WARNING**: Agents lents (30+ min sans beacon), tâches en retard
-- **🟢 OK**: Système sain
+Liste des problÃ¨mes dÃ©tectÃ©s automatiquement:
+- **ðŸ”´ CRITICAL**: Agents inactifs depuis 2+ heures, agents jamais connectÃ©s
+- **ðŸŸ¡ WARNING**: Agents lents (30+ min sans beacon), tÃ¢ches en retard
+- **ðŸŸ¢ OK**: SystÃ¨me sain
 
-### 3. État des Agents
+### 3. Ã‰tat des Agents
 
-Tableau détaillé de chaque agent avec:
+Tableau dÃ©taillÃ© de chaque agent avec:
 - Nom et statut
 - Hostname et OS
 - Utilisateur et date d'enregistrement
-- Nombre de beacons et tâches
-- Taux de succès (avec barre de progression)
-- Bouton "🚀 Audit" pour lancer un audit
+- Nombre de beacons et tÃ¢ches
+- Taux de succÃ¨s (avec barre de progression)
+- Bouton "ðŸš€ Audit" pour lancer un audit
 
 ### 4. Agents Hors Ligne
 
-Tableau spécifique listé les machines inaccessibles avec:
-- Nombre d'heures/minutes d'inactivité
+Tableau spÃ©cifique listÃ© les machines inaccessibles avec:
+- Nombre d'heures/minutes d'inactivitÃ©
 - Boutons de retry pour forcer la reconnexion
 
-### 5. Résumé des Tâches
+### 5. RÃ©sumÃ© des TÃ¢ches
 
-Statistiques agrégées sur les tâches en cours/complétées.
+Statistiques agrÃ©gÃ©es sur les tÃ¢ches en cours/complÃ©tÃ©es.
 
-## 🔧 Utilisation
+## ðŸ”§ Utilisation
 
 ### Lancer un Audit
 
-1. Localisez l'agent dans la section "État des Agents"
-2. Cliquez sur le bouton **"🚀 Audit"**
-3. Sélectionnez une commande parmi les options proposées:
+1. Localisez l'agent dans la section "Ã‰tat des Agents"
+2. Cliquez sur le bouton **"ðŸš€ Audit"**
+3. SÃ©lectionnez une commande parmi les options proposÃ©es:
    - `Get-AuditPolicy` - Politiques d'audit Windows
-   - `Get-EventLog` - Logs d'événements
+   - `Get-EventLog` - Logs d'Ã©vÃ©nements
    - `Get-LocalUser` - Utilisateurs locaux
    - `Get-Service` - Services Windows
    - `Get-Process` - Processus actifs
-   - `Get-NetConnectionProfile` - Connectivité réseau
-   - `Get-WindowsFeature` - Rôles/fonctionnalités
-   - Personnalisée - Entrez une commande PowerShell
+   - `Get-NetConnectionProfile` - ConnectivitÃ© rÃ©seau
+   - `Get-WindowsFeature` - RÃ´les/fonctionnalitÃ©s
+   - PersonnalisÃ©e - Entrez une commande PowerShell
 
-4. Sélectionnez la priorité (Normal / Haute / Critique)
-5. Cliquez sur **"✓ Lancer l'Audit"**
+4. SÃ©lectionnez la prioritÃ© (Normal / Haute / Critique)
+5. Cliquez sur **"âœ“ Lancer l'Audit"**
 
-L'audit est créé et envoyé à l'agent. Les résultats seront visibles après exécution.
+L'audit est crÃ©Ã© et envoyÃ© Ã  l'agent. Les rÃ©sultats seront visibles aprÃ¨s exÃ©cution.
 
-### Rafraîchir les Données
+### RafraÃ®chir les DonnÃ©es
 
-- **Manuel**: Cliquez sur le bouton **"🔄 Rafraîchir"**
-- **Automatique**: Les données se mettent à jour tous les 30 secondes
+- **Manuel**: Cliquez sur le bouton **"ðŸ”„ RafraÃ®chir"**
+- **Automatique**: Les donnÃ©es se mettent Ã  jour tous les 30 secondes
 
-## 🎨 Thème & Styling
+## ðŸŽ¨ ThÃ¨me & Styling
 
-L'application utilise un thème professionnel avec:
-- Couleurs standard (bleu pour les actions, vert pour le succès, rouge pour les erreurs)
-- Design responsive (adaptable à tous les écrans)
+L'application utilise un thÃ¨me professionnel avec:
+- Couleurs standard (bleu pour les actions, vert pour le succÃ¨s, rouge pour les erreurs)
+- Design responsive (adaptable Ã  tous les Ã©crans)
 - Animations fluides et transitions
-- Accessibilité optimisée
+- AccessibilitÃ© optimisÃ©e
 
-## 🔌 API Utilisée
+## ðŸ”Œ API UtilisÃ©e
 
 L'application communique avec les endpoints suivants:
 
-| Endpoint | Utilité |
+| Endpoint | UtilitÃ© |
 |----------|---------|
 | `GET /monitoring/overview` | Vue d'ensemble globale |
-| `GET /monitoring/agents` | Détails par agent |
-| `GET /monitoring/tasks` | Statistiques de tâches |
-| `GET /monitoring/results` | Statistiques de résultats |
-| `GET /monitoring/alerts` | Alertes du système |
-| `POST /tasks/{agent_id}` | Créer une nouvelle tâche |
+| `GET /monitoring/agents` | DÃ©tails par agent |
+| `GET /monitoring/tasks` | Statistiques de tÃ¢ches |
+| `GET /monitoring/results` | Statistiques de rÃ©sultats |
+| `GET /monitoring/alerts` | Alertes du systÃ¨me |
+| `POST /tasks/{agent_id}` | CrÃ©er une nouvelle tÃ¢che |
 
-## 📝 Notes Techniques
+## ðŸ“ Notes Techniques
 
-### Dépendances
+### DÃ©pendances
 
-- **Vue.js 3** (CDN): Framework web réactif
-- **JavaScript natif**: Pas de compilation nécessaire
+- **Vue.js 3** (CDN): Framework web rÃ©actif
+- **JavaScript natif**: Pas de compilation nÃ©cessaire
 - **CSS3**: Styling moderne et responsive
 
-### Navigateurs Supportés
+### Navigateurs SupportÃ©s
 
 - Chrome/Chromium 90+
 - Firefox 88+
@@ -220,7 +220,7 @@ L'application communique avec les endpoints suivants:
 
 ### CORS
 
-Si vous lancez l'application depuis un domaine différent du serveur API, assurez-vous que CORS est correctement configuré dans `main.py`:
+Si vous lancez l'application depuis un domaine diffÃ©rent du serveur API, assurez-vous que CORS est correctement configurÃ© dans `main.py`:
 
 ```python
 from fastapi.middleware.cors import CORSMiddleware
@@ -234,39 +234,40 @@ app.add_middleware(
 )
 ```
 
-## 🐛 Troubleshooting
+## ðŸ› Troubleshooting
 
-### Erreur "Impossible de charger les données"
+### Erreur "Impossible de charger les donnÃ©es"
 
 **Cause**: L'API n'est pas accessible
 
 **Solution**:
-1. Vérifiez que le serveur FastAPI est en cours d'exécution
-2. Vérifiez l'URL de l'API dans `js/api.js`
-3. Vérifiez la configuration CORS
+1. VÃ©rifiez que le serveur FastAPI est en cours d'exÃ©cution
+2. VÃ©rifiez l'URL de l'API dans `js/api.js`
+3. VÃ©rifiez la configuration CORS
 
-### Les données ne se mettent pas à jour
+### Les donnÃ©es ne se mettent pas Ã  jour
 
-**Cause**: L'auto-rafraîchissement pourrait être bloqué
+**Cause**: L'auto-rafraÃ®chissement pourrait Ãªtre bloquÃ©
 
 **Solution**:
-1. Cliquez manuellement sur "🔄 Rafraîchir"
-2. Vérifiez la console (F12) pour les erreurs
-3. Vérifiez la connexion réseau
+1. Cliquez manuellement sur "ðŸ”„ RafraÃ®chir"
+2. VÃ©rifiez la console (F12) pour les erreurs
+3. VÃ©rifiez la connexion rÃ©seau
 
 ### Les audits ne se lancent pas
 
-**Cause**: L'agent pourrait être inactif
+**Cause**: L'agent pourrait Ãªtre inactif
 
 **Solution**:
-1. Vérifiez que l'agent a le statut "active"
+1. VÃ©rifiez que l'agent a le statut "active"
 2. Essayez avec un agent en ligne
-3. Vérifiez les logs de l'API pour les erreurs
+3. VÃ©rifiez les logs de l'API pour les erreurs
 
-## 📚 Documentation Complète
+## ðŸ“š Documentation ComplÃ¨te
 
-Pour plus de détails sur l'API, consultez [../README.md](../README.md).
+Pour plus de dÃ©tails sur l'API, consultez [../README.md](../README.md).
 
-## 📄 Licence
+## ðŸ“„ Licence
 
-À définir selon votre projet.
+Ã€ dÃ©finir selon votre projet.
+

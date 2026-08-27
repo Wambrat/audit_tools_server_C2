@@ -1,4 +1,4 @@
-import logging
+﻿import logging
 import logging.handlers
 import json
 from datetime import datetime
@@ -72,7 +72,7 @@ class SecretsFilter(logging.Filter):
 
 
 class JSONFormatter(logging.Formatter):
-    """Formatteur personnalisé pour le logging en JSON"""
+    """Formatteur personnalisÃ© pour le logging en JSON"""
     
     def format(self, record):
         log_data = {
@@ -85,36 +85,36 @@ class JSONFormatter(logging.Formatter):
             "line": record.lineno,
         }
         
-        # Ajouter les informations d'exception si présentes
+        # Ajouter les informations d'exception si prÃ©sentes
         if record.exc_info:
             log_data["exception"] = self.formatException(record.exc_info)
         
-        # Ajouter les champs personnalisés
+        # Ajouter les champs personnalisÃ©s
         if hasattr(record, "extra_fields"):
             log_data.update(record.extra_fields)
         
         return json.dumps(log_data, ensure_ascii=False)
 
 
-def setup_logging(app_name: str = "c2-server", log_level: str = None):
+def setup_logging(app_name: str = "jadus-server", log_level: str = None):
     """
-    Configurer le logging structuré pour l'application.
+    Configurer le logging structurÃ© pour l'application.
     
     Args:
         app_name: Nom de l'application
         log_level: Niveau de log (DEBUG, INFO, WARNING, ERROR, CRITICAL)
     """
-    # Déterminer le niveau de log
+    # DÃ©terminer le niveau de log
     if log_level is None:
         log_level = os.getenv("LOG_LEVEL", "INFO")
     
     log_level = getattr(logging, log_level.upper(), logging.INFO)
     
-    # Créer le répertoire logs s'il n'existe pas
+    # CrÃ©er le rÃ©pertoire logs s'il n'existe pas
     log_dir = Path("logs")
     log_dir.mkdir(exist_ok=True)
     
-    # Créer le logger racine
+    # CrÃ©er le logger racine
     root_logger = logging.getLogger()
     root_logger.setLevel(log_level)
     
@@ -124,7 +124,7 @@ def setup_logging(app_name: str = "c2-server", log_level: str = None):
     # Formatteur JSON
     json_formatter = JSONFormatter()
     
-    # ===== Handler Console (développement) =====
+    # ===== Handler Console (dÃ©veloppement) =====
     console_handler = logging.StreamHandler()
     console_handler.setLevel(log_level)
     console_handler.addFilter(secrets_filter)
@@ -166,18 +166,18 @@ def setup_logging(app_name: str = "c2-server", log_level: str = None):
 
 
 def get_logger(name: str) -> logging.Logger:
-    """Récupérer un logger pour un module"""
+    """RÃ©cupÃ©rer un logger pour un module"""
     return logging.getLogger(name)
 
 
 class StructuredLogger:
-    """Wrapper pour logging structuré avec champs personnalisés"""
+    """Wrapper pour logging structurÃ© avec champs personnalisÃ©s"""
     
     def __init__(self, name: str):
         self.logger = get_logger(name)
     
     def _log(self, level: int, message: str, **extra_fields):
-        """Enregistrer un message avec champs personnalisés"""
+        """Enregistrer un message avec champs personnalisÃ©s"""
         record = self.logger.makeRecord(
             self.logger.name,
             level,
@@ -204,3 +204,4 @@ class StructuredLogger:
     
     def critical(self, message: str, **extra):
         self._log(logging.CRITICAL, message, **extra)
+

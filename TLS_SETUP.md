@@ -1,37 +1,37 @@
-# 🔐 TLS/HTTPS Configuration Guide
+﻿# ðŸ” TLS/HTTPS Configuration Guide
 
-Ce guide explique comment configurer TLS/chiffrement complet pour développement avec certificats auto-signés.
+Ce guide explique comment configurer TLS/chiffrement complet pour dÃ©veloppement avec certificats auto-signÃ©s.
 
 ## Architecture TLS
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│                 Client Browser (HTTPS)                  │
-│                  https://localhost:443                  │
-└─────────────────────────────────────────────────────────┘
-                            ↓
-         ┌──────────────────────────────────────┐
-         │   Traefik (Reverse Proxy)            │
-         │   - Termine TLS/SSL                  │
-         │   - Certificat: api.pem (auto-signé) │
-         │   - Ports: 80→443 redirect           │
-         └──────────────────────────────────────┘
-          ↙                                    ↘
-┌──────────────────────┐              ┌──────────────────────┐
-│  Frontend (Nginx)    │              │  Backend (FastAPI)   │
-│  Port: 80 (interne)  │              │  Port: 8000 (interne)│
-└──────────────────────┘              └──────────────────────┘
-                                             ↓
-                                   ┌──────────────────────┐
-                                   │  MongoDB (TLS)       │
-                                   │  - Port: 27017 (TLS) │
-                                   │  - Cert: mongodb.pem │
-                                   └──────────────────────┘
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚                 Client Browser (HTTPS)                  â”‚
+â”‚                  https://localhost:443                  â”‚
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+                            â†“
+         â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+         â”‚   Traefik (Reverse Proxy)            â”‚
+         â”‚   - Termine TLS/SSL                  â”‚
+         â”‚   - Certificat: api.pem (auto-signÃ©) â”‚
+         â”‚   - Ports: 80â†’443 redirect           â”‚
+         â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+          â†™                                    â†˜
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”              â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚  Frontend (Nginx)    â”‚              â”‚  Backend (FastAPI)   â”‚
+â”‚  Port: 80 (interne)  â”‚              â”‚  Port: 8000 (interne)â”‚
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜              â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+                                             â†“
+                                   â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+                                   â”‚  MongoDB (TLS)       â”‚
+                                   â”‚  - Port: 27017 (TLS) â”‚
+                                   â”‚  - Cert: mongodb.pem â”‚
+                                   â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
 ```
 
 ## Installation
 
-### 1. Générer les Certificats Auto-signés
+### 1. GÃ©nÃ©rer les Certificats Auto-signÃ©s
 
 ```powershell
 # Windows PowerShell
@@ -41,20 +41,20 @@ powershell -ExecutionPolicy Bypass -File .\generate-certs.ps1
 bash ./generate-certs.sh
 ```
 
-**Résultat :**
+**RÃ©sultat :**
 ```
 certs/
-├── ca.pem                 (CA Certificate - autorite)
-├── ca-key.pem            (CA Private Key - confidentiel)
-├── mongodb-combined.pem  (MongoDB: cert + key)
-├── api.pem               (API/Nginx Certificate)
-├── api-key.pem           (API/Nginx Private Key)
-└── api-san.conf          (Configuration SubjectAltNames)
+â”œâ”€â”€ ca.pem                 (CA Certificate - autorite)
+â”œâ”€â”€ ca-key.pem            (CA Private Key - confidentiel)
+â”œâ”€â”€ mongodb-combined.pem  (MongoDB: cert + key)
+â”œâ”€â”€ api.pem               (API/Nginx Certificate)
+â”œâ”€â”€ api-key.pem           (API/Nginx Private Key)
+â””â”€â”€ api-san.conf          (Configuration SubjectAltNames)
 ```
 
-### 2. (Optionnel) Ajouter le CA au Système
+### 2. (Optionnel) Ajouter le CA au SystÃ¨me
 
-Pour éviter les avertissements "certificat non fiable" :
+Pour Ã©viter les avertissements "certificat non fiable" :
 
 **Windows (Admin):**
 ```powershell
@@ -74,7 +74,7 @@ sudo update-ca-certificates
 
 ### 3. Configuration Environment Variables
 
-Le `.env` est déjà configuré avec TLS :
+Le `.env` est dÃ©jÃ  configurÃ© avec TLS :
 
 ```env
 # MongoDB avec TLS
@@ -84,24 +84,24 @@ MONGODB_URI=mongodb://root:password@mongodb:27017/...&tls=true&tlsCAFile=/etc/mo
 ALLOWED_ORIGINS=["https://localhost", "https://127.0.0.1"]
 ```
 
-### 4. Démarrer les Services
+### 4. DÃ©marrer les Services
 
 ```powershell
 # Build et lancer
 docker-compose down
 docker-compose up -d --build
 
-# Vérifier les services
+# VÃ©rifier les services
 docker-compose ps
 
 # Expected output:
-# c2-traefik    Up (healthy)
-# c2-mongodb    Up (healthy)  
-# c2-backend    Up (healthy)
-# c2-frontend   Up (healthy)
+# jadus-traefik    Up (healthy)
+# jadus-mongodb    Up (healthy)  
+# jadus-backend    Up (healthy)
+# jadus-frontend   Up (healthy)
 ```
 
-## Accès aux Services
+## AccÃ¨s aux Services
 
 | Service | URL | Notes |
 |---------|-----|-------|
@@ -110,23 +110,23 @@ docker-compose ps
 | **API Direct** | `https://localhost/api/...` | Endpoints via Traefik |
 | **Health Check** | `https://localhost/health` | Status page |
 
-### Accepter le Certificat Auto-Signé
+### Accepter le Certificat Auto-SignÃ©
 
 1. Naviguer vers `https://localhost`
-2. Le navigateur affiche **"Certificat non approuvé"**
-3. Cliquer sur **"Détails"** → **"Continuer vers localhost"**
-4. Le navigateur mémorise la décision
+2. Le navigateur affiche **"Certificat non approuvÃ©"**
+3. Cliquer sur **"DÃ©tails"** â†’ **"Continuer vers localhost"**
+4. Le navigateur mÃ©morise la dÃ©cision
 
 Ou importer le CA (voir section 2 ci-dessus).
 
-## Vérification du Chiffrement
+## VÃ©rification du Chiffrement
 
 ### Via Browser DevTools
 
 1. Ouvrir **DevTools** (F12)
-2. Aller à l'onglet **Network**
-3. Chercher une requête vers `/api`
-4. Dans **Headers** → **General**:
+2. Aller Ã  l'onglet **Network**
+3. Chercher une requÃªte vers `/api`
+4. Dans **Headers** â†’ **General**:
    ```
    Protocol: h2 (HTTP/2 sur TLS)
    ```
@@ -134,23 +134,23 @@ Ou importer le CA (voir section 2 ci-dessus).
 ### Via Ligne de Commande
 
 ```powershell
-# Vérifier certificat TLS frontend
+# VÃ©rifier certificat TLS frontend
 openssl s_client -connect localhost:443 -servername localhost
 
-# Vérifier certificat MongoDB
+# VÃ©rifier certificat MongoDB
 openssl s_client -connect localhost:27017 -showcerts
 ```
 
-## Dépannage
+## DÃ©pannage
 
 ### "Certificate Verification Failed" au login
 
-**Cause :** Certificat auto-signé non fiable
+**Cause :** Certificat auto-signÃ© non fiable
 
 **Solution :**
 1. Importer le CA (voir section 2)
 2. OU accepter manuellement le certificat dans le navigateur
-3. OU ajouter `-k` flag à curl: `curl -k https://localhost/api/login`
+3. OU ajouter `-k` flag Ã  curl: `curl -k https://localhost/api/login`
 
 ### MongoDB Connection Fails
 
@@ -158,74 +158,74 @@ openssl s_client -connect localhost:27017 -showcerts
 
 **Solutions :**
 ```powershell
-# 1. Vérifier les certificats existent
+# 1. VÃ©rifier les certificats existent
 Test-Path ./certs/mongodb-combined.pem
 Test-Path ./certs/ca.pem
 
-# 2. Vérifier les permissions
+# 2. VÃ©rifier les permissions
 Get-Item ./certs/ | Get-ACL
 
-# 3. Redémarrer MongoDB
+# 3. RedÃ©marrer MongoDB
 docker-compose restart mongodb
 
-# 4. Vérifier les logs
+# 4. VÃ©rifier les logs
 docker-compose logs mongodb -f
 ```
 
 ### Traefik n'expose pas HTTPS
 
-**Cause :** Les certificats ne sont pas montés correctement
+**Cause :** Les certificats ne sont pas montÃ©s correctement
 
-**Vérifier :**
+**VÃ©rifier :**
 ```powershell
 # Logs Traefik
 docker-compose logs traefik
 
 # Certificats dans le volume
-docker exec c2-traefik ls -la /etc/traefik/certs/
+docker exec jadus-traefik ls -la /etc/traefik/certs/
 ```
 
-## Configuration Avancée
+## Configuration AvancÃ©e
 
 ### Renouveler les Certificats
 
-Les certificats durent **365 jours**. Pour en générer de nouveaux :
+Les certificats durent **365 jours**. Pour en gÃ©nÃ©rer de nouveaux :
 
 ```powershell
 # Supprimer les anciens
 Remove-Item ./certs -Recurse -Force
 
-# Regénérer
+# RegÃ©nÃ©rer
 powershell -ExecutionPolicy Bypass -File .\generate-certs.ps1
 
-# Redémarrer services
+# RedÃ©marrer services
 docker-compose restart traefik mongodb backend
 ```
 
 ### Certificats Production (Let's Encrypt)
 
-Pour production avec domaine réel :
+Pour production avec domaine rÃ©el :
 
 ```powershell
 # Utiliser Traefik avec Let's Encrypt automatiquement
-# Configuration supplémentaire requise dans docker-compose.yml
+# Configuration supplÃ©mentaire requise dans docker-compose.yml
 ```
 
-### Augmenter la Validité des Certificats
+### Augmenter la ValiditÃ© des Certificats
 
 Dans `generate-certs.ps1`, modifier :
 ```powershell
-$Days = 365  # ← Changer à 1825 (5 ans)
+$Days = 365  # â† Changer Ã  1825 (5 ans)
 ```
 
-## Securité
+## SecuritÃ©
 
-### ⚠️ Développement SEULEMENT
+### âš ï¸ DÃ©veloppement SEULEMENT
 
-Les certificats auto-signés ne doivent être utilisés que pour :
-- ✅ Développement local
-- ✅ Tests internes
-- ✅ Environnement de staging
+Les certificats auto-signÃ©s ne doivent Ãªtre utilisÃ©s que pour :
+- âœ… DÃ©veloppement local
+- âœ… Tests internes
+- âœ… Environnement de staging
 
 Ne PAS utiliser en production publique !
 
@@ -240,7 +240,7 @@ Ne PAS utiliser en production publique !
     entryPoint = "web"
 ```
 
-## Références
+## RÃ©fÃ©rences
 
 - [Traefik Documentation](https://doc.traefik.io/)
 - [MongoDB TLS](https://docs.mongodb.com/manual/tutorial/configure-ssl/)
@@ -253,7 +253,7 @@ Ne PAS utiliser en production publique !
 # Afficher le certificat
 openssl x509 -in ./certs/api.pem -text -noout
 
-# Vérifier la chaîne certificats
+# VÃ©rifier la chaÃ®ne certificats
 openssl verify -CAfile ./certs/ca.pem ./certs/api.pem
 
 # Test de connexion HTTPS
@@ -262,3 +262,4 @@ curl -k https://localhost/health
 # Tester l'API avec certificat
 curl -k --cert ./certs/api.pem --key ./certs/api-key.pem https://localhost/api/admin/login
 ```
+

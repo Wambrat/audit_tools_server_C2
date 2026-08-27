@@ -1,8 +1,8 @@
-import zipfile
+﻿import zipfile
 import os
 from pathlib import Path
 
-root = Path(r'C:\Users\perso\OneDrive\Documents\esgi\yearly_project_5\server_C2')
+root = Path(r'C:\Users\perso\OneDrive\Documents\esgi\yearly_project_5\jadus')
 zip_path = root / 'modules.zip'
 if not zip_path.exists():
     raise FileNotFoundError(f'Missing archive: {zip_path}')
@@ -34,3 +34,4 @@ if zip_path.exists():
 os.replace(tmp_path, zip_path)
 
 print(f'updated_occurrences={updated}')
+

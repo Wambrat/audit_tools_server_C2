@@ -1,7 +1,7 @@
-import os, zipfile, subprocess, tempfile, re, json, textwrap
+﻿import os, zipfile, subprocess, tempfile, re, json, textwrap
 from pathlib import Path
 
-zip_path = Path(r'C:\Users\perso\OneDrive\Documents\esgi\yearly_project_5\server_C2\modules.zip')
+zip_path = Path(r'C:\Users\perso\OneDrive\Documents\esgi\yearly_project_5\jadus\modules.zip')
 if not zip_path.exists():
     raise SystemExit(f'missing zip {zip_path}')
 
@@ -33,3 +33,4 @@ with zipfile.ZipFile(zip_path) as archive:
         finally:
             try: os.unlink(tmp)
             except Exception: pass
+

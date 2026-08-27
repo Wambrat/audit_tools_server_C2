@@ -1,16 +1,16 @@
-#!/usr/bin/env pwsh
+﻿#!/usr/bin/env pwsh
 param([switch]$SkipTests, [switch]$SkipServer, [switch]$SkipIntegration)
 
 $API_URL = "http://localhost:8000"
 $API_TIMEOUT = 5
 
-Write-Host "=== C2 BACKEND TEST SUITE ===" -ForegroundColor Cyan
+Write-Host "=== jadus BACKEND TEST SUITE ===" -ForegroundColor Cyan
 
 # Test 1: Unit Tests
 if (-not $SkipTests) {
     Write-Host "`nTest 1: Running Unit Tests..." -ForegroundColor Green
     try {
-        Set-Location "C:\Users\perso\OneDrive\Documents\esgi\yearly_project_5\server_C2"
+        Set-Location "C:\Users\perso\OneDrive\Documents\esgi\yearly_project_5\jadus"
         $env:ENCRYPTION_KEY = 'test-master-key-that-is-long-enough'
         . .\venv\Scripts\Activate.ps1
         
@@ -143,3 +143,4 @@ Write-Host "  1. Open: http://localhost:8000/docs" -ForegroundColor White
 Write-Host "  2. Start frontend: cd web && npm start" -ForegroundColor White
 Write-Host "  3. Test integration" -ForegroundColor White
 Write-Host "`n" -NoNewline
+

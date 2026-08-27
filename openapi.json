@@ -1,11 +1,11 @@
-{
+﻿{
   "openapi": "3.1.0",
   "info": {
-    "title": "C2 Server API",
-    "description": "\n## Overview\n\nC2 Server API is a REST API for managing PowerShell audit agents in an enterprise environment.\n\n### Key Features\n\n- 🔐 **Secure Authentication**: UUID + API Key authentication per agent\n- 🚦 **Rate Limiting**: Sliding window algorithm per agent per endpoint\n- 📊 **Real-time Monitoring**: Dashboard with live agent statistics\n- 🔒 **Encrypted Results**: AES-256-GCM encryption for sensitive audit data\n- 📝 **Audit Logging**: JSON structured logging for compliance\n- ⚡ **High Performance**: Sub-second response times for 1000+ agents\n\n### Architecture\n\n```\nAgent (PowerShell)\n    ↓\nPOST /api/enroll → Get agent_id + api_key\n    ↓\nPOST /api/beacon → Heartbeat + get pending tasks\n    ↓\nExecute task locally\n    ↓\nPOST /api/results → Submit encrypted results\n    ↓\nGET /api/monitoring/* → Admin dashboard (Vue.js)\n```\n\n### Authentication\n\nAll endpoints except `/api/enroll` require:\n- `agent_id` + `api_key` in request body\n- Headers with valid credentials\n\n### Rate Limiting\n\nEndpoints are rate limited per agent:\n- `POST /api/enroll`: 5 requests/hour per host\n- `POST /api/beacon`: 100 requests/hour per agent\n- `POST /api/results`: 50 requests/hour per agent\n\nResponse includes:\n- `X-RateLimit-Limit`: Maximum requests allowed\n- `X-RateLimit-Remaining`: Requests remaining\n- `X-RateLimit-Reset`: Timestamp when limit resets\n\nReturns **HTTP 429** if limit exceeded.\n\n### Encryption\n\nAll audit results are encrypted with AES-256-GCM:\n- `result_encrypted`: Ciphertext (base64)\n- `result_hash`: SHA-256 hash for searching\n- `result_preview`: Safe preview for UI (\"Output: 2500 bytes, 45 lines\")\n\nOnly administrators with the `ENCRYPTION_KEY` can decrypt.\n\n### Error Handling\n\nAll errors follow standard HTTP status codes:\n- `400`: Bad Request (validation error)\n- `401`: Unauthorized (invalid credentials)\n- `404`: Not Found (resource doesn't exist)\n- `409`: Conflict (resource already exists)\n- `422`: Unprocessable Entity (invalid data format)\n- `429`: Too Many Requests (rate limit exceeded)\n- `500`: Internal Server Error\n\nAll error responses include a `detail` field with explanation.\n\n### Examples\n\nSee [API_DOCUMENTATION.md](./API_DOCUMENTATION.md) for detailed examples.\n",
+    "title": "jadus Server API",
+    "description": "\n## Overview\n\njadus Server API is a REST API for managing PowerShell audit agents in an enterprise environment.\n\n### Key Features\n\n- ðŸ” **Secure Authentication**: UUID + API Key authentication per agent\n- ðŸš¦ **Rate Limiting**: Sliding window algorithm per agent per endpoint\n- ðŸ“Š **Real-time Monitoring**: Dashboard with live agent statistics\n- ðŸ”’ **Encrypted Results**: AES-256-GCM encryption for sensitive audit data\n- ðŸ“ **Audit Logging**: JSON structured logging for compliance\n- âš¡ **High Performance**: Sub-second response times for 1000+ agents\n\n### Architecture\n\n```\nAgent (PowerShell)\n    â†“\nPOST /api/enroll â†’ Get agent_id + api_key\n    â†“\nPOST /api/beacon â†’ Heartbeat + get pending tasks\n    â†“\nExecute task locally\n    â†“\nPOST /api/results â†’ Submit encrypted results\n    â†“\nGET /api/monitoring/* â†’ Admin dashboard (Vue.js)\n```\n\n### Authentication\n\nAll endpoints except `/api/enroll` require:\n- `agent_id` + `api_key` in request body\n- Headers with valid credentials\n\n### Rate Limiting\n\nEndpoints are rate limited per agent:\n- `POST /api/enroll`: 5 requests/hour per host\n- `POST /api/beacon`: 100 requests/hour per agent\n- `POST /api/results`: 50 requests/hour per agent\n\nResponse includes:\n- `X-RateLimit-Limit`: Maximum requests allowed\n- `X-RateLimit-Remaining`: Requests remaining\n- `X-RateLimit-Reset`: Timestamp when limit resets\n\nReturns **HTTP 429** if limit exceeded.\n\n### Encryption\n\nAll audit results are encrypted with AES-256-GCM:\n- `result_encrypted`: Ciphertext (base64)\n- `result_hash`: SHA-256 hash for searching\n- `result_preview`: Safe preview for UI (\"Output: 2500 bytes, 45 lines\")\n\nOnly administrators with the `ENCRYPTION_KEY` can decrypt.\n\n### Error Handling\n\nAll errors follow standard HTTP status codes:\n- `400`: Bad Request (validation error)\n- `401`: Unauthorized (invalid credentials)\n- `404`: Not Found (resource doesn't exist)\n- `409`: Conflict (resource already exists)\n- `422`: Unprocessable Entity (invalid data format)\n- `429`: Too Many Requests (rate limit exceeded)\n- `500`: Internal Server Error\n\nAll error responses include a `detail` field with explanation.\n\n### Examples\n\nSee [API_DOCUMENTATION.md](./API_DOCUMENTATION.md) for detailed examples.\n",
     "contact": {
-      "name": "C2 Administrator",
-      "email": "admin@c2.internal"
+      "name": "jadus Administrator",
+      "email": "admin@jadus.internal"
     },
     "license": {
       "name": "Internal Use Only"
@@ -18,7 +18,7 @@
       "description": "Development server"
     },
     {
-      "url": "https://api.c2.internal",
+      "url": "https://api.jadus.internal",
       "description": "Production server"
     }
   ],
@@ -190,7 +190,7 @@
     "/api/tasks/{agent_id}": {
       "get": {
         "summary": "List Agent Tasks",
-        "description": "Lister les tâches d'un agent",
+        "description": "Lister les tÃ¢ches d'un agent",
         "operationId": "list_agent_tasks_api_tasks__agent_id__get",
         "parameters": [
           {
@@ -226,7 +226,7 @@
       },
       "post": {
         "summary": "Create Task",
-        "description": "Créer une nouvelle tâche pour un agent (endpoint de gestion)\n\nBody JSON:\n{\n  \"command\": \"Get-AuditPolicy\",\n  \"parameters\": {...},\n  \"priority\": 0\n}",
+        "description": "CrÃ©er une nouvelle tÃ¢che pour un agent (endpoint de gestion)\n\nBody JSON:\n{\n  \"command\": \"Get-AuditPolicy\",\n  \"parameters\": {...},\n  \"priority\": 0\n}",
         "operationId": "create_task_api_tasks__agent_id__post",
         "parameters": [
           {
@@ -274,7 +274,7 @@
     "/api/results/{agent_id}": {
       "get": {
         "summary": "Get Agent Results",
-        "description": "Récupérer tous les résultats d'un agent",
+        "description": "RÃ©cupÃ©rer tous les rÃ©sultats d'un agent",
         "operationId": "get_agent_results_api_results__agent_id__get",
         "parameters": [
           {
@@ -312,7 +312,7 @@
     "/api/results/detail/{result_id}": {
       "get": {
         "summary": "Get Result Detail",
-        "description": "Récupérer les détails complets d'un résultat spécifique",
+        "description": "RÃ©cupÃ©rer les dÃ©tails complets d'un rÃ©sultat spÃ©cifique",
         "operationId": "get_result_detail_api_results_detail__result_id__get",
         "parameters": [
           {
@@ -350,7 +350,7 @@
     "/api/rate-limit/stats/{agent_id}/{endpoint}": {
       "get": {
         "summary": "Get Rate Limit Stats",
-        "description": "Récupérer les stats de rate limit pour un agent et endpoint",
+        "description": "RÃ©cupÃ©rer les stats de rate limit pour un agent et endpoint",
         "operationId": "get_rate_limit_stats_api_rate_limit_stats__agent_id___endpoint__get",
         "parameters": [
           {
@@ -397,7 +397,7 @@
     "/api/beacon-history/{agent_id}": {
       "get": {
         "summary": "Get Beacon History",
-        "description": "Récupérer l'historique des beacons d'un agent.\n\n- **agent_id**: ID de l'agent\n- **limit**: Nombre maximum de beacons à retourner (défaut: 100)",
+        "description": "RÃ©cupÃ©rer l'historique des beacons d'un agent.\n\n- **agent_id**: ID de l'agent\n- **limit**: Nombre maximum de beacons Ã  retourner (dÃ©faut: 100)",
         "operationId": "get_beacon_history_api_beacon_history__agent_id__get",
         "parameters": [
           {
@@ -445,7 +445,7 @@
     "/api/beacon-stats/{agent_id}": {
       "get": {
         "summary": "Get Beacon Stats",
-        "description": "Récupérer les statistiques de beacon pour un agent.\n\n- **agent_id**: ID de l'agent",
+        "description": "RÃ©cupÃ©rer les statistiques de beacon pour un agent.\n\n- **agent_id**: ID de l'agent",
         "operationId": "get_beacon_stats_api_beacon_stats__agent_id__get",
         "parameters": [
           {
@@ -506,7 +506,7 @@
           "Monitoring"
         ],
         "summary": "Agents dashboard",
-        "description": "**Agents Dashboard** - Get detailed statistics for each agent.\n\nPour chaque agent:\n- Informations de base (hostname, OS, etc.)\n- Statut de disponibilité\n- Stats de beacon\n- Tâches assignées\n- Taux de succès des résultats",
+        "description": "**Agents Dashboard** - Get detailed statistics for each agent.\n\nPour chaque agent:\n- Informations de base (hostname, OS, etc.)\n- Statut de disponibilitÃ©\n- Stats de beacon\n- TÃ¢ches assignÃ©es\n- Taux de succÃ¨s des rÃ©sultats",
         "operationId": "monitoring_agents_api_monitoring_agents_get",
         "responses": {
           "200": {
@@ -523,7 +523,7 @@
     "/api/monitoring/tasks": {
       "get": {
         "summary": "Monitoring Tasks",
-        "description": "Récupérer le dashboard détaillé des tâches.\n\nInclut:\n- Tâches par statut (pending, assigned, completed, failed)\n- Tâches en retard (timeout dépassé)\n- Temps d'exécution moyen\n- Tâches groupées par agent",
+        "description": "RÃ©cupÃ©rer le dashboard dÃ©taillÃ© des tÃ¢ches.\n\nInclut:\n- TÃ¢ches par statut (pending, assigned, completed, failed)\n- TÃ¢ches en retard (timeout dÃ©passÃ©)\n- Temps d'exÃ©cution moyen\n- TÃ¢ches groupÃ©es par agent",
         "operationId": "monitoring_tasks_api_monitoring_tasks_get",
         "responses": {
           "200": {
@@ -540,7 +540,7 @@
     "/api/monitoring/results": {
       "get": {
         "summary": "Monitoring Results",
-        "description": "Récupérer le dashboard détaillé des résultats.\n\nInclut:\n- Taux de succès/échec\n- Temps d'exécution moyen\n- Résultats en erreur (dernier 10)\n- Résultats groupés par agent",
+        "description": "RÃ©cupÃ©rer le dashboard dÃ©taillÃ© des rÃ©sultats.\n\nInclut:\n- Taux de succÃ¨s/Ã©chec\n- Temps d'exÃ©cution moyen\n- RÃ©sultats en erreur (dernier 10)\n- RÃ©sultats groupÃ©s par agent",
         "operationId": "monitoring_results_api_monitoring_results_get",
         "responses": {
           "200": {
@@ -557,7 +557,7 @@
     "/api/monitoring/alerts": {
       "get": {
         "summary": "Monitoring Alerts",
-        "description": "Récupérer les alertes du système.\n\nTypes d'alertes:\n- Agents inactifs (2+ heures sans beacon)\n- Agents lents (30+ minutes sans beacon)\n- Agents jamais connectés\n- Tâches en timeout\n\nNiveau d'alerte global: ok, warning, critical",
+        "description": "RÃ©cupÃ©rer les alertes du systÃ¨me.\n\nTypes d'alertes:\n- Agents inactifs (2+ heures sans beacon)\n- Agents lents (30+ minutes sans beacon)\n- Agents jamais connectÃ©s\n- TÃ¢ches en timeout\n\nNiveau d'alerte global: ok, warning, critical",
         "operationId": "monitoring_alerts_api_monitoring_alerts_get",
         "responses": {
           "200": {
@@ -574,7 +574,7 @@
     "/api/monitoring/dashboard": {
       "get": {
         "summary": "Monitoring Dashboard",
-        "description": "Récupérer le dashboard complet du système (combinaison de tous les endpoints).\n\n**ATTENTION**: Cet endpoint peut être lourd. Préférez les endpoints spécifiques.",
+        "description": "RÃ©cupÃ©rer le dashboard complet du systÃ¨me (combinaison de tous les endpoints).\n\n**ATTENTION**: Cet endpoint peut Ãªtre lourd. PrÃ©fÃ©rez les endpoints spÃ©cifiques.",
         "operationId": "monitoring_dashboard_api_monitoring_dashboard_get",
         "responses": {
           "200": {
@@ -591,7 +591,7 @@
     "/api/admin/reset": {
       "post": {
         "summary": "Admin Reset",
-        "description": "Réinitialiser la base de données (DÉVELOPPEMENT UNIQUEMENT).\nSupprime tous les agents, tâches et résultats.",
+        "description": "RÃ©initialiser la base de donnÃ©es (DÃ‰VELOPPEMENT UNIQUEMENT).\nSupprime tous les agents, tÃ¢ches et rÃ©sultats.",
         "operationId": "admin_reset_api_admin_reset_post",
         "responses": {
           "200": {
@@ -625,7 +625,7 @@
     "/health": {
       "get": {
         "summary": "Health",
-        "description": "Endpoint de santé",
+        "description": "Endpoint de santÃ©",
         "operationId": "health_health_get",
         "responses": {
           "200": {
@@ -697,7 +697,7 @@
           "execution_time_ms"
         ],
         "title": "AuditResultRequest",
-        "description": "Modèle pour soumettre un résultat d'audit"
+        "description": "ModÃ¨le pour soumettre un rÃ©sultat d'audit"
       },
       "AuditResultResponse": {
         "properties": {
@@ -716,7 +716,7 @@
           "acknowledged"
         ],
         "title": "AuditResultResponse",
-        "description": "Réponse après traitement du résultat"
+        "description": "RÃ©ponse aprÃ¨s traitement du rÃ©sultat"
       },
       "BeaconRequest": {
         "properties": {
@@ -756,7 +756,7 @@
           "uptime_seconds"
         ],
         "title": "BeaconRequest",
-        "description": "Modèle pour le heartbeat et récupération des tâches"
+        "description": "ModÃ¨le pour le heartbeat et rÃ©cupÃ©ration des tÃ¢ches"
       },
       "BeaconResponse": {
         "properties": {
@@ -778,7 +778,7 @@
           "next_beacon_interval"
         ],
         "title": "BeaconResponse",
-        "description": "Réponse avec les tâches en attente"
+        "description": "RÃ©ponse avec les tÃ¢ches en attente"
       },
       "EnrollRequest": {
         "properties": {
@@ -807,7 +807,7 @@
           "username"
         ],
         "title": "EnrollRequest",
-        "description": "Modèle pour l'enregistrement initial d'un agent"
+        "description": "ModÃ¨le pour l'enregistrement initial d'un agent"
       },
       "EnrollResponse": {
         "properties": {
@@ -831,7 +831,7 @@
           "message"
         ],
         "title": "EnrollResponse",
-        "description": "Réponse après enregistrement"
+        "description": "RÃ©ponse aprÃ¨s enregistrement"
       },
       "HTTPValidationError": {
         "properties": {
@@ -874,7 +874,7 @@
           "command"
         ],
         "title": "TaskCreateRequest",
-        "description": "Modèle pour créer une tâche via le dashboard"
+        "description": "ModÃ¨le pour crÃ©er une tÃ¢che via le dashboard"
       },
       "TaskModel": {
         "properties": {
@@ -914,7 +914,7 @@
           "command"
         ],
         "title": "TaskModel",
-        "description": "Modèle d'une tâche"
+        "description": "ModÃ¨le d'une tÃ¢che"
       },
       "ValidationError": {
         "properties": {
@@ -957,7 +957,7 @@
       "description": "Enroll agents and manage agent information",
       "externalDocs": {
         "description": "Agent Management Guide",
-        "url": "https://c2.internal/docs/agents"
+        "url": "https://jadus.internal/docs/agents"
       }
     },
     {

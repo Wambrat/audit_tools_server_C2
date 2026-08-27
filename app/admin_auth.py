@@ -1,4 +1,4 @@
-"""
+﻿"""
 Admin JWT Authentication Module
 
 Provides JWT token generation and validation for admin access to monitoring endpoints.
@@ -28,7 +28,7 @@ from datetime import datetime, timedelta
 from typing import Optional, Dict, Any
 import logging
 
-logger = logging.getLogger("C2")
+logger = logging.getLogger("jadus")
 
 # Configuration from environment
 ADMIN_SECRET_KEY = os.getenv("ADMIN_SECRET_KEY", "your-admin-secret-key-change-in-production-min-32-chars!!!")
@@ -64,7 +64,7 @@ def validate_secret_key():
     """
     if ADMIN_SECRET_KEY == "your-admin-secret-key-change-in-production-min-32-chars!!!":
         logger.warning(
-            "⚠️  Using default ADMIN_SECRET_KEY! Set ADMIN_SECRET_KEY environment variable in production"
+            "âš ï¸  Using default ADMIN_SECRET_KEY! Set ADMIN_SECRET_KEY environment variable in production"
         )
     
     if len(ADMIN_SECRET_KEY) < 32:
@@ -283,3 +283,4 @@ def extract_token_from_header(authorization_header: Optional[str]) -> Optional[s
         return None
     
     return parts[1]
+

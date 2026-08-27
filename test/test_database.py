@@ -1,6 +1,6 @@
-"""
+﻿"""
 Tests unitaires pour app/database.py
-Teste le stockage en mémoire des agents, tâches, et résultats
+Teste le stockage en mÃ©moire des agents, tÃ¢ches, et rÃ©sultats
 """
 import pytest
 from datetime import datetime
@@ -9,10 +9,10 @@ from app.models import AgentStatus, TaskStatus
 
 
 class TestDatabaseAgents:
-    """Tests pour les opérations d'agents"""
+    """Tests pour les opÃ©rations d'agents"""
     
     def test_create_agent(self, sample_agent_data):
-        """Test: Créer un agent"""
+        """Test: CrÃ©er un agent"""
         db = Database()
         agent = db.create_agent(**sample_agent_data)
         
@@ -23,7 +23,7 @@ class TestDatabaseAgents:
         assert agent.created_at is not None
     
     def test_get_agent(self, sample_agent_data):
-        """Test: Récupérer un agent par ID"""
+        """Test: RÃ©cupÃ©rer un agent par ID"""
         db = Database()
         created_agent = db.create_agent(**sample_agent_data)
         
@@ -34,7 +34,7 @@ class TestDatabaseAgents:
         assert retrieved_agent.agent_name == sample_agent_data["agent_name"]
     
     def test_get_nonexistent_agent(self):
-        """Test: Récupérer un agent inexistant"""
+        """Test: RÃ©cupÃ©rer un agent inexistant"""
         db = Database()
         agent = db.get_agent("nonexistent-id")
         
@@ -66,7 +66,7 @@ class TestDatabaseAgents:
         assert is_valid is False
     
     def test_update_agent_beacon(self, sample_agent_data):
-        """Test: Mettre à jour le timestamp du dernier beacon"""
+        """Test: Mettre Ã  jour le timestamp du dernier beacon"""
         db = Database()
         agent = db.create_agent(**sample_agent_data)
         
@@ -92,10 +92,10 @@ class TestDatabaseAgents:
 
 
 class TestDatabaseTasks:
-    """Tests pour les opérations de tâches"""
+    """Tests pour les opÃ©rations de tÃ¢ches"""
     
     def test_create_task(self, sample_agent_data, sample_task_data):
-        """Test: Créer une tâche"""
+        """Test: CrÃ©er une tÃ¢che"""
         db = Database()
         agent = db.create_agent(**sample_agent_data)
         
@@ -107,7 +107,7 @@ class TestDatabaseTasks:
         assert task.status == TaskStatus.PENDING
     
     def test_get_task(self, sample_agent_data, sample_task_data):
-        """Test: Récupérer une tâche par ID"""
+        """Test: RÃ©cupÃ©rer une tÃ¢che par ID"""
         db = Database()
         agent = db.create_agent(**sample_agent_data)
         created_task = db.create_task(agent.agent_id, **sample_task_data)
@@ -118,18 +118,18 @@ class TestDatabaseTasks:
         assert retrieved_task.task_id == created_task.task_id
     
     def test_get_nonexistent_task(self):
-        """Test: Récupérer une tâche inexistante"""
+        """Test: RÃ©cupÃ©rer une tÃ¢che inexistante"""
         db = Database()
         task = db.get_task("nonexistent-id")
         
         assert task is None
     
     def test_get_pending_tasks(self, sample_agent_data, sample_task_data):
-        """Test: Récupérer les tâches en attente d'un agent"""
+        """Test: RÃ©cupÃ©rer les tÃ¢ches en attente d'un agent"""
         db = Database()
         agent = db.create_agent(**sample_agent_data)
         
-        # Créer 3 tâches
+        # CrÃ©er 3 tÃ¢ches
         task1 = db.create_task(agent.agent_id, "Command1", priority=1)
         task2 = db.create_task(agent.agent_id, "Command2", priority=2)
         task3 = db.create_task(agent.agent_id, "Command3", priority=0)
@@ -137,13 +137,13 @@ class TestDatabaseTasks:
         pending_tasks = db.get_pending_tasks(agent.agent_id)
         
         assert len(pending_tasks) == 3
-        # Doivent être triées par priorité (décroissante) puis par date
+        # Doivent Ãªtre triÃ©es par prioritÃ© (dÃ©croissante) puis par date
         assert pending_tasks[0].priority == 2
         assert pending_tasks[1].priority == 1
         assert pending_tasks[2].priority == 0
     
     def test_mark_task_assigned(self, sample_agent_data, sample_task_data):
-        """Test: Marquer une tâche comme assignée"""
+        """Test: Marquer une tÃ¢che comme assignÃ©e"""
         db = Database()
         agent = db.create_agent(**sample_agent_data)
         task = db.create_task(agent.agent_id, **sample_task_data)
@@ -155,10 +155,10 @@ class TestDatabaseTasks:
         assert updated_task.assigned_at is not None
     
     def test_list_tasks_all(self, sample_agent_data):
-        """Test: Lister toutes les tâches"""
+        """Test: Lister toutes les tÃ¢ches"""
         db = Database()
         agent1 = db.create_agent(**sample_agent_data)
-        agent2 = db.create_agent("agent-2", "Windows", "PC2", "user")
+        agent2 = db.create_agent("agent-2", "Windows", "Pjadus", "user")
         
         db.create_task(agent1.agent_id, "Command1")
         db.create_task(agent1.agent_id, "Command2")
@@ -169,10 +169,10 @@ class TestDatabaseTasks:
         assert len(all_tasks) == 3
     
     def test_list_tasks_by_agent(self, sample_agent_data):
-        """Test: Lister les tâches d'un agent"""
+        """Test: Lister les tÃ¢ches d'un agent"""
         db = Database()
         agent1 = db.create_agent(**sample_agent_data)
-        agent2 = db.create_agent("agent-2", "Windows", "PC2", "user")
+        agent2 = db.create_agent("agent-2", "Windows", "Pjadus", "user")
         
         db.create_task(agent1.agent_id, "Command1")
         db.create_task(agent1.agent_id, "Command2")
@@ -185,7 +185,7 @@ class TestDatabaseTasks:
 
 
 class TestDefaultModuleSeed:
-    """Tests pour l'initialisation des modules par défaut depuis l'archive zip"""
+    """Tests pour l'initialisation des modules par dÃ©faut depuis l'archive zip"""
 
     def test_seed_default_modules(self):
         """Test: importer les modules standards depuis modules.zip pour la commande et les templates"""
@@ -200,7 +200,7 @@ class TestDefaultModuleSeed:
         assert any(t.name for t in db.list_audit_templates())
 
     def test_template_tasks_include_registered_command_script(self):
-        """Test: les tâches générées depuis un template doivent inclure le script enregistré pour le command"""
+        """Test: les tÃ¢ches gÃ©nÃ©rÃ©es depuis un template doivent inclure le script enregistrÃ© pour le command"""
         db = Database()
         agent = db.create_agent("agent-a", "Windows 11", "HOSTA", "admin")
         db.create_powershell_command(
@@ -224,10 +224,10 @@ class TestDefaultModuleSeed:
 
 
 class TestDatabaseResults:
-    """Tests pour les opérations de résultats"""
+    """Tests pour les opÃ©rations de rÃ©sultats"""
     
     def test_store_result_success(self, sample_agent_data, sample_task_data, sample_result_data):
-        """Test: Stocker un résultat avec succès"""
+        """Test: Stocker un rÃ©sultat avec succÃ¨s"""
         db = Database()
         agent = db.create_agent(**sample_agent_data)
         task = db.create_task(agent.agent_id, **sample_task_data)
@@ -244,7 +244,7 @@ class TestDatabaseResults:
         assert result.created_at is not None
     
     def test_store_result_updates_task_status(self, sample_agent_data, sample_task_data):
-        """Test: Stocker un résultat met à jour le statut de la tâche"""
+        """Test: Stocker un rÃ©sultat met Ã  jour le statut de la tÃ¢che"""
         db = Database()
         agent = db.create_agent(**sample_agent_data)
         task = db.create_task(agent.agent_id, **sample_task_data)
@@ -262,7 +262,7 @@ class TestDatabaseResults:
         assert updated_task.completed_at is not None
     
     def test_store_result_failed_updates_task(self, sample_agent_data, sample_task_data):
-        """Test: Un résultat échoué marque la tâche comme FAILED"""
+        """Test: Un rÃ©sultat Ã©chouÃ© marque la tÃ¢che comme FAILED"""
         db = Database()
         agent = db.create_agent(**sample_agent_data)
         task = db.create_task(agent.agent_id, **sample_task_data)
@@ -280,7 +280,7 @@ class TestDatabaseResults:
         assert updated_task.status == TaskStatus.FAILED
     
     def test_get_result(self, sample_agent_data, sample_task_data):
-        """Test: Récupérer un résultat par ID"""
+        """Test: RÃ©cupÃ©rer un rÃ©sultat par ID"""
         db = Database()
         agent = db.create_agent(**sample_agent_data)
         task = db.create_task(agent.agent_id, **sample_task_data)
@@ -299,7 +299,7 @@ class TestDatabaseResults:
         assert retrieved_result.result_id == stored_result.result_id
     
     def test_list_results_all(self, sample_agent_data, sample_task_data):
-        """Test: Lister tous les résultats"""
+        """Test: Lister tous les rÃ©sultats"""
         db = Database()
         agent = db.create_agent(**sample_agent_data)
         
@@ -309,16 +309,16 @@ class TestDatabaseResults:
         db.store_result(task1.task_id, agent.agent_id, "success", {"data": "1"}, 1000)
         db.store_result(task2.task_id, agent.agent_id, "success", {"data": "2"}, 1500)
         
-        # Récupérer tous les résultats en utilisant get_results_by_agent
+        # RÃ©cupÃ©rer tous les rÃ©sultats en utilisant get_results_by_agent
         all_results = db.get_results_by_agent(agent.agent_id)
         
         assert len(all_results) == 2
     
     def test_list_results_by_agent(self, sample_agent_data, sample_task_data):
-        """Test: Lister les résultats d'un agent"""
+        """Test: Lister les rÃ©sultats d'un agent"""
         db = Database()
         agent1 = db.create_agent(**sample_agent_data)
-        agent2 = db.create_agent("agent-2", "Windows", "PC2", "user")
+        agent2 = db.create_agent("agent-2", "Windows", "Pjadus", "user")
         
         task1 = db.create_task(agent1.agent_id, **sample_task_data)
         task2 = db.create_task(agent2.agent_id, **sample_task_data)
@@ -352,7 +352,7 @@ class TestDatabaseBeaconHistory:
         assert beacon.created_at is not None
     
     def test_get_beacon_history(self, sample_agent_data):
-        """Test: Récupérer l'historique des beacons"""
+        """Test: RÃ©cupÃ©rer l'historique des beacons"""
         db = Database()
         agent = db.create_agent(**sample_agent_data)
         
@@ -381,10 +381,10 @@ class TestDatabaseBeaconHistory:
 
 
 class TestDatabaseIntegration:
-    """Tests d'intégration complets"""
+    """Tests d'intÃ©gration complets"""
     
     def test_full_workflow(self, sample_agent_data, sample_task_data):
-        """Test: Workflow complet (enroll → beacon → task → result)"""
+        """Test: Workflow complet (enroll â†’ beacon â†’ task â†’ result)"""
         db = Database()
         
         # 1. Enroll
@@ -409,7 +409,7 @@ class TestDatabaseIntegration:
             task_id=task.task_id,
             agent_id=agent.agent_id,
             status="success",
-            result={"services": ["svc1", "svc2"]},
+            result={"services": ["svc1", "svjadus"]},
             execution_time_ms=1250
         )
         
@@ -417,3 +417,4 @@ class TestDatabaseIntegration:
         assert db.get_task(task.task_id).status == TaskStatus.COMPLETED
         assert db.get_result(result.result_id) is not None
         assert len(db.get_results_by_agent(agent.agent_id)) == 1
+

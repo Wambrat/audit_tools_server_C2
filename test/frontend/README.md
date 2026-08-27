@@ -1,118 +1,118 @@
-# 🎨 Tests du Frontend (IHM)
+﻿# ðŸŽ¨ Tests du Frontend (IHM)
 
-## 📁 Structure des Tests Frontend
+## ðŸ“ Structure des Tests Frontend
 
 ```
 test/frontend/
-├── __init__.py              # Initialisation du module
-├── setup.js                 # Configuration Jest
-├── test_api.js              # Tests du client API (20 tests)
-├── test_app.js              # Tests de l'app Vue.js (25 tests)
-├── test_ihm.js              # Tests d'intégration IHM (40 tests)
-└── README.md               # Documentation
+â”œâ”€â”€ __init__.py              # Initialisation du module
+â”œâ”€â”€ setup.js                 # Configuration Jest
+â”œâ”€â”€ test_api.js              # Tests du client API (20 tests)
+â”œâ”€â”€ test_app.js              # Tests de l'app Vue.js (25 tests)
+â”œâ”€â”€ test_ihm.js              # Tests d'intÃ©gration IHM (40 tests)
+â””â”€â”€ README.md               # Documentation
 ```
 
-## 📊 Fichiers de Test
+## ðŸ“Š Fichiers de Test
 
 ### **test_api.js** (20 tests)
 Tests du client API (`web/js/api.js`)
 
 | Test | Description |
 |------|-------------|
-| ✅ getSystemOverview | Récupère l'aperçu système |
-| ✅ getAgentsDashboard | Récupère le dashboard agents |
-| ✅ getTasksDashboard | Récupère le dashboard tâches |
-| ✅ getResultsDashboard | Récupère le dashboard résultats |
-| ✅ getAlerts | Récupère les alertes système |
-| ✅ getAgents | Récupère la liste des agents |
-| ✅ createTask | Crée une nouvelle tâche |
-| ✅ Gestion d'erreurs HTTP | Gère 404, 500, etc. |
-| ✅ Erreurs réseau | Gère les erreurs de connexion |
-| ✅ Logging des erreurs | Log en console |
+| âœ… getSystemOverview | RÃ©cupÃ¨re l'aperÃ§u systÃ¨me |
+| âœ… getAgentsDashboard | RÃ©cupÃ¨re le dashboard agents |
+| âœ… getTasksDashboard | RÃ©cupÃ¨re le dashboard tÃ¢ches |
+| âœ… getResultsDashboard | RÃ©cupÃ¨re le dashboard rÃ©sultats |
+| âœ… getAlerts | RÃ©cupÃ¨re les alertes systÃ¨me |
+| âœ… getAgents | RÃ©cupÃ¨re la liste des agents |
+| âœ… createTask | CrÃ©e une nouvelle tÃ¢che |
+| âœ… Gestion d'erreurs HTTP | GÃ¨re 404, 500, etc. |
+| âœ… Erreurs rÃ©seau | GÃ¨re les erreurs de connexion |
+| âœ… Logging des erreurs | Log en console |
 
 ### **test_app.js** (25 tests)
 Tests de l'application Vue.js (`web/js/app.js`)
 
 | Test | Description |
 |------|-------------|
-| ✅ État initial | Initialise les données |
-| ✅ Computed: successRate | Calcule le taux de succès |
-| ✅ Computed: inactiveAgents | Filtre les agents inactifs |
-| ✅ loadDashboardData | Charge les données en parallèle |
-| ✅ Gestion erreurs API | Gère les erreurs |
-| ✅ refreshData | Rafraîchit les données |
-| ✅ formatDate | Formate les dates |
-| ✅ formatDuration | Formate les durées |
-| ✅ Alertes | Gère les alertes |
-| ✅ Sélection agent | Sélectionne un agent |
-| ✅ Validation données | Valide la structure |
-| ✅ Statuts valides | Vérifie les énumérations |
+| âœ… Ã‰tat initial | Initialise les donnÃ©es |
+| âœ… Computed: successRate | Calcule le taux de succÃ¨s |
+| âœ… Computed: inactiveAgents | Filtre les agents inactifs |
+| âœ… loadDashboardData | Charge les donnÃ©es en parallÃ¨le |
+| âœ… Gestion erreurs API | GÃ¨re les erreurs |
+| âœ… refreshData | RafraÃ®chit les donnÃ©es |
+| âœ… formatDate | Formate les dates |
+| âœ… formatDuration | Formate les durÃ©es |
+| âœ… Alertes | GÃ¨re les alertes |
+| âœ… SÃ©lection agent | SÃ©lectionne un agent |
+| âœ… Validation donnÃ©es | Valide la structure |
+| âœ… Statuts valides | VÃ©rifie les Ã©numÃ©rations |
 
 ### **test_ihm.js** (40 tests)
-Tests d'intégration de l'interface utilisateur
+Tests d'intÃ©gration de l'interface utilisateur
 
 #### Tableau des agents
-- ✅ Affiche la liste des agents
-- ✅ Affiche le statut (active/inactive/compromised)
-- ✅ Affiche le dernier beacon
-- ✅ Icônes de statut (🟢 ⚪ 🔴)
+- âœ… Affiche la liste des agents
+- âœ… Affiche le statut (active/inactive/compromised)
+- âœ… Affiche le dernier beacon
+- âœ… IcÃ´nes de statut (ðŸŸ¢ âšª ðŸ”´)
 
 #### Modal d'audit
-- ✅ Ouvre la modal avec l'agent sélectionné
-- ✅ Commandes disponibles (Get-Service, Get-Process, etc.)
-- ✅ Commande personnalisée
-- ✅ Sélection de priorité
-- ✅ Soumission de tâche
-- ✅ Fermeture après soumission
-- ✅ Affichage des erreurs
+- âœ… Ouvre la modal avec l'agent sÃ©lectionnÃ©
+- âœ… Commandes disponibles (Get-Service, Get-Process, etc.)
+- âœ… Commande personnalisÃ©e
+- âœ… SÃ©lection de prioritÃ©
+- âœ… Soumission de tÃ¢che
+- âœ… Fermeture aprÃ¨s soumission
+- âœ… Affichage des erreurs
 
-#### Tableau des résultats
-- ✅ Affiche les résultats
-- ✅ Statut du résultat (success/failed)
-- ✅ Temps d'exécution
-- ✅ Icônes de résultat (✅ ❌)
-- ✅ Détails du résultat
+#### Tableau des rÃ©sultats
+- âœ… Affiche les rÃ©sultats
+- âœ… Statut du rÃ©sultat (success/failed)
+- âœ… Temps d'exÃ©cution
+- âœ… IcÃ´nes de rÃ©sultat (âœ… âŒ)
+- âœ… DÃ©tails du rÃ©sultat
 
 #### Statistiques et graphiques
-- ✅ Nombre total d'agents
-- ✅ Tâches par statut
-- ✅ Taux de succès
-- ✅ Barres de progression
+- âœ… Nombre total d'agents
+- âœ… TÃ¢ches par statut
+- âœ… Taux de succÃ¨s
+- âœ… Barres de progression
 
 #### Filtrage et recherche
-- ✅ Filtre par nom
-- ✅ Filtre par statut
-- ✅ Filtre par priorité
+- âœ… Filtre par nom
+- âœ… Filtre par statut
+- âœ… Filtre par prioritÃ©
 
-#### Rafraîchissement automatique
-- ✅ Initialise l'intervalle
-- ✅ Arrête le rafraîchissement
-- ✅ Charge les données
+#### RafraÃ®chissement automatique
+- âœ… Initialise l'intervalle
+- âœ… ArrÃªte le rafraÃ®chissement
+- âœ… Charge les donnÃ©es
 
 #### Gestion des erreurs
-- ✅ Messages d'erreur API
-- ✅ Spinner de chargement
-- ✅ Messages de succès
-- ✅ Nettoyage des messages
+- âœ… Messages d'erreur API
+- âœ… Spinner de chargement
+- âœ… Messages de succÃ¨s
+- âœ… Nettoyage des messages
 
-#### Accessibilité
-- ✅ Labels de formulaires
-- ✅ ARIA labels
-- ✅ Contraste des couleurs
+#### AccessibilitÃ©
+- âœ… Labels de formulaires
+- âœ… ARIA labels
+- âœ… Contraste des couleurs
 
-## 🚀 Exécution des Tests
+## ðŸš€ ExÃ©cution des Tests
 
-### Installation des dépendances
+### Installation des dÃ©pendances
 ```bash
 npm install --save-dev jest babel-jest @babel/preset-env
 ```
 
-### Exécuter tous les tests frontend
+### ExÃ©cuter tous les tests frontend
 ```bash
 jest test/frontend/
 ```
 
-### Avec verbosité
+### Avec verbositÃ©
 ```bash
 jest test/frontend/ -v
 ```
@@ -122,7 +122,7 @@ jest test/frontend/ -v
 jest test/frontend/ --coverage
 ```
 
-### Tests spécifiques
+### Tests spÃ©cifiques
 ```bash
 jest test/frontend/test_api.js
 jest test/frontend/test_app.js
@@ -134,19 +134,19 @@ jest test/frontend/test_ihm.js
 jest test/frontend/ --watch
 ```
 
-## 📊 Résultats
+## ðŸ“Š RÃ©sultats
 
 ```
-✅ test_api.js       - 20 tests passés
-✅ test_app.js       - 25 tests passés
-✅ test_ihm.js       - 40 tests passés
-─────────────────────────────────────
-   TOTAL: 85 tests passés ✅
+âœ… test_api.js       - 20 tests passÃ©s
+âœ… test_app.js       - 25 tests passÃ©s
+âœ… test_ihm.js       - 40 tests passÃ©s
+â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+   TOTAL: 85 tests passÃ©s âœ…
 ```
 
-## 🔧 Dépendances
+## ðŸ”§ DÃ©pendances
 
-Voir `requirements-test.txt` pour les dépendances Python.
+Voir `requirements-test.txt` pour les dÃ©pendances Python.
 
 Pour le frontend (JavaScript/Jest):
 ```json
@@ -159,23 +159,23 @@ Pour le frontend (JavaScript/Jest):
 }
 ```
 
-## 📝 Structure des Tests
+## ðŸ“ Structure des Tests
 
 ### Test du Client API
 ```javascript
-describe('C2ApiClient', () => {
+describe('jadusApiClient', () => {
   beforeEach(() => {
     global.fetch = jest.fn(); // Mock fetch
   });
 
-  it('devrait retourner l\'aperçu système', async () => {
+  it('devrait retourner l\'aperÃ§u systÃ¨me', async () => {
     const mockData = { agents: { total: 5 } };
     global.fetch.mockResolvedValueOnce({
       ok: true,
       json: async () => mockData
     });
 
-    const result = await C2ApiClient.getSystemOverview();
+    const result = await jadusApiClient.getSystemOverview();
     expect(result).toEqual(mockData);
   });
 });
@@ -184,7 +184,7 @@ describe('C2ApiClient', () => {
 ### Test Vue.js
 ```javascript
 describe('Dashboard Vue App', () => {
-  it('devrait calculer le taux de succès', () => {
+  it('devrait calculer le taux de succÃ¨s', () => {
     const overview = {
       results: { total: 100, by_status: { success: 80 } }
     };
@@ -195,7 +195,7 @@ describe('Dashboard Vue App', () => {
 });
 ```
 
-### Test d'Intégration IHM
+### Test d'IntÃ©gration IHM
 ```javascript
 describe('Interface Utilisateur', () => {
   it('devrait filtrer les agents par nom', () => {
@@ -210,25 +210,25 @@ describe('Interface Utilisateur', () => {
 });
 ```
 
-## 🐛 Bugs Potentiels Testés
+## ðŸ› Bugs Potentiels TestÃ©s
 
-1. ✅ Erreurs API non gérées
-2. ✅ Affichage de données invalides
-3. ✅ Filtrage incorrect
-4. ✅ Rafraîchissement à l'infini
-5. ✅ Fuites mémoire (intervals non nettoyés)
-6. ✅ Validation de données manquante
-7. ✅ Gestion des états vides
-8. ✅ Accessibilité manquante
+1. âœ… Erreurs API non gÃ©rÃ©es
+2. âœ… Affichage de donnÃ©es invalides
+3. âœ… Filtrage incorrect
+4. âœ… RafraÃ®chissement Ã  l'infini
+5. âœ… Fuites mÃ©moire (intervals non nettoyÃ©s)
+6. âœ… Validation de donnÃ©es manquante
+7. âœ… Gestion des Ã©tats vides
+8. âœ… AccessibilitÃ© manquante
 
-## 📚 Ressources
+## ðŸ“š Ressources
 
 - [Jest Documentation](https://jestjs.io/)
 - [Vue Test Utils](https://vue-test-utils.vuejs.org/)
 - [Testing Library](https://testing-library.com/)
 - [Jest DOM Matchers](https://github.com/testing-library/jest-dom)
 
-## 🔄 Intégration CI/CD
+## ðŸ”„ IntÃ©gration CI/CD
 
 ```yaml
 # GitHub Actions Example
@@ -238,16 +238,17 @@ describe('Interface Utilisateur', () => {
     jest test/frontend/ --coverage
 ```
 
-## 💡 Prochaines Étapes
+## ðŸ’¡ Prochaines Ã‰tapes
 
 1. **Tests E2E** - Playwright ou Cypress
 2. **Tests de performance** - Lighthouse
 3. **Tests visuels** - Percy ou Chromatic
-4. **Tests d'accessibilité** - axe-core
+4. **Tests d'accessibilitÃ©** - axe-core
 5. **Tests mobiles** - WebDriver
 
 ---
 
-**Total: 85 tests frontend** ✅
+**Total: 85 tests frontend** âœ…
 
 Voir [../README.md](../README.md) pour les tests backend.
+

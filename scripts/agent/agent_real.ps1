@@ -1,4 +1,4 @@
-#Requires -Version 5.0
+﻿#Requires -Version 5.0
 
 param(
     [string]$ServerUrl = "http://localhost:8000/api",
@@ -235,14 +235,14 @@ function Submit-Result {
 
 Write-Host ""
 Write-Host "========================================================" 
-Write-Host "           C2 AGENT - PowerShell Audit"
+Write-Host "           jadus AGENT - PowerShell Audit"
 Write-Host "     Autonomous Agent with Periodic Beacon"
 Write-Host "========================================================"
 Write-Host ""
 
 $script:StartTime = Get-Date
 
-Write-Log "Starting C2 Agent..." "Info"
+Write-Log "Starting jadus Agent..." "Info"
 Write-Log "Server: $ServerUrl" "Info"
 Write-Log "Beacon interval: $BeaconInterval seconds" "Info"
 
@@ -295,3 +295,4 @@ while ($true) {
         Start-Sleep -Seconds $BeaconInterval
     }
 }
+

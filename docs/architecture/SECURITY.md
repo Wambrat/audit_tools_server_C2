@@ -1,27 +1,27 @@
-# 🔐 Sécurité - Phase 5 Tier 3 Hardening
+﻿# ðŸ” SÃ©curitÃ© - Phase 5 Tier 3 Hardening
 
-Documentation complète des mesures de sécurité du système C2.
+Documentation complÃ¨te des mesures de sÃ©curitÃ© du systÃ¨me jadus.
 
-**Statut:** ✅ **376/376 tests passants** - Toutes les mesures validées
+**Statut:** âœ… **376/376 tests passants** - Toutes les mesures validÃ©es
 
 ---
 
-## 📊 Vue d'ensemble - 4 Pilliers de Sécurité
+## ðŸ“Š Vue d'ensemble - 4 Pilliers de SÃ©curitÃ©
 
-### 1️⃣ **SQL Injection Prevention** (59 tests ✅)
+### 1ï¸âƒ£ **SQL Injection Prevention** (59 tests âœ…)
 
-**Objectif:** Empêcher les attaques par injection SQL
+**Objectif:** EmpÃªcher les attaques par injection SQL
 
-**Vecteurs d'attaque détectés:**
-- ✅ UNION-based SQL injection
-- ✅ Boolean-based blind injection
-- ✅ Time-based blind injection
-- ✅ Error-based injection
-- ✅ Stacked queries
-- ✅ Comment injection
-- ✅ Wildcard injection
+**Vecteurs d'attaque dÃ©tectÃ©s:**
+- âœ… UNION-based SQL injection
+- âœ… Boolean-based blind injection
+- âœ… Time-based blind injection
+- âœ… Error-based injection
+- âœ… Stacked queries
+- âœ… Comment injection
+- âœ… Wildcard injection
 
-**Implémentation:**
+**ImplÃ©mentation:**
 ```python
 # app/sql_injection_prevention.py
 
@@ -40,7 +40,7 @@ from app.sql_injection_prevention import detect_injection_pattern
 user_input = request.query  # Potentiellement malveillant
 pattern = detect_injection_pattern(user_input)
 if pattern:
-    raise HTTPException(status_code=400, detail=f"Injection détectée: {pattern}")
+    raise HTTPException(status_code=400, detail=f"Injection dÃ©tectÃ©e: {pattern}")
 ```
 
 **Tests:**
@@ -50,9 +50,9 @@ if pattern:
 
 ---
 
-### 2️⃣ **CORS Security** (45 tests ✅)
+### 2ï¸âƒ£ **CORS Security** (45 tests âœ…)
 
-**Objectif:** Contrôler les requêtes cross-origin
+**Objectif:** ContrÃ´ler les requÃªtes cross-origin
 
 **Configuration:**
 ```python
@@ -66,16 +66,16 @@ app.add_middleware(
         "http://127.0.0.1:8000",   # API self
     ],
     allow_credentials=True,         # Autoriser cookies/auth
-    allow_methods=["GET", "POST"],  # Méthodes autorisées
-    allow_headers=["*"],            # Headers autorisés
+    allow_methods=["GET", "POST"],  # MÃ©thodes autorisÃ©es
+    allow_headers=["*"],            # Headers autorisÃ©s
 )
 ```
 
-**Patterns d'origine supportés:**
-- ✅ Exact match: `https://example.com`
-- ✅ Subdomain: `https://*.example.com`
-- ✅ Wildcard: `https://*` (⚠️ À éviter en prod)
-- ✅ Regex: `https://[a-z0-9]+.example.com`
+**Patterns d'origine supportÃ©s:**
+- âœ… Exact match: `https://example.com`
+- âœ… Subdomain: `https://*.example.com`
+- âœ… Wildcard: `https://*` (âš ï¸ Ã€ Ã©viter en prod)
+- âœ… Regex: `https://[a-z0-9]+.example.com`
 
 **Tests:**
 - Origin validation: 15 tests
@@ -84,15 +84,15 @@ app.add_middleware(
 
 ---
 
-### 3️⃣ **Session Management & Key Rotation** (29 tests ✅)
+### 3ï¸âƒ£ **Session Management & Key Rotation** (29 tests âœ…)
 
-**Objectif:** Gérer les sessions sécurisées et les clés
+**Objectif:** GÃ©rer les sessions sÃ©curisÃ©es et les clÃ©s
 
 **Session Lifecycle:**
 ```python
 # app/session_management.py
 
-# 1. Création
+# 1. CrÃ©ation
 session = SessionManager.create_session(
     user_id="agent-123",
     data={"role": "agent"},
@@ -102,13 +102,13 @@ session = SessionManager.create_session(
 # 2. Validation
 is_valid = SessionManager.validate_session(session_id)
 
-# 3. Régénération (après authentification)
+# 3. RÃ©gÃ©nÃ©ration (aprÃ¨s authentification)
 SessionManager.regenerate_session(old_session_id)
 
 # 4. Invalidation (logout)
 SessionManager.invalidate_session(session_id)
 
-# 5. Cleanup (sessions expirées)
+# 5. Cleanup (sessions expirÃ©es)
 SessionManager.cleanup_expired_sessions()
 ```
 
@@ -118,19 +118,19 @@ SessionManager.cleanup_expired_sessions()
 
 # Configuration
 ENCRYPTION_KEY = os.getenv("ENCRYPTION_KEY")  # Master key
-MAX_ACTIVE_KEYS = 3  # Garder les 3 dernières clés
+MAX_ACTIVE_KEYS = 3  # Garder les 3 derniÃ¨res clÃ©s
 
 # Rotation mensuelle
 def rotate_key():
-    """Créer une nouvelle clé de chiffrement"""
+    """CrÃ©er une nouvelle clÃ© de chiffrement"""
     new_key = secrets.token_urlsafe(32)
-    # Archive: Garder les anciennes clés pour décryption
-    # Active: Nouvelle clé pour chiffrement
+    # Archive: Garder les anciennes clÃ©s pour dÃ©cryption
+    # Active: Nouvelle clÃ© pour chiffrement
     key_manager.rotate(new_key)
 
-# Pour décryption:
+# Pour dÃ©cryption:
 def decrypt_with_any_key(encrypted_data):
-    """Essayer toutes les clés (actuelle + précédentes)"""
+    """Essayer toutes les clÃ©s (actuelle + prÃ©cÃ©dentes)"""
     for key in key_manager.get_decryption_keys():
         try:
             return decrypt(encrypted_data, key)
@@ -141,10 +141,10 @@ def decrypt_with_any_key(encrypted_data):
 
 **Validation de Session:**
 ```python
-# Vérifier l'IP et User-Agent
+# VÃ©rifier l'IP et User-Agent
 class SessionSecurityValidator:
     def validate(session, current_ip, current_user_agent):
-        # Si IP/UA changent → Session compromise → Rejeter
+        # Si IP/UA changent â†’ Session compromise â†’ Rejeter
         if session.ip != current_ip:
             raise SessionCompromiseError("IP mismatch")
         if session.user_agent != current_user_agent:
@@ -158,9 +158,9 @@ class SessionSecurityValidator:
 
 ---
 
-### 4️⃣ **Autres Mesures de Sécurité (Précédentes Phases)**
+### 4ï¸âƒ£ **Autres Mesures de SÃ©curitÃ© (PrÃ©cÃ©dentes Phases)**
 
-#### 🔐 Encryption des Données
+#### ðŸ” Encryption des DonnÃ©es
 
 **Algorithme:** AES-256-GCM (Authenticated Encryption)
 
@@ -178,14 +178,14 @@ def encrypt_password(password: str) -> str:
     return encrypted_password
 ```
 
-#### 🎯 CSRF Protection
+#### ðŸŽ¯ CSRF Protection
 
 ```python
 # main.py
 
 CSRF_SECRET_KEY = os.getenv("CSRF_SECRET_KEY")  # 32+ chars
 
-# Générer un token CSRF
+# GÃ©nÃ©rer un token CSRF
 csrf_token = secrets.token_urlsafe(32)
 
 # Valider sur chaque POST
@@ -193,7 +193,7 @@ if request.headers.get("X-CSRF-Token") != session.csrf_token:
     raise HTTPException(status_code=403, detail="CSRF token invalid")
 ```
 
-#### 🛡️ Security Headers
+#### ðŸ›¡ï¸ Security Headers
 
 ```python
 # SecurityHeadersMiddleware dans main.py
@@ -205,9 +205,9 @@ response.headers["X-Content-Type-Options"] = "nosniff"
 response.headers["X-XSS-Protection"] = "1; mode=block"
 ```
 
-#### 📝 Audit Logging
+#### ðŸ“ Audit Logging
 
-Toutes les opérations sensibles sont loggées:
+Toutes les opÃ©rations sensibles sont loggÃ©es:
 
 ```
 ENROLL: Agent registered
@@ -218,7 +218,7 @@ AUTH_FAILURE: Failed authentication attempt
 CRYPTO_FAILURE: Encryption/Decryption error
 ```
 
-#### 🚷 Rate Limiting
+#### ðŸš· Rate Limiting
 
 ```python
 ENROLL_RATE_LIMIT = 5 requests/hour      # Anti-spam registration
@@ -228,18 +228,18 @@ RESULTS_RATE_LIMIT = 50 requests/hour    # Anti-flood results
 
 ---
 
-## 🔑 Configuration des Secrets
+## ðŸ”‘ Configuration des Secrets
 
 ### Variables d'Environnement Essentielles
 
 ```env
-# Clé de chiffrement (32+ caractères)
+# ClÃ© de chiffrement (32+ caractÃ¨res)
 ENCRYPTION_KEY=your-super-secret-key-that-is-32-chars-minimum
 
-# Secret CSRF (32+ caractères)
+# Secret CSRF (32+ caractÃ¨res)
 CSRF_SECRET_KEY=test-csrf-secret-key-32-chars-minimum
 
-# Secret Admin (32+ caractères)
+# Secret Admin (32+ caractÃ¨res)
 ADMIN_SECRET_KEY=test-admin-secret-key-32-chars-minimum
 
 # Database
@@ -253,25 +253,25 @@ ALLOWED_ORIGINS=http://localhost:5500,http://127.0.0.1:8000
 LOG_LEVEL=INFO               # INFO, DEBUG, WARNING, ERROR
 ```
 
-### ⚠️ Recommandations Production
+### Production
 
 1. **Secrets Manager:** Utiliser HashiCorp Vault, AWS Secrets Manager, etc.
 2. **Rotation:** Rotation des secrets tous les 90 jours
 3. **HTTPS:** Toujours utiliser HTTPS en production
 4. **TLS:** Version 1.2 minimum
 5. **MongoDB Auth:** Authentification + TLS obligatoires
-6. **Firewall:** Restreindre l'accès à l'API à des plages IP connues
+6. **Firewall:** Restreindre l'accÃ¨s Ã  l'API Ã  des plages IP connues
 7. **Backups:** Chiffrer les backups
 8. **Monitoring:** Alertes sur tentatives d'injection/auth failure
 
 ---
 
-## 🧪 Tests de Sécurité
+## ðŸ§ª Tests de SÃ©curitÃ©
 
 ### Lancer les Tests
 
 ```bash
-# Tous les tests de sécurité
+# Tous les tests de sÃ©curitÃ©
 python -m pytest test/test_sql_injection_prevention.py -v
 python -m pytest test/test_cors_security.py -v
 python -m pytest test/test_session_management.py -v
@@ -290,31 +290,31 @@ python -m pytest test/ --cov=app --cov-report=html
 | SQL Injection | 59 | 100% |
 | CORS | 45 | 100% |
 | Session Mgmt | 29 | 100% |
-| Encryption | Intégré | 100% |
+| Encryption | IntÃ©grÃ© | 100% |
 | **Total** | **376** | **>95%** |
 
 ---
 
-## 🚀 Deployment Checklist
+## ðŸš€ Deployment Checklist
 
-Avant de déployer en production:
+Avant de dÃ©ployer en production:
 
 - [ ] Tous les tests passent (`pytest test/ -q`)
-- [ ] .env configuré avec des secrets forts
-- [ ] HTTPS activé
-- [ ] CORS réduit aux origines nécessaires
+- [ ] .env configurÃ© avec des secrets forts
+- [ ] HTTPS activÃ©
+- [ ] CORS rÃ©duit aux origines nÃ©cessaires
 - [ ] MongoDB avec authentification
-- [ ] Backups configurés et testés
-- [ ] Monitoring des logs activé
-- [ ] Rate limiting configuré
-- [ ] Firewall configuré
+- [ ] Backups configurÃ©s et testÃ©s
+- [ ] Monitoring des logs activÃ©
+- [ ] Rate limiting configurÃ©
+- [ ] Firewall configurÃ©
 - [ ] Secrets en Vault (pas dans .env)
-- [ ] Logs centralisés (Splunk, ELK, etc.)
-- [ ] Alertes sur erreurs de sécurité
+- [ ] Logs centralisÃ©s (Splunk, ELK, etc.)
+- [ ] Alertes sur erreurs de sÃ©curitÃ©
 
 ---
 
-## 📚 Ressources Sécurité
+## ðŸ“š Ressources SÃ©curitÃ©
 
 - [OWASP Top 10](https://owasp.org/www-project-top-ten/)
 - [OWASP SQL Injection](https://owasp.org/www-community/attacks/SQL_Injection)
@@ -324,14 +324,15 @@ Avant de déployer en production:
 
 ---
 
-## 🔗 Voir Aussi
+## ðŸ”— Voir Aussi
 
 - [Architecture](./ARCHITECTURE.md) - Design global
-- [API Documentation](../api/API.md) - Endpoints sécurisés
-- [Testing Guide](../testing/TESTING.md) - Tests de sécurité
-- [Quick Start](../setup/QUICK_START.md) - Démarrage sécurisé
+- [API Documentation](../api/API.md) - Endpoints sÃ©curisÃ©s
+- [Testing Guide](../testing/TESTING.md) - Tests de sÃ©curitÃ©
+- [Quick Start](../setup/QUICK_START.md) - DÃ©marrage sÃ©curisÃ©
 
 ---
 
 **Last Updated:** 2026-06-16  
-**Security Level:** ✅ Phase 5 Tier 3 - HARDENED
+**Security Level:** âœ… Phase 5 Tier 3 - HARDENED
+
