@@ -18,7 +18,10 @@ function Get-IPv6Status {
             "IPv6 est desactive sur cet adaptateur ; cela est generalement sans danger si votre environnement ne depend pas d'IPv6."
         }
 
+        $status = if ($bind.Enabled) { 'WARNING' } else { 'PASS' }
+
         $ipv6state = [pscustomobject]@{
+            Status         = $status
             Adapter        = $bind.Name
             IPv6Enabled    = $bind.Enabled
             Recommendation = $recommendation

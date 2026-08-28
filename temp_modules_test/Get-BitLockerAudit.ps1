@@ -41,7 +41,16 @@ function Get-BitLockerAudit {
             $recommendation = "Revoir regulierement les parametres BitLocker pour s'assurer que les protecteurs (TPM, PIN, cle de recuperation) respectent toujours les exigences de securite."
         }
 
+        $status = if ($protStatusText -eq 'Off' -or $v.EncryptionPercentage -lt 100) {
+            'FAIL'
+        } elseif (($isOS -and -not $hasTPM -and -not $hasPIN) -or (-not $hasRecoveryPassword)) {
+            'WARNING'
+        } else {
+            'PASS'
+        }
+
         $BitLockerState = [pscustomobject]@{
+            Status             = $status
             MountPoint         = $v.MountPoint
             VolumeType         = $v.VolumeType
             ProtectionStatus   = $protStatusText

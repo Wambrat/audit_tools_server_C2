@@ -164,6 +164,47 @@ function New-ExecutionEnvelope {
     }
 }
 
+function ConvertTo-CommandOutput {
+    # Retourne @{ type = 'json'|'text'|'empty'; text = <string> }
+    # - Objet structure (PSCustomObject/hashtable) -> JSON : preserve le champ Status
+    #   et Recommendation/Xml du module pour l'evaluation de conformite cote serveur.
+    # - Sinon (texte, objets .NET bruts) -> texte via Out-String.
+    param($Raw)
+
+    if ($null -eq $Raw) { return @{ type = 'empty'; text = '' } }
+
+    $items   = @($Raw)
+    $objects = @($items | Where-Object { $_ -isnot [System.Management.Automation.ErrorRecord] })
+
+    if ($objects.Count -eq 0) {
+        $txt = ($items | Out-String).Trim()
+        if ([string]::IsNullOrWhiteSpace($txt)) { return @{ type = 'empty'; text = '' } }
+        return @{ type = 'text'; text = $txt }
+    }
+
+    $structured = $false
+    foreach ($o in $objects) {
+        if ($o -is [pscustomobject] -or $o -is [hashtable] -or $o -is [System.Collections.IDictionary]) {
+            $structured = $true; break
+        }
+    }
+
+    if ($structured) {
+        try {
+            $payload = if ($objects.Count -eq 1) { $objects[0] } else { $objects }
+            $json = $payload | ConvertTo-Json -Depth 25
+            return @{ type = 'json'; text = [string]$json }
+        }
+        catch {
+            return @{ type = 'text'; text = ($objects | Out-String).Trim() }
+        }
+    }
+
+    $txt = ($objects | Out-String).Trim()
+    if ([string]::IsNullOrWhiteSpace($txt)) { return @{ type = 'empty'; text = '' } }
+    return @{ type = 'text'; text = $txt }
+}
+
 function Execute-Command {
     param(
         [string]$Command,
@@ -187,17 +228,18 @@ function Execute-Command {
             $scriptBody = [string]$normalizedParameters['code']
         }
 
+        $raw = $null
         if ($scriptBody) {
             $commandToRun = [ScriptBlock]::Create($scriptBody)
-            $output = (& $commandToRun 2>&1 | Out-String)
+            $raw = (& $commandToRun 2>&1)
         }
         elseif (Get-Command -Name $Command -ErrorAction SilentlyContinue) {
             $commandToRun = $Command
-            $output = (& $commandToRun 2>&1 | Out-String)
+            $raw = (& $commandToRun 2>&1)
         }
         elseif ($Command -match '^[A-Za-z0-9_\-\\/\.]+\.ps1$') {
             if (Test-Path -Path $Command -PathType Leaf) {
-                $output = (& $Command 2>&1 | Out-String)
+                $raw = (& $Command 2>&1)
             }
             else {
                 throw "Command not available on agent: $Command"
@@ -206,18 +248,18 @@ function Execute-Command {
         else {
             throw "Command not available on agent: $Command"
         }
-        if ($null -eq $output) {
-            $output = ""
-        }
 
-        if ([string]::IsNullOrWhiteSpace([string]$output)) {
+        # Preserver la structure (JSON) quand le module renvoie un objet -> le serveur
+        # lit alors le champ Status pour evaluer la conformite ; sinon texte.
+        $converted = ConvertTo-CommandOutput -Raw $raw
+        if ($converted.type -eq 'empty') {
             $result.output_type = "empty"
             $result.empty_reason = "No output captured by the command."
             $result.output = ""
         }
         else {
-            $result.output_type = "text"
-            $result.output = [string]$output
+            $result.output_type = $converted.type
+            $result.output = [string]$converted.text
         }
     }
     catch {

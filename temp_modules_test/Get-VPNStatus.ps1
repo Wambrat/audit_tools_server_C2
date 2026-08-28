@@ -41,7 +41,10 @@ function Get-VPNStatus {
         $parts += "$($activeProfiles.Count) profil(s) VPN actuellement connecte(s)"
     }
 
+    # Module informationnel : pas de regle de conformite stricte (depend de la politique).
+    # PASS par defaut ; adapte cette regle si un VPN non autorise doit remonter en FAIL.
     $VPNStatus = [pscustomobject]@{
+        Status                = 'PASS'
         HasVpnAdapters        = $hasVpnAdapters
         HasVpnProfiles        = $hasVpnProfiles
         HasActiveVpnProfiles  = $hasActiveVpnProfiles

@@ -106,7 +106,19 @@ function Get-RDPAudit {
 
 
 
+    # ---- Statut de conformite (convention : PASS / WARNING / FAIL) ----
+    # Calcule a partir des constats reels : RDP active avec des reglages faibles = FAIL.
+    $issues = 0
+    if ($rdpEnabled) {
+        if ($securityLayer -ne 2) { $issues++ }
+        if ($minEnc -lt 3)        { $issues++ }
+        if ($userAuth -ne 1)      { $issues++ }
+        if ($encryptRPC -ne 1)    { $issues++ }
+    }
+    $Status = if ($issues -gt 0) { 'FAIL' } else { 'PASS' }
+
     $RDPAudit = [pscustomobject]@{
+        Status                 = $Status
         RDPEnabled             = $rdpEnabled
         DisableRestrictedAdmin = $disableRA
         MinEncryptionLevel     = $minEncText

@@ -5,6 +5,7 @@ function Get-UACAudit{
     $XmlList = [System.Collections.ArrayList]@()
 
     $result = [pscustomobject]@{
+        Status                      = $null   # conformite : PASS / WARNING / FAIL
         EnableLUA                   = $null   # UAC global on/off (0/1)
         ConsentPromptAdmin          = $null   # ConsentPromptBehaviorAdmin
         ConsentPromptUser           = $null   # ConsentPromptBehaviorUser
@@ -27,6 +28,7 @@ function Get-UACAudit{
     $uacReg = Get-ItemProperty -Path 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System' -ErrorAction SilentlyContinue
 
     if (-not $uacReg) {
+        $result.Status = 'WARNING'
         $result.Recommendation = 'UAC policy keys not found; ensure User Account Control is enabled and configured via GPO according to your hardening baseline.'
         return $result
     }
@@ -128,6 +130,9 @@ function Get-UACAudit{
     else {
         'UAC configuration appears aligned with common hardening baselines; review exception cases and remote administration scenarios.'
     }
+
+    # UAC globalement desactive = FAIL ; ecarts de durcissement = WARNING ; sinon PASS.
+    $result.Status = if ($result.EnableLUA -ne 1) { 'FAIL' } elseif ($XmlList.Count -gt 0) { 'WARNING' } else { 'PASS' }
 
     return [PSCustomObject]@{
         Value = $result

@@ -154,6 +154,10 @@ function Get-AuditPasswordPolicies {
         $results.ComplianceChecks += Test-AnssiCompliance -PolicyObj $p -Type "Service/Haut-Priv" -Standard $AnssiSpecs.Service
     }
 
+    # Statut global lu par le serveur (agrege les controles ANSSI)
+    $chkStatuses = @($results.ComplianceChecks | ForEach-Object { $_.Status })
+    $results.Status = if ($chkStatuses -contains 'NON CONFORME') { 'FAIL' } elseif ($chkStatuses.Count -eq 0) { 'UNKNOWN' } else { 'PASS' }
+
     return [PSCustomObject]$results
 }
 

@@ -103,7 +103,9 @@ function Get-PolPassAudit {
             # 5. Construction de l'objet resultat
             return [PSCustomObject]@{
                 Check           = "Password Policy"
-                
+                # Statut global lu par le serveur (FAIL prioritaire, puis WARNING, sinon PASS)
+                Status          = if ("FAIL" -in ($statusLength, $statusComplexity, $statusLockout)) { "FAIL" } elseif ("WARNING" -in ($statusLength, $statusComplexity, $statusLockout)) { "WARNING" } else { "PASS" }
+
                 MinLengthVal    = $currentMinLength
                 MinLengthStatus = $statusLength
                 MinLengthReco   = $msgLength

@@ -32,7 +32,10 @@ function Get-NetBiosInfo {
             }
         }
 
+        $status = if ($adapter.TcpipNetbiosOptions -eq 2) { 'PASS' } else { 'WARNING' }
+
         $Netbios = [PSCustomObject]@{
+            Status          = $status
             Interface       = $adapter.Description
             NetBIOS_Status  = $netbiosStatus
             TcpipNetbiosOptions = $adapter.TcpipNetbiosOptions

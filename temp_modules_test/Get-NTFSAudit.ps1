@@ -39,19 +39,24 @@ function Get-NTFSAudit {
         $CanWrite      = ($CumulativeRights -band $WriteMask) -eq $WriteMask
         $CanRead       = ($CumulativeRights -band $ReadMask)  -eq $ReadMask
 
-        # 4. Determination du label "Status" pour lecture humaine rapide
-        $Status = "None"
-        if ($IsFullControl) { $Status = "FullControl" }
-        elseif ($CanWrite -and $CanRead) { $Status = "Read/Write" }
-        elseif ($CanWrite) { $Status = "WriteOnly" }
-        elseif ($CanRead) { $Status = "ReadOnly" }
-        elseif ($CumulativeRights -ne 0) { $Status = "Custom" }
+        # 4. Determination du label de niveau d'acces (lecture humaine rapide)
+        $AccessLevel = "None"
+        if ($IsFullControl) { $AccessLevel = "FullControl" }
+        elseif ($CanWrite -and $CanRead) { $AccessLevel = "Read/Write" }
+        elseif ($CanWrite) { $AccessLevel = "WriteOnly" }
+        elseif ($CanRead) { $AccessLevel = "ReadOnly" }
+        elseif ($CumulativeRights -ne 0) { $AccessLevel = "Custom" }
+
+        # 4b. Statut de conformite : droits trop larges pour cet utilisateur = a corriger.
+        #     FullControl = FAIL, Write = WARNING, sinon PASS.
+        $Status = if ($IsFullControl) { 'FAIL' } elseif ($CanWrite) { 'WARNING' } else { 'PASS' }
 
         # 5. RETOUR DE L'OBJET
         [PSCustomObject]@{
             Path          = $Path
             User          = $User
-            Status        = $Status         # Resume textuel
+            Status        = $Status         # Conformite : PASS / WARNING / FAIL
+            AccessLevel   = $AccessLevel     # Resume textuel du niveau d'acces
             IsFullControl = $IsFullControl  # Booleen
             CanWrite      = $CanWrite       # Booleen
             CanRead       = $CanRead        # Booleen

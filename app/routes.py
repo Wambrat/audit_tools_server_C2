@@ -885,31 +885,39 @@ async def get_agent_results(agent_id: str):
 
 @router.get("/results/detail/{result_id}")
 async def get_result_detail(result_id: str):
-    """Récupérer les détails complets d'un résultat spécifique"""
+    """Récupérer les détails complets d'un résultat spécifique (avec conformité)."""
+    from .monitoring import evaluate_result_compliance
+
     db = get_db()
-    
+
+    result = None
     try:
-        # Pour la base de données en mémoire
-        if hasattr(db, 'results') and isinstance(db.results, dict):
+        # Backend-agnostique : MongoDB expose get_result(), l'in-memory un dict `results`.
+        if hasattr(db, "get_result"):
+            result = db.get_result(result_id)
+        elif hasattr(db, "results") and isinstance(db.results, dict):
             result = db.results.get(result_id)
-            if result:
-                return {
-                    "result_id": result.result_id,
-                    "task_id": result.task_id,
-                    "agent_id": result.agent_id,
-                    "status": result.status,
-                    "result": result.result,
-                    "error_message": result.error_message,
-                    "execution_time_ms": result.execution_time_ms,
-                    "created_at": result.created_at
-                }
     except Exception as e:
         logger.error(f"Error retrieving result {result_id}: {e}")
-    
-    raise HTTPException(
-        status_code=status.HTTP_404_NOT_FOUND,
-        detail="Result not found"
-    )
+
+    if not result:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Result not found"
+        )
+
+    compliance = evaluate_result_compliance(result.result)
+    return {
+        "result_id": result.result_id,
+        "task_id": result.task_id,
+        "agent_id": result.agent_id,
+        "status": result.status,
+        "result": result.result,
+        "error_message": result.error_message,
+        "execution_time_ms": result.execution_time_ms,
+        "created_at": result.created_at,
+        "compliance": compliance,
+    }
 
 
 # ===== Endpoints de monitoring du rate limiting =====

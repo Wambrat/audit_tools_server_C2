@@ -10,6 +10,7 @@ function Get-LLMNRState {
     if (-not $llmnrValue) {
         $llmnrValue = $null
         return [PSCustomObject]@{
+            Status = 'FAIL'
             Value = $llmnrValue
             LLMNR_Status = 'Active par defaut (aucune politique explicite, la resolution de noms multicast est probablement autorisee)'
             Recommendation = "Aucune politique LLMNR explicite trouvee; configurez EnableMulticast = 0 (Desactiver la resolution de noms multicast) pour desactiver LLMNR."
@@ -27,7 +28,10 @@ function Get-LLMNRState {
         $recommendation = "Revoir la configuration LLMNR et l'aligner avec la base de durcissement (typiquement desactive sur les reseaux d'entreprise)."
     }
 
+    $status = if ($llmnrValue -eq 0) { 'PASS' } elseif ($llmnrValue -eq 1) { 'FAIL' } else { 'WARNING' }
+
     return [PSCustomObject]@{
+        Status = $status
         Value = $llmnrValue
         LLMNR_Status = $llmnrStatus
         Recommendation = $recommendation

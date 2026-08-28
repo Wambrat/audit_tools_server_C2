@@ -24,11 +24,16 @@ function Get-GroupsAudit {
 
         $adminmembers = Get-LocalGroupMember -Group $admingroup -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Name
 
+        # Informationnel : liste des membres du groupe Administrateurs (a revoir).
+        # WARNING si plus de 3 membres (beaucoup d'admins locaux), sinon PASS.
+        $grpStatus = if ($adminmembers.Count -gt 3) { 'WARNING' } else { 'PASS' }
+
         return [PSCustomObject]@{
+            Status         = $grpStatus
             GroupName = $admingroup
             MembersCount   = $adminmembers.Count
             Members        = $adminmembers
-        }    
+        }
     }
 }
 

@@ -339,7 +339,20 @@ class MongoDatabase:
         for doc in docs:
             doc.pop("_id", None)
         return [AuditResult(**doc) for doc in docs]
-    
+
+    def get_results_by_agent(self, agent_id: str) -> list:
+        """Alias de get_results : compatibilité avec les dashboards de monitoring
+        (get_agents_dashboard / get_results_dashboard appellent ce nom)."""
+        return self.get_results(agent_id)
+
+    def list_results(self) -> list:
+        """Lister tous les résultats (tous agents confondus), pour les dashboards.
+        Remplace l'accès in-memory `db.results.values()` incompatible avec MongoDB."""
+        docs = list(self.results.find().sort("created_at", DESCENDING))
+        for doc in docs:
+            doc.pop("_id", None)
+        return [AuditResult(**doc) for doc in docs]
+
     def get_result(self, result_id: str) -> AuditResult:
         """Récupérer un résultat par ID"""
         doc = self.results.find_one({"result_id": result_id})
@@ -468,6 +481,18 @@ class MongoDatabase:
                                     "created_at": datetime.now(),
                                     "enabled": True,
                                 })
+                                command_count += 1
+                            elif existing.get("script") != script_content:
+                                # Le module a été mis à jour dans modules.zip : rafraîchir
+                                # le script stocké (sinon la version en base reste figée).
+                                self.powershell_commands.update_one(
+                                    {"_id": existing["_id"]},
+                                    {"$set": {
+                                        "script": script_content,
+                                        "description": f"Module importé depuis {relative_name}",
+                                        "updated_at": datetime.now(),
+                                    }}
+                                )
                                 command_count += 1
                         except Exception:
                             continue

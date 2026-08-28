@@ -50,6 +50,8 @@ function Get-LocalUserAudit {
             # --- 4. Construction de l'objet de resultat ---
             $auditObject = [PSCustomObject]@{
 
+                # Compte Invite actif = FAIL ; Administrateur integre actif = WARNING ; sinon PASS.
+                Status              = if ($builtInGuest.Enabled -eq $true) { 'FAIL' } elseif ($builtInAdmin.Enabled -eq $true) { 'WARNING' } else { 'PASS' }
                 AdminAccountName    = $builtInAdmin.Name
                 AdminAccountSID     = $builtInAdmin.SID.Value
                 AdminEnabled        = $builtInAdmin.Enabled # Devrait etre False par securite

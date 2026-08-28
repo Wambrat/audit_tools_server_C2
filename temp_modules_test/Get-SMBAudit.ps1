@@ -15,6 +15,7 @@ function Get-SMBAudit {
     $SMBInfo = Get-SmbServerConfiguration
 
     $SMBA = [pscustomobject]@{
+        Status                   = $null
         SMBv1State               = $SMBInfo.EnableSMB1Protocol
         SMBv2State               = $SMBInfo.EnableSMB2Protocol
         EnableSecuritySignature  = $SMBInfo.EnableSecuritySignature
@@ -70,6 +71,15 @@ function Get-SMBAudit {
         $reco -join ' | '
     }else{
         'La configuration SMB semble conforme aux normes de securite courantes (SMBv1 desactive, SMBv2/3 active, signature requise).'
+    }
+
+    # SMBv1 actif ou SMBv2 desactive = FAIL ; signature non requise = WARNING ; sinon PASS.
+    $SMBA.Status = if ($SMBInfo.EnableSMB1Protocol -or (-not $SMBInfo.EnableSMB2Protocol)) {
+        'FAIL'
+    } elseif (-not $SMBInfo.RequireSecuritySignature) {
+        'WARNING'
+    } else {
+        'PASS'
     }
 
     $Output = [PSCustomObject]@{

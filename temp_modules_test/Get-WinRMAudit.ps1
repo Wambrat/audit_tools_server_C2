@@ -6,6 +6,7 @@ function Get-WinRMAudit {
 
     if (-not $winrmSvc -or $winrmSvc.Status -eq 'Stopped') {
         return [pscustomobject]@{
+            Status             = 'PASS'
             WinRmEnabled       = $false
             ListenerTransport  = $null
             ListeningOn        = $null
@@ -81,7 +82,17 @@ function Get-WinRMAudit {
         $reco += 'WinRM appears configured with encrypted transport and restricted filters; validate settings against your hardening baseline and remote management requirements.'
     }
 
+    # HTTP sans HTTPS / trafic non chiffre / Basic cote service = FAIL ; filtres larges,
+    # Basic client, comptes RM non-admin = WARNING ; sinon PASS.
+    $winrmFail = ($transport -contains 'HTTP' -and -not ($transport -contains 'HTTPS')) -or
+                 ($serviceAuth.Unencrypted -eq 'true') -or ($serviceAuth.Basic -eq 'true')
+    $winrmWarn = ($ipv4Filter -eq '*' -or [string]::IsNullOrWhiteSpace($ipv4Filter)) -or
+                 ($ipv6Filter -eq '*' -or [string]::IsNullOrWhiteSpace($ipv6Filter)) -or
+                 ($clientAuth.Basic -eq 'true') -or ($rmNotAdmins -and $rmNotAdmins.Count -gt 0)
+    $winrmStatus = if ($winrmFail) { 'FAIL' } elseif ($winrmWarn) { 'WARNING' } else { 'PASS' }
+
     $Output = [pscustomobject]@{
+        Status            = $winrmStatus
         WinRmEnabled      = $true
         ListenerTransport = $transport
         ListeningOn       = $listeningOn

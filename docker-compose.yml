@@ -74,8 +74,9 @@ services:
       # ensuite (sinon les résultats déjà chiffrés deviennent illisibles).
       ENCRYPTION_KEY: ${ENCRYPTION_KEY:?ENCRYPTION_KEY doit etre defini dans .env (min 32 caracteres)}
       DEBUG: "false"
-    ports:
-      - "8000:8000"
+    # Pas de publication du port 8000 sur l'hote : le backend est joint en interne
+    # via le reseau docker (nginx `/api` -> backend:8000 et les labels Traefik).
+    # (Publier 8000 echoue sous Windows : plage 7981-8080 reservee par WinNAT/Hyper-V.)
     depends_on:
       mongodb:
         condition: service_healthy

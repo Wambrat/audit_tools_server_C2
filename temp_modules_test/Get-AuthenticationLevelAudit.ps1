@@ -6,6 +6,7 @@ function Get-AuthenticationLevelAudit {
     process{
         # Initialisation du tableau des methodes activees
         $ActivatedMethods = [PSCustomObject]@{
+            Status = $null
             GPO = $false
             CSP = $false
             Consumer = $false
@@ -37,8 +38,11 @@ function Get-AuthenticationLevelAudit {
             Write-Host "Le service Ngc (Windows Hello) ne semble pas present."
         }
 
+        # Auth phishing-resistante (Windows Hello for Business) via GPO/CSP = PASS ; sinon WARNING.
+        $ActivatedMethods.Status = if ($ActivatedMethods.GPO -or $ActivatedMethods.CSP) { 'PASS' } else { 'WARNING' }
+
         return $ActivatedMethods
-        
+
     }
 }
 

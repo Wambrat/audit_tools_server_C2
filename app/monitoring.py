@@ -727,6 +727,17 @@ def evaluate_result_compliance(result: Any) -> Dict[str, Any]:
     if result is None:
         return build_failure_response("Résultat d’audit vide ou de taille nulle : échec de la commande.")
 
+    # L'agent transmet le résultat comme une CHAÎNE JSON (enveloppe complète
+    # sérialisée). On la décode d'abord pour que l'enveloppe — et son champ
+    # `output` — redevienne une structure exploitable par flatten_audit_controls.
+    if isinstance(result, str):
+        _s = result.strip()
+        if _s[:1] in ("[", "{"):
+            try:
+                result = json.loads(_s)
+            except Exception:
+                pass
+
     if isinstance(result, str):
         if not result.strip():
             return build_failure_response("Résultat d’audit vide ou de taille nulle : échec de la commande.")
@@ -777,7 +788,21 @@ def evaluate_result_compliance(result: Any) -> Dict[str, Any]:
                 _stringify(error_message) or _stringify(empty_reason) or "Vérifier la commande et le contexte d’exécution sur l’agent."
             )
 
-    controls = flatten_audit_controls(result)
+    # Si la sortie est structurée (output_type "json"), évaluer sur l'objet parsé
+    # (préserve Status / Recommendation / Xml du module) plutôt que sur l'enveloppe.
+    eval_target = result
+    if isinstance(result, dict):
+        _out_type = _extract_field(result, "output_type", "OutputType")
+        _out = _extract_field(result, "output", "Output")
+        if isinstance(_out, (dict, list)):
+            eval_target = _out
+        elif isinstance(_out, str) and str(_out_type).strip().lower() == "json" and _out.strip():
+            try:
+                eval_target = json.loads(_out)
+            except Exception:
+                eval_target = result
+
+    controls = flatten_audit_controls(eval_target)
     if controls:
         status = compute_overall_status(controls)
         recommendations: List[str] = []
@@ -825,7 +850,7 @@ def evaluate_result_compliance(result: Any) -> Dict[str, Any]:
             "comments": [control.get("comments") for control in controls if control.get("comments")],
         }
 
-    payload_dict = result if isinstance(result, dict) else {"value": result}
+    payload_dict = eval_target if isinstance(eval_target, dict) else {"value": eval_target}
     explicit_status = _extract_field(payload_dict, "status", "Status")
     if explicit_status is not None:
         normalized = _normalize_status(explicit_status)
@@ -833,17 +858,25 @@ def evaluate_result_compliance(result: Any) -> Dict[str, Any]:
             status = "non_compliant"
         elif normalized == "WARNING":
             status = "partially_compliant"
-        else:
+        elif normalized == "PASS":
             status = "compliant"
+        else:
+            status = "unknown"
     else:
-        status = "compliant"
+        # Aucun statut exploitable et aucune sortie structurée -> NE PAS présumer conforme.
+        status = "unknown"
 
     recommendation = _extract_field(payload_dict, "recommendation", "Recommendation", "recommendations", "Recommendations")
     recommendation_text = _stringify(recommendation)
     if recommendation_text is None:
         recommendation_text = "Aucune action requise."
 
-    issues = ["Aucune anomalie détectée sur les contrôles de l’audit."] if status == "compliant" else ["Un ou plusieurs éléments de l’audit n’ont pas été validés."]
+    if status == "compliant":
+        issues = ["Aucune anomalie détectée sur les contrôles de l’audit."]
+    elif status == "unknown":
+        issues = ["Conformité non évaluable : la commande n’a pas renvoyé de statut structuré (champ Status)."]
+    else:
+        issues = ["Un ou plusieurs éléments de l’audit n’ont pas été validés."]
     return {
         "status": status,
         "severity": "critical" if status == "non_compliant" else "warning" if status == "partially_compliant" else "info",
@@ -851,7 +884,8 @@ def evaluate_result_compliance(result: Any) -> Dict[str, Any]:
             "non_compliant": "Non conforme",
             "partially_compliant": "Partiellement conforme",
             "compliant": "Conforme",
-        }.get(status, "Conforme"),
+            "unknown": "Non évalué",
+        }.get(status, "Non évalué"),
         "issues": issues,
         "audit_id": _stringify(_extract_field(payload_dict, "audit_id", "AuditId", "auditId")),
         "recommendation": recommendation_text,
@@ -882,11 +916,25 @@ def _extract_field(payload: Any, *candidate_keys: str) -> Any:
     return walk(payload)
 
 
+def _list_all_results(db) -> List[Any]:
+    """Récupère tous les résultats quel que soit le backend.
+
+    In-memory expose `results` comme un dict ; MongoDB expose une collection
+    pymongo (sans `.values()`), listée via `list_results()`.
+    """
+    store = getattr(db, "results", None)
+    if isinstance(store, dict):
+        return list(store.values())
+    if hasattr(db, "list_results"):
+        return db.list_results()
+    return []
+
+
 def get_system_overview() -> Dict[str, Any]:
     db = get_db()
     agents = db.list_agents()
     tasks = db.list_tasks()
-    results = list(db.results.values())
+    results = _list_all_results(db)
 
     agent_stats = {
         "active": len([agent for agent in agents if str(agent.status).lower() == "active"]),
@@ -1014,7 +1062,7 @@ def get_tasks_dashboard() -> Dict[str, Any]:
 
 def get_results_dashboard() -> Dict[str, Any]:
     db = get_db()
-    results = list(db.results.values())
+    results = _list_all_results(db)
     agents = {agent.agent_id: agent for agent in db.list_agents()}
 
     all_results = []
@@ -1146,7 +1194,7 @@ def get_alerts() -> Dict[str, Any]:
                     "timestamp": datetime.utcnow().isoformat(),
                 })
 
-    for result in list(db.results.values()):
+    for result in _list_all_results(db):
         compliance = evaluate_result_compliance(result.result)
         if compliance["status"] == "non_compliant":
             agent = db.get_agent(result.agent_id)

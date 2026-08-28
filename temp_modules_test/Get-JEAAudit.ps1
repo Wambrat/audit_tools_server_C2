@@ -3,6 +3,7 @@ function Get-JEAAudit {
     param()
 
     $result = [pscustomobject]@{
+        Status                = 'PASS'   # informationnel (JEA = durcissement optionnel)
         WinRmState            = $null
         HasJEASessionConfig   = $false
         SessionConfigurations = @()

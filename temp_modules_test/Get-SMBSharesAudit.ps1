@@ -13,7 +13,12 @@ function Get-SMBSharesAudit {
 
         $shareList = @()
         foreach ($share in $shares) {
+            # Partages administratifs (C$, ADMIN$, IPC$...) = normaux (PASS) ;
+            # partages personnalises = a revoir (WARNING) car leurs droits ne sont pas
+            # encore evalues ici (voir la logique 'Tout le monde'/NTFS commentee ci-dessous).
+            $isAdminShare = ($share.Name -match '\$$') -or ($share.ShareType -ne 'FileSystemDirectory')
             $shareList += @{
+                Status = if ($isAdminShare) { 'PASS' } else { 'WARNING' }
                 Name = $share.Name
                 Path = $share.Path
                 Description = $share.Description

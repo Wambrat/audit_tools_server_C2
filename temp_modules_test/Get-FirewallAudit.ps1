@@ -45,7 +45,12 @@ function Get-FirewallAudit {
         $fwReco += 'Le service de pare-feu Windows semble etre actif; examinez regulierement les regles d entrance pour eviter l exposition inutile (RDP, SMB, WinRM, etc.).'
     }
 
+    # Statut de conformite : FAIL si pare-feu inactif OU regle RDP ouverte a "Any".
+    $hasRdpAny = $rdpRules | Where-Object { $_.RemoteAddress -eq 'Any' }
+    $Status = if ((-not $svcRunning) -or $hasRdpAny) { 'FAIL' } else { 'PASS' }
+
     return [pscustomobject]@{
+        Status                = $Status
         FirewallServiceStatus = if ($svc) { $svc.Status } else { 'NotFound' }
         FirewallServiceRunning= $svcRunning
         ActiveProfile         = $profile

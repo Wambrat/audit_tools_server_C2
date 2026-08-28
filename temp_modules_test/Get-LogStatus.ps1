@@ -22,6 +22,7 @@ function Get-LogStatus {
 
             if (-not $log) {
                 $MyCustomObject = [PSCustomObject]@{
+                    Status         = 'FAIL'
                     LogName        = $name
                     IsEnabled      = $false
                     RecordCount    = 0
@@ -54,7 +55,10 @@ function Get-LogStatus {
                 $recText = "Aucune recommandation de taille specifique definie pour ce journal ; revisez les exigences de conservation et ajustez la taille en consequence."
             }
 
+            $status = if ($log.IsEnabled -eq $false) { 'FAIL' } elseif ($sizeOK -eq $false) { 'WARNING' } else { 'PASS' }
+
             $MyCustomObject = [PSCustomObject]@{
+                Status         = $status
                 LogName        = $log.LogName
                 IsEnabled      = $log.IsEnabled
                 RecordCount    = $log.RecordCount

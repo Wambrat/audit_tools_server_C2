@@ -28,7 +28,16 @@ function Get-OptionalFeaturesAudit {
             "Revoir si cette fonctionnalite optionnelle est reellement utilisee ; la desactiver si elle n'est pas necessaire pour reduire la surface d'attaque."
         }
 
+        $status = if ($f.FeatureName -match 'SMB1Protocol|TelnetClient|TFTPClient|^FTP') {
+            'FAIL'
+        } elseif ($risk) {
+            'WARNING'
+        } else {
+            'PASS'
+        }
+
         $OFA = [pscustomobject]@{
+            Status         = $status
             FeatureName    = $f.FeatureName
             State          = $f.State
             RiskNote       = $risk
